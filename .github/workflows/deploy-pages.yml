@@ -1,0 +1,46 @@
+name: Deploy Connect DG to GitHub Pages
+
+# 웹 파일(html·css·js·assets)만 게시. 사업문서(docs)·SQL(sql)은 제외.
+# 운영본은 바닐라 정적 사이트 — 빌드 불필요.
+# ※ 최초 1회: 저장소 Settings → Pages → Build and deployment → Source: "GitHub Actions" 설정 필요.
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 웹 파일만 _site로 수집
+        run: |
+          mkdir -p _site
+          cp *.html _site/ 2>/dev/null || true
+          cp sitemap.xml robots.txt _site/ 2>/dev/null || true
+          for d in css js assets data; do
+            if [ -d "$d" ]; then cp -r "$d" _site/; fi
+          done
+          ls -1 _site/*.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

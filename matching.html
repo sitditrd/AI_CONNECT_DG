@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>창고 · 차량 매칭 — 적합성 · 가용성 · 안전성 평가 | Connect DG</title>
+  <meta name="description" content="법적 적합성 40% · 인허가 범위 20% · 가용 용량 15% · 안전관리 이력 10% · 운송 접근성 10% · 비용 5% 가중치로 위험물 창고와 차량 후보를 평가합니다.">
+  <meta name="theme-color" content="#0a0f1e">
+  <link rel="canonical" href="https://sitditrd.github.io/AI_CONNECT_DG/matching.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Connect DG">
+  <meta property="og:title" content="창고 · 차량 매칭 | Connect DG">
+  <meta property="og:image" content="https://sitditrd.github.io/AI_CONNECT_DG/assets/og-image.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-01a">
+  <link rel="icon" href="assets/twl_logo.ico">
+</head>
+<body class="hero-page">
+  <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="Connect DG 홈"></a>
+      <button class="nav-burger" aria-label="메뉴 열기" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="site-nav" aria-label="주요 메뉴">
+        <a href="process.html">프로세스</a>
+        <a href="msds.html">MSDS 분석</a>
+        <a href="compliance.html">적법성 검토</a>
+        <a href="matching.html" class="active">창고·차량 매칭</a>
+        <a href="route.html">안전경로</a>
+        <a href="dispatch.html">배차·입고</a>
+        <a href="insight.html">시장 현황</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <section id="main-content" tabindex="-1" class="dash-hero">
+    <div class="container">
+      <div class="dash-title-row">
+        <div>
+          <h1>창고 · 차량 매칭 <span style="font-weight:300; opacity:.75;">— 프로세스 상세 ④</span></h1>
+          <p class="dash-sub">우선순위 : 안전 · 법적 적합성 › 가용성 › 접근성 › 비용</p>
+        </div>
+        <div class="dash-badges">
+          <span class="dash-badge" id="caseBadge">케이스 미생성</span>
+          <span class="dash-badge" id="targetBadge">대상 없음</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 가중치 ============ -->
+  <section class="dash-section">
+    <div class="container">
+      <div class="split">
+        <div class="panel reveal">
+          <div class="panel-head">
+            <h3>매칭 평가 기준 — 가중치</h3>
+            <span class="sub" id="safetyShare">안전 · 법적 적합성 60%</span>
+          </div>
+          <div class="panel-body">
+            <div id="weightRows"></div>
+            <div class="row" style="margin-top:12px;">
+              <button class="btn btn-ghost btn-sm" id="wReset" type="button">기본 가중치로 복원</button>
+              <span class="muted" style="font-size:11.5px;">슬라이더로 가중치를 조정하면 후보 순위가 즉시 재계산됩니다</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel reveal">
+          <div class="panel-head">
+            <h3>매칭 조건</h3>
+            <span class="sub">요청 정보 기반 · 수정 가능</span>
+          </div>
+          <div class="panel-body">
+            <div class="grid-2">
+              <div>
+                <label class="lbl" for="mQty">보관 수량 (PL)</label>
+                <input class="field" id="mQty" type="number" min="1" style="width:100%">
+              </div>
+              <div>
+                <label class="lbl" for="mRegion">희망 권역</label>
+                <select class="field" id="mRegion" style="width:100%">
+                  <option>무관</option><option>경기남부</option><option>수도권</option><option>영남권</option><option>호남권</option>
+                </select>
+              </div>
+              <div>
+                <label class="lbl" for="mTemp">온도 구역</label>
+                <select class="field" id="mTemp" style="width:100%">
+                  <option value="">무관</option>
+                  <option>상온</option>
+                  <option>정온(15~25℃)</option>
+                  <option>냉장</option>
+                </select>
+              </div>
+              <div>
+                <label class="lbl" for="mOnly">표시 범위</label>
+                <select class="field" id="mOnly" style="width:100%">
+                  <option value="all">전체 후보 (제외 포함)</option>
+                  <option value="fit">적합 · 조건부만</option>
+                </select>
+              </div>
+            </div>
+            <p class="notice" style="margin-top:14px;">
+              <b>단계별 정보 공개</b> — 탐색 단계에서는 창고명·주소를 가립니다(예: "평택 포승단지 내 제4류 허가 창고 A").
+              계약이 확정되면 실제 상호·주소가 공개됩니다.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 창고 후보 ============ -->
+  <section class="dash-section" style="padding-top:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">Warehouse</span>
+        <h2>창고 후보 · 종합 추천점수</h2>
+        <span class="hint">클릭하면 지표별 상세 점수와 창고 상세가 열립니다</span>
+      </div>
+      <div id="whList" class="reveal"></div>
+      <p class="notice">
+        <b>중요</b> — '종합 추천점수'는 후보 간 우선순위를 위한 지표이며, <b>법적 적합성을 확률로 보증하는 수치가 아닙니다</b>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ 창고 상세 ============ -->
+  <section class="dash-section" style="padding-top:0;">
+    <div class="container">
+      <div class="split">
+        <div class="panel reveal">
+          <div class="panel-head"><h3>선택 창고 상세</h3><span class="sub" id="detailName">-</span></div>
+          <div class="panel-body" id="whDetail">
+            <p class="muted" style="font-size:13px;">후보를 선택하면 지표별 점수와 인허가 정보가 표시됩니다.</p>
+          </div>
+        </div>
+
+        <div class="panel reveal">
+          <div class="panel-head"><h3>차량 매칭</h3><span class="sub">등급 · 적재 · 자격 요건</span></div>
+          <div class="panel-body" id="vehList"></div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:16px;">
+        <button class="btn btn-dg" id="confirmBtn" type="button" disabled>이 창고로 확정 → 안전경로 검토</button>
+        <a class="btn btn-ghost btn-sm" href="compliance.html">← 적법성 검토</a>
+        <a class="btn btn-ghost btn-sm" href="process.html">워크벤치</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="Connect DG"></a>
+        <p class="footer-note">
+          Connect DG · 창고 · 차량 매칭 · 안전 · 법적 적합성 관련 항목이 전체 가중치의 60%<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS.
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="compliance.html">적법성 검토</a>
+        <a href="route.html">안전경로</a>
+        <a href="dispatch.html">배차·입고</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="js/common.js?v=2026-08-01a"></script>
+  <script src="js/data_dg.js?v=2026-08-01a"></script>
+  <script src="js/db.js?v=2026-08-01a"></script>
+  <script src="js/match-engine.js?v=2026-08-01a"></script>
+  <script src="js/matching.js?v=2026-08-01a"></script>
+</body>
+</html>

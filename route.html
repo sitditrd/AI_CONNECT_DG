@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DG Route Intelligence — 위험물 안전경로 검토 | Connect DG</title>
+  <meta name="description" content="차량 제원·위험물 통행제한·터널 제한코드·도로 폭·ETA·비상대응 접근성 6개 조건으로 위험물 운송 경로를 검토합니다.">
+  <meta name="theme-color" content="#0a0f1e">
+  <link rel="canonical" href="https://sitditrd.github.io/AI_CONNECT_DG/route.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Connect DG">
+  <meta property="og:title" content="DG Route Intelligence — 위험물 안전경로 검토 | Connect DG">
+  <meta property="og:image" content="https://sitditrd.github.io/AI_CONNECT_DG/assets/og-image.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-01a">
+  <link rel="icon" href="assets/twl_logo.ico">
+</head>
+<body class="hero-page">
+  <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="Connect DG 홈"></a>
+      <button class="nav-burger" aria-label="메뉴 열기" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="site-nav" aria-label="주요 메뉴">
+        <a href="process.html">프로세스</a>
+        <a href="msds.html">MSDS 분석</a>
+        <a href="compliance.html">적법성 검토</a>
+        <a href="matching.html">창고·차량 매칭</a>
+        <a href="route.html" class="active">안전경로</a>
+        <a href="dispatch.html">배차·입고</a>
+        <a href="insight.html">시장 현황</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <section id="main-content" tabindex="-1" class="dash-hero">
+    <div class="container">
+      <div class="dash-title-row">
+        <div>
+          <h1>DG Route Intelligence <span style="font-weight:300; opacity:.75;">— 프로세스 상세 ⑤</span></h1>
+          <p class="dash-sub">위험물 차량 · 터널 제한을 반영한 안전경로 검토 후, 확정 창고까지의 실행 업무로 연결합니다</p>
+        </div>
+        <div class="dash-badges">
+          <span class="dash-badge" id="caseBadge">케이스 미생성</span>
+          <span class="dash-badge" id="whBadge">창고 미확정</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 검토 조건 ============ -->
+  <section class="dash-section">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">Conditions</span>
+        <h2>경로 검토 조건 6종</h2>
+        <span class="hint">조건을 하나라도 위반하는 경로는 후보에서 자동 제외됩니다</span>
+      </div>
+      <div class="check-list reveal" id="condList"></div>
+
+      <div class="panel reveal" style="margin-top:16px;">
+        <div class="panel-head">
+          <h3>운송 차량 선택</h3>
+          <span class="sub">차량 제원이 터널 제한·도로 조건 판정에 반영됩니다</span>
+        </div>
+        <div class="panel-body">
+          <div class="chip-row" id="vehChips"></div>
+          <div class="kv" id="vehSpec" style="margin-top:12px;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 경로 후보 ============ -->
+  <section class="dash-section" style="padding-top:0;">
+    <div class="container">
+      <div class="split">
+        <div>
+          <div class="dash-head reveal">
+            <span class="no">Routes</span>
+            <h2>경로 후보</h2>
+            <span class="hint">출발지 → 확정 창고 · 조건 위반 항목 표시</span>
+          </div>
+          <div id="routeList" class="reveal"></div>
+        </div>
+
+        <div class="panel reveal">
+          <div class="panel-head"><h3>경로 개요</h3><span class="sub" id="routeName">-</span></div>
+          <div class="panel-body">
+            <svg class="route-map" id="routeMap" viewBox="0 0 520 200" role="img" aria-label="경로 개요도"></svg>
+            <div id="routeChecks" style="margin-top:14px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:16px;">
+        <button class="btn btn-dg" id="confirmBtn" type="button" disabled>이 경로로 확정 → 계약 · 배차</button>
+        <a class="btn btn-ghost btn-sm" href="matching.html">← 창고 매칭</a>
+        <a class="btn btn-ghost btn-sm" href="process.html">워크벤치</a>
+      </div>
+
+      <p class="notice">
+        배차 후에는 <b>실시간 위치(GPS) 추적</b>과 <b>전자인수증</b> 발행이 연결됩니다.
+        위험물 1만ℓ 이상 · 유해화학물질 5톤 이상 운송차량은 TS한국교통안전공단 위험물질운송안전관리센터 모니터링 대상입니다.
+      </p>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="Connect DG"></a>
+        <p class="footer-note">
+          Connect DG · DG Route Intelligence · 터널 제한코드(A~E)는 ADR 기준을 준용한 예시입니다<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS.
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="matching.html">창고·차량 매칭</a>
+        <a href="dispatch.html">배차·입고</a>
+        <a href="process.html">프로세스</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="js/common.js?v=2026-08-01a"></script>
+  <script src="js/data_dg.js?v=2026-08-01a"></script>
+  <script src="js/db.js?v=2026-08-01a"></script>
+  <script src="js/match-engine.js?v=2026-08-01a"></script>
+  <script src="js/route.js?v=2026-08-01a"></script>
+</body>
+</html>

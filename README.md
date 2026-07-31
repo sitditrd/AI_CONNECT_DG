@@ -1,0 +1,112 @@
+# Connect DG — AI 기반 위험물 물류 통합 플랫폼
+
+> **TaeSLA 4기 최종 과제** — '창고 매칭'을 넘어, 분석 · 보관 · 운송 · 관리를 하나로.
+> 저장소 https://github.com/sitditrd/AI_CONNECT_DG · 배포 **https://sitditrd.github.io/AI_CONNECT_DG/** · 문의 itt@twsc.co.kr
+
+화주 · 위험물 창고 · 운송사를 하나의 네트워크로 연결하는 **위험물(DG) 물류 통합 플랫폼**의 기능 시연 웹.
+발표자료 「[TaeSLA] Connect_DG_ver2.pptx」의 **14~20장(플랫폼 개념 · 핵심 기능 · 프로세스 상세 ①~⑤)** 을 실제 동작하는 화면으로 구현했습니다.
+구조는 AI_SCM(TWL Control Tower) 템플릿 계열 — 바닐라 정적 사이트, 빌드 불필요.
+
+---
+
+## 1. 60초 요약 — 시작하기
+
+```bash
+# 1) 저장소 가져오기
+git clone https://github.com/sitditrd/AI_CONNECT_DG.git
+cd AI_CONNECT_DG
+
+# 2) 빌드 불필요 — index.html 을 브라우저로 열면 바로 동작(정적)
+#    로컬 서버가 필요하면:  python -m http.server 8155
+
+# 3) 코드 수정 후 push 하면 GitHub Pages 로 자동 배포됨
+git add -A && git commit -m "..." && git push origin master
+```
+
+**데모 시나리오** — `process.html`(워크벤치)에서 보관 요청 등록 → `msds.html`에서 MSDS 3종 중 하나 선택·분석·확정 → `compliance.html` 4단계 검토·전문가 승인 → `matching.html` 창고 확정 → `route.html` 경로 확정 → `dispatch.html` 실행 6단계·입고 확정. 전 과정이 케이스 하나로 이어지고 감사 로그가 쌓입니다.
+
+---
+
+## 2. 화면 구성 (발표자료 장표 매핑)
+
+| 화면 | 파일 | 장표 | 내용 |
+|---|---|---|---|
+| 플랫폼 개요 | `index.html` | 14 · 15 · 22 | 3면 네트워크 · 4대 기둥 · STEP 01~04 · 수익모델 4축 |
+| 프로세스 워크벤치 | `process.html` | 16 | 보관 요청 등록 · **9단계 파이프라인** · 케이스 요약 · 감사 로그 |
+| MSDS 분석 | `msds.html` | 17 | LLM-OCR 4단계 · **실제 MSDS 3종**(UN3077/3480/3098) · 원문 위치·신뢰도 · 표준 프로파일 |
+| 적법성 검토 | `compliance.html` | 18 | **4단계 방어 절차**(원문 대조→규제 교차→인허가 대조→전문가 승인) · 판정 4종 · 법령 카탈로그 |
+| 창고·차량 매칭 | `matching.html` | 19 | **가중치 6종**(법적 40 · 인허가 20 · 용량 15 · 안전 10 · 접근 10 · 비용 5, 조정 가능) · 후보 점수화 · 단계별 정보 공개 |
+| 안전경로 | `route.html` | 20 | **경로 검토 조건 6종** · 터널 제한코드(A~E) · 차량 제원 반영 · 통행 불가 경로 차단 |
+| 배차·입고 | `dispatch.html` | 20 · 23 | **실행 6단계** · 견적/정산 · GPS 시뮬레이션 · 전자인수증 · 입고 검수 · 자동 생성 문서 6종 |
+| 시장 현황 | `insight.html` | 4~8 · 12 | 소방청 통계(10.9만 개소 · 옥내저장소 8,702) · 권역/유별 편중 · 화학사고 추이 · 4대 문제 |
+
+**설계 원칙(발표자료 15 · 18 · 33장 반영)** — AI는 판단을 대신하지 않고 전문가가 검토할 근거를 구조화. "100% 적법·완전 면책"이 아닌 **'법률 적합성 사전검토 + 전문가 검토 지원'** 으로 표현. 추천점수는 우선순위 지표일 뿐 적법성 확률이 아님을 화면에 명시.
+
+---
+
+## 3. 폴더 구조
+
+```
+AI_CONNECT_DG/
+├─ README.md              ← 본 문서 (마스터 인수인계)
+├─ *.html                 웹 화면 8종
+├─ css/style.css          토큰 기반 라이트/다크 테마 (DG 오렌지 아이덴티티)
+├─ js/
+│  ├─ common.js           로고·테마·리빌·툴팁 + DGCase(케이스 스토어, localStorage)
+│  ├─ data_dg.js          시드 데이터 — MSDS 3종·창고 8·차량 5·가중치·법령 7·경로·통계
+│  ├─ db.js               Supabase REST 연동(publishable key) — 실패 시 시드로 동작
+│  ├─ match-engine.js     매칭·적합성 평가 엔진 (가중 점수 + 판정 4종)
+│  ├─ pipeline.js         9단계 파이프라인 렌더러
+│  └─ landing/process/msds/compliance/matching/route/dispatch/insight.js  화면별
+├─ sql/schema.sql         Supabase 테이블 + RLS (참조 공개읽기 · 케이스 insert-only)
+├─ sql/seed.sql           시드 적재 (실행 시 웹이 원격 데이터로 전환)
+├─ assets/                twl_symbol.png · twl_logo.ico · og-image.png
+├─ .github/workflows/     deploy-pages.yml (push → Pages 자동배포)
+└─ docs/                  01-overview ~ 07-presentation (AI_SCM 표준 트리)
+```
+
+---
+
+## 4. 데이터 · Supabase 연동
+
+- **기본은 내장 시드** (`js/data_dg.js`) — 오프라인·미설정 상태에서도 전 기능 동작.
+- **Supabase 전환**: 대시보드 SQL Editor에서 `sql/schema.sql` → `sql/seed.sql` 순서로 실행하면
+  `js/db.js`가 자동으로 원격 데이터(`dg_warehouses` · `dg_vehicles` · `dg_regulations`)를 읽어 시드를 덮어씁니다.
+  화면 우측 상단 배지가 "내장 시드 데이터" → "Supabase 연결"로 바뀝니다.
+- 프로젝트: `https://qgwmqbtkuvozszgaunlp.supabase.co` (publishable key는 `js/db.js` — 클라이언트 노출 전제 키, 보호는 RLS가 담당. **service key 사용 금지**)
+- `dg_cases`는 insert-only 정책(조회 차단) — 입고 확정 시 케이스 스냅샷을 적재 시도하며 실패해도 화면 동작에 영향 없음.
+- 케이스 진행 상태는 **브라우저 localStorage**(`dg-case`)에 저장 — 워크벤치의 "케이스 초기화"로 리셋.
+
+### 창고·차량·경로 데이터는 시연용 예시
+발표자료의 매칭 시나리오(A 97점 적합 / B 조건부 / C 가용공간 없음 / D 허가 없음)가 재현되도록 구성한 가상 데이터입니다. 시장 현황(`insight.html`)의 통계만 실제 출처(소방청 「2025 위험물 통계자료」 등) 기반입니다.
+
+---
+
+## 5. 배포 (GitHub Pages)
+
+- `git push origin master` → GitHub Actions(`Deploy Connect DG to GitHub Pages`) → **https://sitditrd.github.io/AI_CONNECT_DG/**
+- ⚠️ 무료 계정은 **저장소 public 유지** 필수 (private 전환 시 Pages 꺼짐).
+- 최초 1회: Settings → Pages → Source **`GitHub Actions`** 지정.
+- 웹 파일(html·css·js·assets)만 게시 — docs·sql은 사이트에 노출되지 않음.
+
+---
+
+## 6. 검증 이력 (2026-07-31)
+
+- `node --check` — JS 13종 문법 통과.
+- jsdom 스모크 — 8개 페이지 로드 · 콘솔 에러 0 · 빈 컨테이너 0.
+- jsdom E2E — 요청→MSDS(UN3480)→적법성(REVIEW→승인 후 OK)→매칭(창고 A 98점)→경로(경부선 78km)→실행 6단계→입고 확정→**9/9 단계 완료, 16/16 PASS**.
+
+---
+
+## 7. 남은 작업 (운영 전환 시)
+
+1. **LLM-OCR 실연동** — 현재는 실제 MSDS 3종의 사전 추출 결과 재생(데모 모드). 운영 시 문서 인식 AI 사용료 발생(발표자료 26장 '실제 현금 지출 항목').
+2. **법령 DB 구독** — `dg_regulations`의 개정일 자동 갱신(법령·인허가 DB 구독).
+3. **지도·경로 API** — 위험물 통행 제한 반영 실경로(현재는 사전계산 경로 카드).
+4. **전자계약·PG** — 표준계약 서명·에스크로 정산 실연동.
+5. **TIMS WMS 연계** — 입고 검수·보관위치 실데이터 연동.
+
+---
+
+*Connect DG · 태웅로직스 TaeSLA 4기 · itt@twsc.co.kr · 본 문서는 이어받기용 단일 진입점입니다.*

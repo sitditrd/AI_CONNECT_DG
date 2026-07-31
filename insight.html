@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>위험물 물류 시장 현황 — 인프라 · 편중 · 안전 | Connect DG</title>
+  <meta name="description" content="소방청 2025 위험물 통계자료 기반 국내 위험물 시설·권역·유별 분포와 화학사고 추이, 글로벌 위험물 물류 시장 규모.">
+  <meta name="theme-color" content="#0a0f1e">
+  <link rel="canonical" href="https://sitditrd.github.io/AI_CONNECT_DG/insight.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Connect DG">
+  <meta property="og:title" content="위험물 물류 시장 현황 | Connect DG">
+  <meta property="og:image" content="https://sitditrd.github.io/AI_CONNECT_DG/assets/og-image.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-01a">
+  <link rel="icon" href="assets/twl_logo.ico">
+</head>
+<body class="hero-page">
+  <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="Connect DG 홈"></a>
+      <button class="nav-burger" aria-label="메뉴 열기" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="site-nav" aria-label="주요 메뉴">
+        <a href="process.html">프로세스</a>
+        <a href="msds.html">MSDS 분석</a>
+        <a href="compliance.html">적법성 검토</a>
+        <a href="matching.html">창고·차량 매칭</a>
+        <a href="route.html">안전경로</a>
+        <a href="dispatch.html">배차·입고</a>
+        <a href="insight.html" class="active">시장 현황</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <section id="main-content" tabindex="-1" class="dash-hero">
+    <div class="container">
+      <div class="dash-title-row">
+        <div>
+          <h1>위험물 물류 시장 현황 <span style="font-weight:300; opacity:.75;">— 인프라 · 편중 · 안전</span></h1>
+          <p class="dash-sub">규제는 강해지고, 시장은 커지며, 인프라는 아직 아날로그입니다</p>
+        </div>
+        <div class="dash-badges">
+          <span class="dash-badge">소방청 2024.12.31 기준</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dash-section">
+    <div class="container">
+      <div class="stat-deck reveal" id="statDeck"></div>
+      <p class="src-note">출처 · 소방청 「2025 위험물 통계자료」 표1-1 · 표1-4 · 국립소방연구원 화학사고 통계분석 · 물류신문</p>
+    </div>
+  </section>
+
+  <section class="dash-section" style="padding-top:0;">
+    <div class="container">
+      <div class="split">
+        <div class="panel reveal">
+          <div class="panel-head"><h3>저장소 81,573개소 — 유형별 구성</h3><span class="sub">보관 영업 대상은 옥내·옥외저장소(창고형)</span></div>
+          <div class="panel-body"><div id="chartStorage"></div>
+            <p class="src-note">화주가 빌릴 수 있는 영업용 허가 창고(옥내저장소)는 <b>8,702개소</b>뿐입니다.</p>
+          </div>
+        </div>
+        <div class="panel reveal">
+          <div class="panel-head"><h3>권역 · 입지 분포</h3><span class="sub">영남 · 수도권 58% 집중</span></div>
+          <div class="panel-body"><div id="chartRegion"></div>
+            <p class="src-note">단일 시도 1위는 경기남부 15,892개소(14.6%) — 권역 편중이 매칭 난이도를 키웁니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dash-section" style="padding-top:0;">
+    <div class="container">
+      <div class="split">
+        <div class="panel reveal">
+          <div class="panel-head"><h3>유별 허가 현황</h3><span class="sub">제4류 인화성액체가 96.8%</span></div>
+          <div class="panel-body"><div id="chartClass"></div>
+            <p class="src-note">사실상 석유류 물류 — 나머지 5개 유별 합계는 3.2%에 불과합니다.</p>
+          </div>
+        </div>
+        <div class="panel reveal">
+          <div class="panel-head"><h3>국내 화학사고 추이</h3><span class="sub">2025년 282건 · 경기 53 · 울산 36</span></div>
+          <div class="panel-body"><svg id="chartAccident" viewBox="0 0 520 220" class="route-map" role="img" aria-label="연도별 화학사고 건수"></svg>
+            <p class="src-note">화학사고 5건 중 1건(21%)은 운송 중 발생하며, 운송사고의 54%가 탱크로리입니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dash-section" style="padding-top:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">Pain Point</span>
+        <h2>구조적 4대 문제 — 플랫폼이 겨냥하는 지점</h2>
+        <span class="hint">매칭 부재 · 공급 희소 · 안전/규제 이중 부담 · 정보 단절</span>
+      </div>
+      <div class="grid-4 reveal" id="painGrid"></div>
+      <div class="grid-2 reveal" style="margin-top:16px;">
+        <div class="card">
+          <h3>운송 인프라 — 세지만 셀 수 없다</h3>
+          <div class="kv" id="transportKv" style="margin-top:8px;"></div>
+        </div>
+        <div class="card">
+          <h3>시장 규모</h3>
+          <div class="kv" id="marketKv" style="margin-top:8px;"></div>
+          <p class="src-note">정의 범위에 따라 규모가 상이해 협의·광의를 병기합니다 (Mordor Intelligence · TBRC · Kings Research).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="Connect DG"></a>
+        <p class="footer-note">
+          Connect DG · 시장 현황 · 공식 통계 공백은 현장 인터뷰·WTP 조사로 보완 예정<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS.
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="index.html">플랫폼 개요</a>
+        <a href="process.html">프로세스</a>
+        <a href="matching.html">창고·차량 매칭</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="js/common.js?v=2026-08-01a"></script>
+  <script src="js/data_dg.js?v=2026-08-01a"></script>
+  <script src="js/insight.js?v=2026-08-01a"></script>
+</body>
+</html>

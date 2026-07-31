@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.local
+_site/
+.DS_Store
+Thumbs.db
+
+# 편집 중 임시 산출물
+*.tmp
+~$*

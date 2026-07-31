@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>적법성 사전검토 — 4단계 방어 절차 | Connect DG</title>
+  <meta name="description" content="원문 대조 → 규제 교차검증 → 창고 인허가 대조 → 전문가 확인. 4단계 방어 절차로 위험물 보관 적합성을 검토합니다.">
+  <meta name="theme-color" content="#0a0f1e">
+  <link rel="canonical" href="https://sitditrd.github.io/AI_CONNECT_DG/compliance.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Connect DG">
+  <meta property="og:title" content="적법성 사전검토 — 4단계 방어 절차 | Connect DG">
+  <meta property="og:image" content="https://sitditrd.github.io/AI_CONNECT_DG/assets/og-image.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-01a">
+  <link rel="icon" href="assets/twl_logo.ico">
+</head>
+<body class="hero-page">
+  <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="Connect DG 홈"></a>
+      <button class="nav-burger" aria-label="메뉴 열기" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="site-nav" aria-label="주요 메뉴">
+        <a href="process.html">프로세스</a>
+        <a href="msds.html">MSDS 분석</a>
+        <a href="compliance.html" class="active">적법성 검토</a>
+        <a href="matching.html">창고·차량 매칭</a>
+        <a href="route.html">안전경로</a>
+        <a href="dispatch.html">배차·입고</a>
+        <a href="insight.html">시장 현황</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <section id="main-content" tabindex="-1" class="dash-hero">
+    <div class="container">
+      <div class="dash-title-row">
+        <div>
+          <h1>적법성 사전검토 <span style="font-weight:300; opacity:.75;">— 프로세스 상세 ③</span></h1>
+          <p class="dash-sub">AI가 판단을 대신하지 않습니다 — 누락 가능성을 줄이고, 전문가가 확인할 근거를 구조화합니다</p>
+        </div>
+        <div class="dash-badges">
+          <span class="dash-badge" id="caseBadge">케이스 미생성</span>
+          <span class="dash-badge" id="targetBadge">검토 대상 없음</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4단계 방어 절차 ============ -->
+  <section class="dash-section">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">Defense in Depth</span>
+        <h2>네 단계 방어 절차</h2>
+        <span class="hint">한 단계라도 미통과 시 다음 단계로 자동 진행되지 않습니다</span>
+      </div>
+      <div class="gates reveal" id="gates"></div>
+      <div class="row" style="margin-top:16px;">
+        <button class="btn btn-dg" id="runBtn" type="button">4단계 검토 실행</button>
+        <span class="muted" style="font-size:12px;" id="runState"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 판정 ============ -->
+  <section class="dash-section" style="padding-top:0;">
+    <div class="container">
+      <div class="split">
+        <div class="panel reveal">
+          <div class="panel-head">
+            <h3>검토 결과</h3>
+            <span class="sub">적합 · 조건부 검토 · 전문가 확인 필요 · 보관 불가</span>
+          </div>
+          <div class="panel-body" id="verdictBox">
+            <p class="muted" style="font-size:13px;">검토를 실행하면 판정이 표시됩니다.</p>
+          </div>
+        </div>
+
+        <div class="panel reveal">
+          <div class="panel-head">
+            <h3>4 · 전문가 검토 · 승인</h3>
+            <span class="sub">최종 의사결정 주체는 사람에게 유지</span>
+          </div>
+          <div class="panel-body">
+            <p style="font-size:13px; color:var(--ink-2); margin-bottom:12px;">
+              충돌 · 예외 · 저신뢰 항목은 위험물/법률 담당자가 직접 확인합니다.
+              승인 시 승인자 · 승인 시각 · 확인 근거가 감사 로그에 함께 기록됩니다.
+            </p>
+            <label class="lbl" for="approver">승인자 (위험물안전관리자 · 법무 담당)</label>
+            <input class="field" id="approver" style="width:100%" placeholder="예: 김안전 (위험물산업기사 · 사번 20231)">
+            <label class="lbl" for="approveNote" style="margin-top:12px;">확인 의견</label>
+            <input class="field" id="approveNote" style="width:100%" placeholder="예: 국내 비대상 표기 건 — 제조사 확인 회신 수령, IMDG 기준 적용">
+            <div class="row" style="margin-top:14px;">
+              <button class="btn btn-dg" id="approveBtn" type="button" disabled>전문가 승인</button>
+              <a class="btn btn-ghost btn-sm" id="toMatching" href="matching.html">다음 — 창고 매칭 ›</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 규제 교차검증 근거 ============ -->
+  <section class="dash-section" style="padding-top:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">2 · 규제 교차 검증</span>
+        <h2>적용 법령 · 국제기준 · 조회 시각</h2>
+        <span class="hint">모든 결과에 적용 근거 · 원문 페이지 · 데이터 출처 · 조회 시각 · 승인자 · 변경 이력을 함께 저장합니다</span>
+      </div>
+      <div class="panel reveal">
+        <div class="table-wrap">
+          <table class="dg-table">
+            <thead>
+              <tr>
+                <th style="width:300px;">법령 · 기준</th>
+                <th style="width:130px;">소관</th>
+                <th style="width:120px;">개정 · 시행</th>
+                <th>적용 내용</th>
+                <th style="width:150px;">조회 시각</th>
+              </tr>
+            </thead>
+            <tbody id="regBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="notice">
+        본 검토는 <b>법률 적합성 사전검토 및 전문가 검토 지원</b>이며, 완전 면책을 보장하지 않습니다.
+        최종 보관·운송 결정은 화주 · 창고 · 전문가 · 관계기관 확인으로 확정됩니다.
+      </p>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="Connect DG"></a>
+        <p class="footer-note">
+          Connect DG · 적법성 사전검토 · 위험물안전관리법(소방청) · 화학물질관리법(환경부) · IMDG / IATA 교차검증<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS.
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="msds.html">MSDS 분석</a>
+        <a href="matching.html">창고·차량 매칭</a>
+        <a href="process.html">프로세스</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="js/common.js?v=2026-08-01a"></script>
+  <script src="js/data_dg.js?v=2026-08-01a"></script>
+  <script src="js/db.js?v=2026-08-01a"></script>
+  <script src="js/match-engine.js?v=2026-08-01a"></script>
+  <script src="js/compliance.js?v=2026-08-01a"></script>
+</body>
+</html>
