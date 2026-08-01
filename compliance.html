@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko" data-theme="dark">
 <head>
+  <script>/* 테마 FOUC 방지 — 저장된 테마를 스타일 로드 전에 적용 */
+  try{var t=localStorage.getItem('dg-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>적법성 사전검토 — 4단계 방어 절차 | Connect DG</title>
@@ -10,9 +12,12 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Connect DG">
   <meta property="og:title" content="적법성 사전검토 — 4단계 방어 절차 | Connect DG">
+  <meta property="og:description" content="원문 대조 → 규제 교차검증 → 창고 인허가 대조 → 전문가 확인. 4단계 방어 절차로 위험물 보관 적합성을 검토합니다.">
   <meta property="og:image" content="https://sitditrd.github.io/AI_CONNECT_DG/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-08-01a">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-01b">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/touch-icon.png">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
 <body class="hero-page">
@@ -49,6 +54,7 @@
         <div class="dash-badges">
           <span class="dash-badge" id="caseBadge">케이스 미생성</span>
           <span class="dash-badge" id="targetBadge">검토 대상 없음</span>
+          <span class="dash-badge" data-db-status></span>
         </div>
       </div>
     </div>
@@ -65,7 +71,8 @@
       <div class="gates reveal" id="gates"></div>
       <div class="row" style="margin-top:16px;">
         <button class="btn btn-dg" id="runBtn" type="button">4단계 검토 실행</button>
-        <span class="muted" style="font-size:12px;" id="runState"></span>
+        <a class="btn btn-ghost btn-sm" href="report.html">적합성 리포트 열기</a>
+        <span class="muted" style="font-size:12px;" id="runState" role="status"></span>
       </div>
     </div>
   </section>
@@ -104,6 +111,20 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 혼재 저장 기준 매트릭스 ============ -->
+  <section class="dash-section" style="padding-top:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">별표 19</span>
+        <h2>유별 혼재 저장 기준 매트릭스</h2>
+        <span class="hint">위험물안전관리법 시행규칙 별표19 — 현재 케이스 화물의 유별이 강조 표시됩니다</span>
+      </div>
+      <div class="panel reveal">
+        <div class="panel-body" id="mixMatrix"></div>
       </div>
     </div>
   </section>
@@ -156,10 +177,10 @@
     </div>
   </footer>
 
-  <script src="js/common.js?v=2026-08-01a"></script>
-  <script src="js/data_dg.js?v=2026-08-01a"></script>
-  <script src="js/db.js?v=2026-08-01a"></script>
-  <script src="js/match-engine.js?v=2026-08-01a"></script>
-  <script src="js/compliance.js?v=2026-08-01a"></script>
+  <script src="js/common.js?v=2026-08-01b"></script>
+  <script src="js/data_dg.js?v=2026-08-01b"></script>
+  <script src="js/db.js?v=2026-08-01b"></script>
+  <script src="js/match-engine.js?v=2026-08-01b"></script>
+  <script src="js/compliance.js?v=2026-08-01b"></script>
 </body>
 </html>

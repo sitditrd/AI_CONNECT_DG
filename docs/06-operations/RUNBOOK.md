@@ -17,7 +17,7 @@ python -m http.server 8155   # http://localhost:8155  (file:// 로 열어도 동
 
 1. https://supabase.com/dashboard → 프로젝트 `qgwmqbtkuvozszgaunlp` → SQL Editor
 2. `sql/schema.sql` 실행 (최초 1회) → `sql/seed.sql` 실행 (갱신 시마다 — upsert 멱등)
-3. 웹 새로고침 → 우측 상단 배지 "Supabase 연결" 확인
+3. 웹 새로고침 → **워크벤치(process.html) · 적법성 검토 · 매칭 화면** 우측 상단 배지 "Supabase 연결" 확인
 4. 창고·차량·법령 데이터 수정은 seed.sql 편집 후 재실행 (또는 Table Editor 직접 수정)
 
 ## 트러블슈팅

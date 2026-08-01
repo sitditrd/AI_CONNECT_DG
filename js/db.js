@@ -56,7 +56,15 @@
       var got = false;
       if (r[0] && r[0].length) { window.DGDATA.WAREHOUSES = r[0].map(normWarehouse); got = true; }
       if (r[1] && r[1].length) { window.DGDATA.VEHICLES = r[1].map(normVehicle); got = true; }
-      if (r[2] && r[2].length) { window.DGDATA.REGULATIONS = r[2]; got = true; }
+      if (r[2] && r[2].length) {
+        /* 시드의 의도된 순서(국내법 → 국제기준 → 운송) 유지 — id 알파벳순 정렬 방지 */
+        var seedOrder = window.DGDATA.REGULATIONS.map(function (x) { return x.id; });
+        window.DGDATA.REGULATIONS = r[2].slice().sort(function (a, b) {
+          var ia = seedOrder.indexOf(a.id), ib = seedOrder.indexOf(b.id);
+          return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+        });
+        got = true;
+      }
       state.mode = got ? 'supabase' : 'seed';
       state.checkedAt = new Date().toISOString();
       window.dispatchEvent(new CustomEvent('dg-data', { detail: state }));

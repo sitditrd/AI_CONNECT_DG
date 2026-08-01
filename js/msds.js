@@ -11,7 +11,7 @@
   var analyzed = false;
 
   function $(id) { return document.getElementById(id); }
-  function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]; }); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]; }); }
 
   var OCR_STEPS = [
     { no: 1, t: '보안 문서 업로드', d: 'PDF · 스캔 · 이미지 형식 인식. 문서는 케이스 단위로 격리 저장.', out: '원본 문서 · 페이지 수' },
@@ -25,7 +25,7 @@
       var on = activeNo != null && s.no <= activeNo;
       return '<div class="step" style="' + (on ? '' : 'opacity:.62;') + '">' +
         '<span class="s-no">' + s.no + '</span>' +
-        '<h4>' + s.t + '</h4><p>' + s.d + '</p>' +
+        '<h3 style="margin:12px 0 6px; font-size:15.5px;">' + s.t + '</h3><p>' + s.d + '</p>' +
         '<span class="s-out">→ ' + s.out + '</span></div>';
     }).join('');
   }
@@ -43,6 +43,7 @@
   function pick(id) {
     selected = D.MSDS.filter(function (m) { return m.id === id; })[0] || null;
     analyzed = false;
+    analyzeGen++;   /* 진행 중이던 분석 재생 체인 중단 */
     $('sampleChips').querySelectorAll('.f-chip').forEach(function (b) {
       b.classList.toggle('on', b.dataset.id === id);
     });
@@ -84,9 +85,13 @@
     $('fileInput').addEventListener('change', function (e) { handleFile(e.target.files[0]); });
   }
 
-  /* ---------- 분석 재생 ---------- */
+  /* ---------- 분석 재생 ----------
+     진행 중 다른 샘플을 선택하면 세대 토큰(analyzeGen)이 바뀌어
+     이전 타이머 체인이 조용히 중단됨 — 두 체인 교차 갱신 방지 */
+  var analyzeGen = 0;
   function analyze() {
     if (!selected) return;
+    var gen = ++analyzeGen;
     var btn = $('analyzeBtn');
     btn.disabled = true;
     var msgs = [
@@ -97,11 +102,13 @@
     ];
     var i = 0;
     (function tick() {
+      if (gen !== analyzeGen) return;   /* 다른 문서 선택됨 — 체인 중단 */
       $('progressText').textContent = msgs[i];
       renderOcrSteps(i + 1);
       i++;
       if (i < msgs.length) { setTimeout(tick, 520); return; }
       setTimeout(function () {
+        if (gen !== analyzeGen) return;
         $('progressText').textContent = '완료 — 추출 항목 ' + selected.extraction.length + '건';
         analyzed = true;
         renderExtract();
@@ -157,7 +164,9 @@
       '<div class="row" style="gap:8px; margin-bottom:12px;">' +
         '<span class="badge badge-dg badge-un"><i></i>' + esc(p.unNo) + '</span>' +
         '<span class="badge badge-neutral"><i></i>Class ' + esc(p.hazardClass) + (p.subRisk ? '(' + esc(p.subRisk) + ')' : '') + '</span>' +
-        '<span class="badge badge-neutral"><i></i>PG ' + esc(p.packingGroup) + '</span>' +
+        (p.packingGroup
+          ? '<span class="badge badge-neutral"><i></i>PG ' + esc(p.packingGroup) + '</span>'
+          : '<span class="badge badge-neutral" data-tip="' + esc(p.packingNote || 'UN 목록상 포장등급 미지정 품목') + '"><i></i>PG 미지정</span>') +
         (p.marinePollutant ? '<span class="badge badge-cond"><i></i>Marine Pollutant</span>' : '') +
         (p.tunnelCode ? '<span class="badge badge-neutral"><i></i>터널코드 ' + esc(p.tunnelCode) + '</span>' : '') +
       '</div>' +
@@ -192,7 +201,8 @@
       /* 프로파일이 바뀌면 이후 단계는 재검토 대상 */
       compliance: null, warehouse: null, route: null, contract: null, dispatch: null, inbound: null
     }, 'MSDS 분석 완료 — ' + selected.title + ' (' + selected.profile.unNo + ' · Class ' +
-       selected.profile.hazardClass + ' · PG ' + selected.profile.packingGroup + ') 표준 프로파일 확정', 'MSDS Document AI');
+       selected.profile.hazardClass + ' · ' + (selected.profile.packingGroup ? 'PG ' + selected.profile.packingGroup : 'PG 미지정') +
+       ') 표준 프로파일 확정', 'MSDS Document AI');
     location.href = 'compliance.html';
   }
 
@@ -203,7 +213,8 @@
       return '<div class="card">' +
         '<div class="row" style="gap:6px;">' +
           '<span class="badge badge-dg badge-un"><i></i>' + esc(p.unNo) + '</span>' +
-          '<span class="badge badge-neutral"><i></i>Class ' + esc(p.hazardClass) + (p.subRisk ? '(' + esc(p.subRisk) + ')' : '') + ' · PG ' + esc(p.packingGroup) + '</span>' +
+          '<span class="badge badge-neutral"><i></i>Class ' + esc(p.hazardClass) + (p.subRisk ? '(' + esc(p.subRisk) + ')' : '') +
+            ' · ' + (p.packingGroup ? 'PG ' + esc(p.packingGroup) : 'PG 미지정') + '</span>' +
         '</div>' +
         '<h3 style="margin-top:10px;">' + esc(m.title) + '</h3>' +
         '<p>' + esc(m.summary) + '</p>' +
@@ -224,17 +235,30 @@
     $('analyzeBtn').addEventListener('click', analyze);
     $('confirmBtn').addEventListener('click', confirmProfile);
 
-    /* 이미 분석된 케이스가 있으면 복원 */
+    /* 이미 분석된 케이스가 있으면 복원 — 저장된 id가 현재 목록에 없으면(데이터 개편 등) 안내만 */
     if (c.msds && c.msds.id) {
-      pick(c.msds.id);
-      uploadedName = c.msds.fileName;
-      analyzed = true;
-      renderOcrSteps(4);
-      renderExtract();
-      renderProfile();
-      $('confirmBtn').disabled = false;
-      $('progressText').textContent = '기존 케이스 프로파일 복원 — ' + c.msds.analyzedAt;
+      var exists = D.MSDS.some(function (m) { return m.id === c.msds.id; });
+      if (exists) {
+        pick(c.msds.id);
+        uploadedName = c.msds.fileName;
+        analyzed = true;
+        renderOcrSteps(4);
+        renderExtract();
+        renderProfile();
+        $('confirmBtn').disabled = false;
+        $('progressText').textContent = '기존 케이스 프로파일 복원 — ' + c.msds.analyzedAt;
+      } else {
+        $('uploadState').textContent = '저장된 케이스의 MSDS(' + c.msds.id + ')가 현재 문서 목록에 없습니다 — 문서를 다시 선택해 분석하세요.';
+      }
     }
+    /* 키보드 접근 — Enter/Space 로 드롭존에서 파일 선택 열기 */
+    var dz = $('dropZone');
+    dz.setAttribute('tabindex', '0');
+    dz.setAttribute('role', 'button');
+    dz.setAttribute('aria-label', 'MSDS 파일 선택 — Enter 키로 파일 대화상자 열기');
+    dz.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('fileInput').click(); }
+    });
     window.DGUI.initReveal();
   });
 })();

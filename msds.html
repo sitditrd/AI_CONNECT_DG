@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko" data-theme="dark">
 <head>
+  <script>/* 테마 FOUC 방지 — 저장된 테마를 스타일 로드 전에 적용 */
+  try{var t=localStorage.getItem('dg-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MSDS Document AI — 표준 위험물 프로파일 | Connect DG</title>
@@ -10,9 +12,12 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Connect DG">
   <meta property="og:title" content="MSDS Document AI — 표준 위험물 프로파일 | Connect DG">
+  <meta property="og:description" content="비정형 MSDS를 LLM-OCR로 구조화해 CAS No.·UN Number·Hazard Class·Packing Group을 원문 위치·신뢰도와 함께 추출합니다.">
   <meta property="og:image" content="https://sitditrd.github.io/AI_CONNECT_DG/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-08-01a">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-01b">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/touch-icon.png">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
 <body class="hero-page">
@@ -79,14 +84,14 @@
             <div class="drop-zone" id="dropZone">
               <div class="dz-t">MSDS 파일을 여기에 끌어다 놓으세요</div>
               <div class="dz-d">또는 아래 실제 MSDS 3종 중 하나를 선택해 분석 과정을 재생합니다</div>
-              <label class="btn btn-ghost btn-sm" for="fileInput" style="cursor:pointer;">파일 선택</label>
-              <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff" class="hide">
+              <button class="btn btn-ghost btn-sm" type="button" onclick="document.getElementById('fileInput').click()">파일 선택</button>
+              <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff" class="hide" aria-hidden="true" tabindex="-1">
             </div>
-            <div class="chip-row" id="sampleChips" style="margin-top:14px;"></div>
-            <p class="src-note" id="uploadState">선택된 문서가 없습니다.</p>
+            <div class="chip-row" id="sampleChips" style="margin-top:14px;" role="group" aria-label="실제 MSDS 3종 샘플 선택"></div>
+            <p class="src-note" id="uploadState" role="status">선택된 문서가 없습니다.</p>
             <div class="row" style="margin-top:12px;">
               <button class="btn btn-dg" id="analyzeBtn" type="button" disabled>LLM-OCR 분석 실행</button>
-              <span class="muted" style="font-size:12px;" id="progressText"></span>
+              <span class="muted" style="font-size:12px;" id="progressText" role="status"></span>
             </div>
             <p class="notice" style="margin-top:14px;">
               <b>데모 모드</b> — 이 화면은 실제 LLM-OCR API를 호출하지 않고, 실제 MSDS 3종에서 사전 추출·검증한 결과를 동일한 처리 순서로 재생합니다.
@@ -173,9 +178,9 @@
     </div>
   </footer>
 
-  <script src="js/common.js?v=2026-08-01a"></script>
-  <script src="js/data_dg.js?v=2026-08-01a"></script>
-  <script src="js/db.js?v=2026-08-01a"></script>
-  <script src="js/msds.js?v=2026-08-01a"></script>
+  <script src="js/common.js?v=2026-08-01b"></script>
+  <script src="js/data_dg.js?v=2026-08-01b"></script>
+  <script src="js/db.js?v=2026-08-01b"></script>
+  <script src="js/msds.js?v=2026-08-01b"></script>
 </body>
 </html>

@@ -39,7 +39,7 @@
   --surface-2: #f0f3f8;
   --ink: #101828;
   --ink-2: #46536a;
-  --muted: #71809b;
+  --muted: #5b6a85;               /* 소형 보조 텍스트 대비 확보 (AA) */
   --grid: #e5e8f0;
   --border: rgba(16, 24, 40, 0.1);
   --header-bg: rgba(255, 255, 255, 0.84);
@@ -47,6 +47,13 @@
   --hero-grad: radial-gradient(1100px 500px at 16% -12%, #14417f 0%, transparent 60%),
                radial-gradient(900px 460px at 88% 0%, #8a4a06 0%, transparent 58%),
                linear-gradient(180deg, #0a1e3f 0%, #0b2d5b 100%);
+  /* 흰 배경 위 텍스트 대비(AA)용 어두운 변형 — 다크에서는 원색 유지 */
+  --dg: #9a6200;
+  --dg-2: #b3731a;
+  --v-ok: #0a7d0a;
+  --v-cond: #8a5a00;
+  --v-review: #b23f1d;
+  --v-no: #bb2f2f;
 }
 
 :root[data-theme='dark'] {
@@ -169,7 +176,7 @@ button { font-family: inherit; cursor: pointer; }
   backdrop-filter: blur(4px);
 }
 .pulse-dot {
-  width: 7px; height: 7px; border-radius: 50%; background: var(--dg);
+  width: 7px; height: 7px; border-radius: 50%; background: #f5a524; /* 다크 히어로 밴드 전용 — 원색 고정 */
   box-shadow: 0 0 0 0 rgba(245,165,36,.7); animation: pulse 2s infinite;
 }
 @keyframes pulse {
@@ -180,7 +187,7 @@ button { font-family: inherit; cursor: pointer; }
   margin: 22px 0 14px; font-size: clamp(29px, 4.8vw, 50px);
   line-height: 1.16; font-weight: 800; letter-spacing: -.02em;
 }
-.hero h1 .accent { color: var(--dg); }
+.hero h1 .accent { color: #f5a524; } /* 히어로는 테마와 무관하게 다크 배경 — 원색 고정 */
 .hero-sub { max-width: 760px; font-size: clamp(14.5px, 1.5vw, 17px); color: #c6d6ee; margin: 0 0 26px; }
 .hero-sub b { color: #fff; font-weight: 700; }
 .hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -535,7 +542,43 @@ input[type=range] { width: 100%; accent-color: var(--dg); }
 /* ---------- 리빌 애니메이션 ---------- */
 .reveal { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; }
 .reveal.in { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  html { scroll-behavior: auto; }
+  .pulse-dot { animation: none; }
+}
+
+/* ---------- 파이프라인 상태 텍스트 (색상 단독 전달 방지) ---------- */
+.pipe-state {
+  margin-left: auto; font-size: 10.5px; font-weight: 800; letter-spacing: .04em;
+  padding: 2px 8px; border-radius: 999px; background: var(--grid); color: var(--muted); flex: none;
+}
+.pipe-item.done .pipe-state { background: color-mix(in srgb, var(--v-ok) 15%, transparent); color: var(--v-ok); }
+.pipe-item.active .pipe-state { background: color-mix(in srgb, var(--dg) 16%, transparent); color: var(--dg); }
+.pipe-item a { margin-left: 0; }
+
+/* ---------- 혼재 금지 매트릭스 (시행규칙 별표19) ---------- */
+.mix-table { width: 100%; border-collapse: collapse; font-size: 12.5px; text-align: center; }
+.mix-table th, .mix-table td { border: 1px solid var(--border); padding: 8px 6px; }
+.mix-table thead th, .mix-table tbody th {
+  background: var(--surface-2); font-size: 11.5px; font-weight: 800; color: var(--ink-2); white-space: nowrap;
+}
+.mix-table td.ok { color: var(--v-ok); font-weight: 800; background: color-mix(in srgb, var(--v-ok) 8%, transparent); }
+.mix-table td.no { color: var(--v-no); font-weight: 800; background: color-mix(in srgb, var(--v-no) 7%, transparent); }
+.mix-table td.self { color: var(--muted); background: var(--surface-2); }
+.mix-table .hl { outline: 2px solid var(--dg); outline-offset: -2px; }
+
+/* ---------- 경로 카드 선택 상태 ---------- */
+.route-card.sel { border-color: var(--dg); box-shadow: 0 0 0 3px color-mix(in srgb, var(--dg) 15%, transparent); }
+
+/* ---------- 보관함 ---------- */
+.arch-item {
+  display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
+  border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; background: var(--surface);
+}
+.arch-item .a-t { font-size: 13.5px; font-weight: 800; }
+.arch-item .a-d { font-size: 11.8px; color: var(--muted); margin-top: 2px; }
+.arch-item .a-btns { display: flex; gap: 6px; flex: none; }
 
 /* ---------- 툴팁 ---------- */
 .tw-tooltip {

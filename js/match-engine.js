@@ -7,38 +7,52 @@
 (function () {
   'use strict';
 
-  /* 프로파일이 요구하는 허가 토큰 */
+  /* 프로파일이 요구하는 허가 토큰
+     kor: 국내 유별이 확정된 품목만 '6류' 형태(창고 permitClasses 표기)로 반환.
+          비대상(korClass null)·판정 필요 품목은 null → 유별 대조 생략 */
   function requiredPermits(profile) {
     if (!profile) return { primary: null, sub: null, kor: null };
+    var kor = null;
+    if (profile.korClass) {
+      var m = /^제([1-6])류/.exec(profile.korClass);
+      /* '해당 여부 판정 필요' 등 유보 표현이 붙으면 확정 아님 → 대조 생략 */
+      if (m && profile.korClass.indexOf('판정') < 0 && profile.korClass.indexOf('비해당') < 0) {
+        kor = m[1] + '류';
+      }
+    }
     return {
       primary: 'Class ' + profile.hazardClass,
       sub: profile.subRisk ? 'Class ' + profile.subRisk : null,
-      kor: (profile.korClass && profile.korClass.indexOf('제') === 0) ? profile.korClass.slice(0, 3) : null
+      kor: kor
     };
   }
 
   function daysUntil(dateStr) {
     if (!dateStr) return 0;
-    return Math.round((new Date(dateStr) - new Date()) / 86400000);
+    var d = Math.round((new Date(dateStr) - new Date()) / 86400000);
+    return isNaN(d) ? 0 : d;   /* 잘못된 날짜 문자열은 중립(0) 처리 */
   }
 
   /* ---------- 개별 지표 (0~100) ---------- */
   function scoreLegal(w, req) {
-    var has = function (t) { return t && w.permitClasses.indexOf(t) >= 0; };
+    var has = function (t) { return t && (w.permitClasses || []).indexOf(t) >= 0; };
     if (!has(req.primary)) return 0;                  /* 주 등급 허가 없음 → 제외 */
+    if (req.kor && !has(req.kor)) return 0;           /* 국내 유별 확정 품목 — 해당 유별 허가 없음 → 제외 */
     if (req.sub && !has(req.sub)) return 62;          /* 부차위험성 허가 미보유 → 조건부 */
     return 100;
   }
 
-  function scorePermit(w, qtyPL) {
+  function scorePermit(w, qtyPL, req) {
     var s = 100;
     var d = daysUntil(w.inspectionValidUntil);
     if (d < 0) s -= 55;                               /* 정기검사 유효기간 경과 */
     else if (d < 60) s -= 18;                         /* 만료 임박 */
     else if (d < 120) s -= 8;
-    if (w.designatedMultiple < qtyPL * 8) s -= 10;    /* 지정수량 배수 여유 부족 */
+    /* 지정수량 배수 여유 — 국내 유별 대상 품목에만 적용하는 데모 휴리스틱
+       (실제 배수는 품명별 지정수량 환산 필요 — 운영 전환 시 데이터 연동) */
+    if (req && req.kor && w.designatedMultiple < qtyPL * 8) s -= 10;
     if (w.safetyManagers < 2) s -= 8;
-    s += Math.min(10, (w.certs.length - 3) * 3);      /* 시설조건 가점 */
+    s += Math.max(0, Math.min(10, ((w.certs || []).length - 3) * 3));  /* 시설조건 가점 (감점 없음) */
     return Math.max(0, Math.min(100, s));
   }
 
@@ -46,7 +60,12 @@
     if (!w.availPL) return 0;
     var r = w.availPL / Math.max(1, qtyPL);
     var s = r >= 1.5 ? 100 : r >= 1 ? 88 : r >= 0.6 ? 58 : 34;
-    if (tempNeed && w.tempZones.indexOf(tempNeed) < 0) s -= 20;
+    /* 온도구역은 접두 일치 — '정온' 요구는 '정온(15~25℃)' 구역도 충족 */
+    if (tempNeed) {
+      var base = tempNeed.split('(')[0];
+      var okZone = (w.tempZones || []).some(function (z) { return z.indexOf(base) === 0; });
+      if (!okZone) s -= 20;
+    }
     return Math.max(0, s);
   }
 
@@ -66,8 +85,11 @@
   }
 
   function scoreCost(w, all) {
-    var min = Math.min.apply(null, all.map(function (x) { return x.ratePLDay; }));
-    var max = Math.max.apply(null, all.map(function (x) { return x.ratePLDay; }));
+    /* 원격 데이터 결손(rate 누락) 시 NaN 전파 방지 — 유한값만으로 범위 산출 */
+    var rates = all.map(function (x) { return x.ratePLDay; }).filter(function (v) { return Number.isFinite(v); });
+    if (!Number.isFinite(w.ratePLDay) || !rates.length) return 50;   /* 결손 → 중립 */
+    var min = Math.min.apply(null, rates);
+    var max = Math.max.apply(null, rates);
     if (max === min) return 100;
     return Math.round(100 - ((w.ratePLDay - min) / (max - min)) * 100);
   }
@@ -77,7 +99,7 @@
     var req = requiredPermits(ctx.profile);
     var parts = {
       legal: scoreLegal(w, req),
-      permit: scorePermit(w, ctx.qtyPL),
+      permit: scorePermit(w, ctx.qtyPL, req),
       capacity: scoreCapacity(w, ctx.qtyPL, ctx.tempNeed),
       safety: scoreSafety(w),
       access: scoreAccess(w, ctx.region),
@@ -94,7 +116,7 @@
 
     if (parts.legal === 0) {
       verdict = 'NO'; label = '보관 불가';
-      reason = '해당 위험물 유별(' + req.primary + ') 허가 없음 · 포장등급/최대 저장수량 조건 불충족';
+      reason = '해당 위험물 유별·등급(' + (req.kor ? req.kor + ' · ' : '') + req.primary + ') 허가 없음 · 포장등급/최대 저장수량 조건 불충족';
     } else if (expired) {
       verdict = 'NO'; label = '보관 불가';
       reason = '정기검사 유효기간 경과(' + w.inspectionValidUntil + ') — 재검사 완료 전 입고 불가';

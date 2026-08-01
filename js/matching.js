@@ -10,7 +10,7 @@
   var ranked = [], selectedId = null;
 
   function $(id) { return document.getElementById(id); }
-  function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]; }); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]; }); }
 
   function ctx() {
     var c = window.DGCase.get();
@@ -23,12 +23,29 @@
     };
   }
 
-  /* ---------- 가중치 UI ---------- */
-  function renderWeights() {
-    var total = weights.reduce(function (a, b) { return a + b.w; }, 0);
+  /* ---------- 가중치 UI ----------
+     슬라이더 input 마다 DOM 을 재생성하면 드래그·키보드 조작이 끊기므로
+     ① 최초/리셋 시에만 renderWeights() 로 재생성
+     ② input 시에는 % 텍스트만 갱신(updateWeightLabels) + 재랭킹은 rAF 디바운스 */
+  var runScheduled = false;
+  function scheduleRun() {
+    if (runScheduled) return;
+    runScheduled = true;
+    requestAnimationFrame(function () { runScheduled = false; run(); });
+  }
+
+  function updateWeightLabels() {
+    var total = Math.max(1, weights.reduce(function (a, b) { return a + b.w; }, 0));
     var safety = weights.filter(function (w) { return w.safety; }).reduce(function (a, b) { return a + b.w; }, 0);
     $('safetyShare').textContent = '안전 · 법적 적합성 ' + Math.round(safety / total * 100) + '%';
+    $('weightRows').querySelectorAll('.meter-row').forEach(function (row, i) {
+      var v = row.querySelector('.m-v');
+      if (v && weights[i]) v.textContent = Math.round(weights[i].w / total * 100) + '%';
+    });
+  }
 
+  function renderWeights() {
+    var total = Math.max(1, weights.reduce(function (a, b) { return a + b.w; }, 0));
     $('weightRows').innerHTML = weights.map(function (w, i) {
       var pct = Math.round(w.w / total * 100);
       return '<div class="meter-row">' +
@@ -41,9 +58,11 @@
     $('weightRows').querySelectorAll('input[type=range]').forEach(function (r) {
       r.addEventListener('input', function () {
         weights[Number(r.dataset.i)].w = Number(r.value);
-        renderWeights(); run();
+        updateWeightLabels();      /* DOM 재생성 없음 — 슬라이더 유지 */
+        scheduleRun();
       });
     });
+    updateWeightLabels();
     window.DGUI.bindTooltips($('weightRows'));
   }
 
@@ -61,9 +80,11 @@
     }
     $('whList').innerHTML = list.map(function (r) {
       var w = r.wh;
-      return '<div class="cand' + (selectedId === w.id ? ' sel' : '') + '" data-id="' + w.id + '" tabindex="0" role="button">' +
+      var on = selectedId === w.id;
+      return '<div class="cand' + (on ? ' sel' : '') + '" data-id="' + w.id + '" tabindex="0" role="button" aria-pressed="' + (on ? 'true' : 'false') + '">' +
         '<div>' +
-          '<div class="c-t">' + esc(w.alias) + ' ' + window.DGUI.verdictBadge(r.verdict, r.label) + '</div>' +
+          '<div class="c-t">' + esc(w.alias) + ' ' + window.DGUI.verdictBadge(r.verdict, r.label) +
+            (on ? ' <span class="badge badge-dg"><i></i>선택됨</span>' : '') + '</div>' +
           '<div class="c-d">' + esc(r.reason) + '</div>' +
           '<div class="c-meta">' +
             '<span>권역 <b>' + esc(w.region) + '</b></span>' +
@@ -148,6 +169,41 @@
     }).join('');
   }
 
+  /* ---------- 권역별 네트워크 요약 ---------- */
+  function renderRegionSummary() {
+    var el = $('regionSummary');
+    if (!el) return;
+    var byRegion = {};
+    D.WAREHOUSES.forEach(function (w) {
+      var r = byRegion[w.region] || (byRegion[w.region] = { n: 0, avail: 0, port: 0 });
+      r.n++; r.avail += w.availPL || 0;
+      if (w.locType === '항만 배후') r.port++;
+    });
+    el.innerHTML = Object.keys(byRegion).map(function (k) {
+      var r = byRegion[k];
+      return '<div class="card pad-sm"><h3 style="font-size:14px;">' + esc(k) + '</h3>' +
+        '<p style="font-size:12.5px;">창고 <b>' + r.n + '</b>개소 · 가용 <b>' + window.DGUI.fmt(r.avail) + '</b> PL' +
+        (r.port ? ' · 항만배후 ' + r.port : '') + '</p></div>';
+    }).join('');
+  }
+
+  /* ---------- CSV 내보내기 ---------- */
+  function exportCsv() {
+    if (!ranked.length) { alert('내보낼 후보가 없습니다.'); return; }
+    var head = ['순위', '창고', '판정', '종합점수'];
+    weights.forEach(function (k) { head.push(k.label); });
+    head.push('권역', '입지', '가용PL', '보관료(원/PL·일)', '검사유효');
+    var rows = [head];
+    ranked.forEach(function (r, i) {
+      var row = [i + 1, r.wh.alias, r.label, r.score];
+      weights.forEach(function (k) { row.push(Math.round(r.parts[k.key] || 0)); });
+      row.push(r.wh.region, r.wh.locType, r.wh.availPL, r.wh.ratePLDay, r.wh.inspectionValidUntil);
+      rows.push(row);
+    });
+    var c = window.DGCase.get();
+    window.DGExport.csv('ConnectDG_창고후보_' + (c.caseNo || 'case') + '.csv', rows);
+  }
+
   /* ---------- 실행 ---------- */
   function run() {
     var cx = ctx();
@@ -163,7 +219,22 @@
     renderList(); renderDetail(); renderVehicles();
   }
 
-  function select(id) { selectedId = id; renderList(); renderDetail(); }
+  /* 선택 변경 — 목록을 재생성하지 않고 클래스만 토글해 키보드 포커스 유지 */
+  function select(id) {
+    selectedId = id;
+    $('whList').querySelectorAll('.cand').forEach(function (el) {
+      var on = el.dataset.id === id;
+      el.classList.toggle('sel', on);
+      el.setAttribute('aria-pressed', on ? 'true' : 'false');
+      var t = el.querySelector('.c-t');
+      if (t) {
+        var old = t.querySelector('.badge-dg');
+        if (old && !on) old.remove();
+        if (on && !old) t.insertAdjacentHTML('beforeend', ' <span class="badge badge-dg"><i></i>선택됨</span>');
+      }
+    });
+    renderDetail();
+  }
 
   function confirmWarehouse() {
     var r = ranked.filter(function (x) { return x.wh.id === selectedId; })[0];
@@ -194,6 +265,7 @@
     if (c.warehouse) selectedId = c.warehouse.id;
 
     renderWeights();
+    renderRegionSummary();
     run();
 
     ['mQty', 'mRegion', 'mTemp', 'mOnly'].forEach(function (id) {
@@ -204,6 +276,10 @@
       renderWeights(); run();
     });
     $('confirmBtn').addEventListener('click', confirmWarehouse);
+    var csvBtn = $('csvBtn');
+    if (csvBtn) csvBtn.addEventListener('click', exportCsv);
+    /* Supabase 하이드레이션 완료 시 원격 창고 데이터로 재랭킹 */
+    window.addEventListener('dg-data', function () { renderRegionSummary(); run(); });
     window.DGUI.initReveal();
   });
 })();

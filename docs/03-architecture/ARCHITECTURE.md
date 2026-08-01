@@ -51,8 +51,17 @@ request → msds(fileName, profile) → compliance → warehouse → route
 
 ## 경로 검토 (route.js)
 
-6조건: 차량 제원(높이·총중량·축중) · 위험물 통행제한 · 터널 제한코드(A~E, ADR 준용) · 도로 폭 · ETA · 비상대응 접근성.
-차량 제원과 위험물 등급(5.1/8/3은 E 이외 터널 불가)에 따라 동일 경로도 판정이 달라짐. 위반 경로는 확정 버튼 비활성.
+6조건: 차량 높이·중량(경로 물리 제한 clearanceM·limitT 직접 비교) · 위험물 통행제한 · 터널 제한코드 · 도로 폭(협소 구간 × 대형 차량) · ETA · 비상대응 접근성.
+**터널 규칙(ADR 준용)**: 화물의 터널 제한코드 X = X 이상 카테고리 터널 통행 금지 — 코드 E 화물(UN3077/3480/3098)은 E 카테고리 터널만 금지, A~D 통행 가능. 차량 제원·화물 코드에 따라 동일 경로도 판정이 달라지며 위반 경로는 확정 버튼 비활성.
+
+## 신규 모듈 (v1.1)
+
+| 모듈 | 책임 |
+|---|---|
+| `export.js` | CSV 내보내기(UTF-8 BOM) — 창고 후보·감사 로그 |
+| `report.js` + `report.html` | 적합성 검토 리포트 — 케이스 전체를 인쇄용 보고서로(@media print 라이트 강제) |
+| `DGCase.archive/restore` | 케이스 보관함(localStorage `dg-archive`, 최근 20건) |
+| `DGDATA.MIX_RULES/mixOk` | 별표19 혼재 기준 매트릭스 데이터 — compliance 화면 렌더 |
 
 ## Supabase 스키마
 

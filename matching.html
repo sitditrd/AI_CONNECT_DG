@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko" data-theme="dark">
 <head>
+  <script>/* 테마 FOUC 방지 — 저장된 테마를 스타일 로드 전에 적용 */
+  try{var t=localStorage.getItem('dg-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>창고 · 차량 매칭 — 적합성 · 가용성 · 안전성 평가 | Connect DG</title>
@@ -10,9 +12,12 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Connect DG">
   <meta property="og:title" content="창고 · 차량 매칭 | Connect DG">
+  <meta property="og:description" content="법적 적합성 40% · 인허가 범위 20% · 가용 용량 15% · 안전관리 이력 10% · 운송 접근성 10% · 비용 5% 가중치로 위험물 창고와 차량 후보를 평가합니다.">
   <meta property="og:image" content="https://sitditrd.github.io/AI_CONNECT_DG/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-08-01a">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-01b">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/touch-icon.png">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
 <body class="hero-page">
@@ -49,8 +54,21 @@
         <div class="dash-badges">
           <span class="dash-badge" id="caseBadge">케이스 미생성</span>
           <span class="dash-badge" id="targetBadge">대상 없음</span>
+          <span class="dash-badge" data-db-status></span>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ============ 권역별 네트워크 요약 ============ -->
+  <section class="dash-section" style="padding-bottom:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">Network</span>
+        <h2>권역별 창고 네트워크</h2>
+        <span class="hint">부산 · 인천 · 평택 · 울산 · 여수광양 — 초기 제휴 후보 거점</span>
+      </div>
+      <div class="grid-4 reveal" id="regionSummary"></div>
     </div>
   </section>
 
@@ -150,6 +168,7 @@
 
       <div class="row" style="margin-top:16px;">
         <button class="btn btn-dg" id="confirmBtn" type="button" disabled>이 창고로 확정 → 안전경로 검토</button>
+        <button class="btn btn-ghost btn-sm" id="csvBtn" type="button">후보 CSV 내보내기</button>
         <a class="btn btn-ghost btn-sm" href="compliance.html">← 적법성 검토</a>
         <a class="btn btn-ghost btn-sm" href="process.html">워크벤치</a>
       </div>
@@ -173,10 +192,11 @@
     </div>
   </footer>
 
-  <script src="js/common.js?v=2026-08-01a"></script>
-  <script src="js/data_dg.js?v=2026-08-01a"></script>
-  <script src="js/db.js?v=2026-08-01a"></script>
-  <script src="js/match-engine.js?v=2026-08-01a"></script>
-  <script src="js/matching.js?v=2026-08-01a"></script>
+  <script src="js/common.js?v=2026-08-01b"></script>
+  <script src="js/data_dg.js?v=2026-08-01b"></script>
+  <script src="js/db.js?v=2026-08-01b"></script>
+  <script src="js/export.js?v=2026-08-01b"></script>
+  <script src="js/match-engine.js?v=2026-08-01b"></script>
+  <script src="js/matching.js?v=2026-08-01b"></script>
 </body>
 </html>

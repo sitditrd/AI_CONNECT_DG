@@ -9,7 +9,7 @@
   var result = null;   // 검토 결과
 
   function $(id) { return document.getElementById(id); }
-  function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]; }); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]; }); }
 
   /* ---------- 게이트 정의 ---------- */
   function buildGates(c) {
@@ -42,7 +42,8 @@
         chk(!korConflict, '국내 법령 · 고시 확인',
             korConflict ? '문서 표기와 UN 분류 충돌 — 전문가 확인 대상' : (p ? p.korNote : '-')),
         chk(true, 'IMDG / IATA 기준 비교',
-            p ? ('IMDG ' + p.unNo + ' · Class ' + p.hazardClass + (p.subRisk ? '(' + p.subRisk + ')' : '') + ' · PG ' + p.packingGroup) : '-'),
+            p ? ('IMDG ' + p.unNo + ' · Class ' + p.hazardClass + (p.subRisk ? '(' + p.subRisk + ')' : '') +
+                 ' · ' + (p.packingGroup ? 'PG ' + p.packingGroup : 'PG 미지정(포장은 PG II 성능 기준)')) : '-'),
         chk(true, '해양오염물질 · 분리기준', marine ? 'Marine Pollutant — IMDG 분리·표기 기준 적용' : '해당 없음'),
         chk(true, '개정일 · 시행일 · 출처 저장', D.REGULATIONS.length + '개 근거 스냅샷 저장')
       ],
@@ -165,6 +166,50 @@
     }).join('');
   }
 
+  /* ---------- 혼재 저장 기준 매트릭스 (시행규칙 별표19) ---------- */
+  function renderMix() {
+    var el = $('mixMatrix');
+    if (!el) return;
+    var M = D.MIX_RULES;
+    var c = window.DGCase.get();
+    var p = c.msds && c.msds.profile;
+
+    /* 현재 화물의 국내 유별(확정된 경우만) — 매트릭스 행/열 하이라이트 */
+    var req = p ? window.DGMatch.requiredPermits(p) : { kor: null };
+    var hlIdx = req.kor ? Number(req.kor.charAt(0)) : null;   /* '6류' → 6 */
+
+    var head = '<tr><th scope="col">유별</th>' + M.classes.map(function (k, i) {
+      return '<th scope="col"' + (hlIdx === i + 1 ? ' class="hl"' : '') + '>' + esc(k) + '<br><span style="font-weight:600; opacity:.75;">' + esc(M.labels[i]) + '</span></th>';
+    }).join('') + '</tr>';
+
+    var body = M.classes.map(function (rk, ri) {
+      var cells = M.classes.map(function (ck, ci) {
+        if (ri === ci) return '<td class="self">—</td>';
+        var ok = D.mixOk(ri + 1, ci + 1);
+        var hl = (hlIdx === ri + 1 || hlIdx === ci + 1) ? ' hl' : '';
+        return '<td class="' + (ok ? 'ok' : 'no') + hl + '">' + (ok ? 'O 혼재 가능' : 'X 금지') + '</td>';
+      }).join('');
+      return '<tr><th scope="row"' + (hlIdx === ri + 1 ? ' class="hl"' : '') + '>' + esc(rk) + '</th>' + cells + '</tr>';
+    }).join('');
+
+    var cargoNote = '';
+    if (p) {
+      if (hlIdx) {
+        cargoNote = '<p class="notice" style="margin-top:12px;">현재 케이스 화물(' + esc(p.unNo) + ')은 <b>' +
+          esc(M.classes[hlIdx - 1]) + '</b> — 강조된 행/열의 기준이 적용됩니다.</p>';
+      } else {
+        cargoNote = '<p class="notice" style="margin-top:12px;">현재 케이스 화물(' + esc(p.unNo) + ' · Class ' + esc(p.hazardClass) +
+          ')은 <b>국내 유별 비대상</b> — 위 매트릭스 대신 IMDG 분리(Segregation) 기준과 MSDS 혼재 금지 조건을 적용합니다: <b>' +
+          esc((p.incompatible || []).join(' · ')) + '</b></p>';
+      }
+    }
+
+    el.innerHTML = '<div class="table-wrap"><table class="mix-table" aria-label="유별 혼재 저장 기준 매트릭스">' +
+      '<thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' +
+      cargoNote +
+      '<p class="src-note">' + esc(M.note) + '</p>';
+  }
+
   /* ---------- 실행 ---------- */
   function run(save) {
     var c = window.DGCase.get();
@@ -182,7 +227,7 @@
     $('runState').textContent = '검토 완료 — ' + window.DGCase.stamp();
 
     if (save) {
-      window.DGCase.patch({
+      var patch = {
         compliance: {
           verdict: dec.verdict, label: dec.label, reason: dec.reason,
           passed: gates.filter(function (g) { return !g.warn; }).length,
@@ -191,8 +236,16 @@
           note: (c.compliance && c.compliance.note) || null,
           candidates: (gates[2].fit || []).length
         }
-      }, '적법성 4단계 검토 실행 — 판정: ' + dec.label + ' (통과 ' +
-         gates.filter(function (g) { return !g.warn; }).length + '/4 · 적합 후보 ' + (gates[2].fit || []).length + '개소)',
+      };
+      /* 재검토 결과가 '보관 불가'로 바뀌면 이미 확정된 창고·경로 이하도 무효화 */
+      var invalidated = dec.verdict === 'NO' && c.warehouse;
+      if (invalidated) {
+        patch.warehouse = null; patch.route = null;
+        patch.contract = null; patch.dispatch = null; patch.inbound = null;
+      }
+      window.DGCase.patch(patch, '적법성 4단계 검토 실행 — 판정: ' + dec.label + ' (통과 ' +
+         gates.filter(function (g) { return !g.warn; }).length + '/4 · 적합 후보 ' + (gates[2].fit || []).length + '개소)' +
+         (invalidated ? ' · 판정 변경으로 확정 창고·경로 이하 무효화' : ''),
         '적법성 검토 엔진');
     }
   }
@@ -220,12 +273,19 @@
     }
 
     renderRegs();
+    renderMix();
     renderGates(buildGates(c), false);
 
     $('runBtn').addEventListener('click', function () { run(true); });
     $('approveBtn').addEventListener('click', approve);
 
     if (c.msds && c.msds.profile) run(false);
+    /* Supabase 하이드레이션 완료 시 법령 카탈로그·창고 대조를 원격 데이터로 재렌더 */
+    window.addEventListener('dg-data', function () {
+      renderRegs();
+      var c2 = window.DGCase.get();
+      if (c2.msds && c2.msds.profile) run(false);
+    });
     window.DGUI.initReveal();
   });
 })();

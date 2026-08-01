@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko" data-theme="dark">
 <head>
+  <script>/* 테마 FOUC 방지 — 저장된 테마를 스타일 로드 전에 적용 */
+  try{var t=localStorage.getItem('dg-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>계약 · 배차 · 입고 관리 — 실행 6단계 | Connect DG</title>
@@ -10,9 +12,12 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Connect DG">
   <meta property="og:title" content="계약 · 배차 · 입고 관리 | Connect DG">
+  <meta property="og:description" content="견적·표준계약·보험 확인·위험물 차량 배차·입고예정 전송·검수까지 6단계 실행과 입출고 기록부·감사 로그 자동 생성.">
   <meta property="og:image" content="https://sitditrd.github.io/AI_CONNECT_DG/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-08-01a">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-01b">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/touch-icon.png">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
 <body class="hero-page">
@@ -66,7 +71,7 @@
       <div class="row" style="margin-top:14px;">
         <button class="btn btn-dg" id="nextStepBtn" type="button">다음 단계 실행</button>
         <button class="btn btn-ghost btn-sm" id="undoBtn" type="button">한 단계 되돌리기</button>
-        <span class="muted" style="font-size:12px;" id="execState"></span>
+        <span class="muted" style="font-size:12px;" id="execState" role="status"></span>
       </div>
     </div>
   </section>
@@ -96,13 +101,13 @@
         </div>
 
         <div class="panel reveal" id="dispatch">
-          <div class="panel-head"><h3>4~5 · 배차 · 실시간 위치</h3><span class="sub" id="gpsState">배차 전</span></div>
+          <div class="panel-head"><h3>4~5 · 배차 · 실시간 위치</h3><span class="sub" id="gpsState" role="status">배차 전</span></div>
           <div class="panel-body">
             <div class="kv" id="dispatchInfo"></div>
             <svg class="route-map" id="gpsTrack" viewBox="0 0 520 120" role="img" aria-label="실시간 위치 추적" style="margin-top:12px;"></svg>
             <div class="row" style="margin-top:12px;">
               <button class="btn btn-ghost btn-sm" id="gpsBtn" type="button" disabled>운행 시뮬레이션 재생</button>
-              <span class="muted" style="font-size:12px;" id="etaText"></span>
+              <span class="muted" style="font-size:12px;" id="etaText" role="status"></span>
             </div>
           </div>
         </div>
@@ -180,9 +185,9 @@
     </div>
   </footer>
 
-  <script src="js/common.js?v=2026-08-01a"></script>
-  <script src="js/data_dg.js?v=2026-08-01a"></script>
-  <script src="js/db.js?v=2026-08-01a"></script>
-  <script src="js/dispatch.js?v=2026-08-01a"></script>
+  <script src="js/common.js?v=2026-08-01b"></script>
+  <script src="js/data_dg.js?v=2026-08-01b"></script>
+  <script src="js/db.js?v=2026-08-01b"></script>
+  <script src="js/dispatch.js?v=2026-08-01b"></script>
 </body>
 </html>

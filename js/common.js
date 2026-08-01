@@ -8,7 +8,7 @@
   /* ---------- 로고 ---------- */
   var LOGO_HTML =
     '<img class="logo-sym" src="assets/twl_symbol.png" alt="">' +
-    '<span class="logo-text" aria-label="Connect DG">' +
+    '<span class="logo-text">' +
     '<span class="l1"><b>CONNECT</b> DG</span>' +
     '<span class="l2">TAEWOONG LOGISTICS</span>' +
     '</span>';
@@ -55,14 +55,36 @@
     var burger = document.querySelector('.nav-burger');
     var nav = document.querySelector('.site-nav');
     if (burger && nav) {
-      burger.addEventListener('click', function () {
-        var open = nav.classList.toggle('open');
+      var setOpen = function (open) {
+        nav.classList.toggle('open', open);
         burger.setAttribute('aria-expanded', open ? 'true' : 'false');
-      });
+        burger.setAttribute('aria-label', open ? '메뉴 닫기' : '메뉴 열기');
+      };
+      burger.addEventListener('click', function () { setOpen(!nav.classList.contains('open')); });
       nav.querySelectorAll('a').forEach(function (a) {
-        a.addEventListener('click', function () { nav.classList.remove('open'); });
+        a.addEventListener('click', function () { setOpen(false); });
+      });
+      /* Escape 로 닫고 버거로 포커스 복귀, 바깥 클릭 시 닫기 */
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && nav.classList.contains('open')) { setOpen(false); burger.focus(); }
+      });
+      document.addEventListener('click', function (e) {
+        if (nav.classList.contains('open') && !nav.contains(e.target) && !burger.contains(e.target)) setOpen(false);
       });
     }
+  }
+
+  /* ---------- 가로 스크롤 표 — 키보드 스크롤 접근 ---------- */
+  function initTableWraps() {
+    document.querySelectorAll('.table-wrap').forEach(function (el) {
+      if (el.hasAttribute('tabindex')) return;
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('role', 'region');
+      if (!el.getAttribute('aria-label')) {
+        var head = el.closest('.panel') && el.closest('.panel').querySelector('.panel-head h3');
+        el.setAttribute('aria-label', (head ? head.textContent + ' ' : '') + '표 — 좌우 스크롤 가능');
+      }
+    });
   }
 
   /* ---------- 스크롤 리빌 ---------- */
@@ -118,9 +140,13 @@
     (root || document).querySelectorAll('[data-tip]').forEach(function (el) {
       if (el.dataset.tipBound) return;
       el.dataset.tipBound = '1';
-      el.addEventListener('mouseenter', function () {
-        var t = ensureTip(); t.innerHTML = el.getAttribute('data-tip'); t.classList.add('show');
-      });
+      var show = function () {
+        var t = ensureTip();
+        t.textContent = el.getAttribute('data-tip');   /* HTML 주입 차단 — 텍스트 전용 */
+        t.classList.add('show');
+      };
+      var hide = function () { if (tipEl) tipEl.classList.remove('show'); };
+      el.addEventListener('mouseenter', show);
       el.addEventListener('mousemove', function (e) {
         var t = ensureTip();
         var x = e.clientX + 14, y = e.clientY + 16, r = t.getBoundingClientRect();
@@ -128,7 +154,14 @@
         if (y + r.height > window.innerHeight - 8) y = e.clientY - r.height - 12;
         t.style.left = x + 'px'; t.style.top = y + 'px';
       });
-      el.addEventListener('mouseleave', function () { if (tipEl) tipEl.classList.remove('show'); });
+      el.addEventListener('mouseleave', hide);
+      /* 키보드 접근 — 포커스 시에도 표시 */
+      el.addEventListener('focusin', function () {
+        show();
+        var t = ensureTip(); var r = el.getBoundingClientRect();
+        t.style.left = r.left + 'px'; t.style.top = (r.bottom + 8) + 'px';
+      });
+      el.addEventListener('focusout', hide);
     });
   }
 
@@ -150,6 +183,7 @@
       → 견적·계약 → 배차 → 입고관리)
      ========================================================= */
   var KEY = 'dg-case';
+  var AKEY = 'dg-archive';
   var EMPTY = {
     caseNo: null,
     createdAt: null,
@@ -169,7 +203,12 @@
       var raw = localStorage.getItem(KEY);
       if (!raw) return JSON.parse(JSON.stringify(EMPTY));
       var o = JSON.parse(raw);
+      if (!o || typeof o !== 'object' || Array.isArray(o)) return JSON.parse(JSON.stringify(EMPTY));
       Object.keys(EMPTY).forEach(function (k) { if (!(k in o)) o[k] = EMPTY[k]; });
+      /* 파손 데이터 타입 정규화 — logs 는 반드시 배열, 객체 키는 객체 또는 null */
+      if (!Array.isArray(o.logs)) o.logs = [];
+      ['request', 'msds', 'compliance', 'warehouse', 'route', 'contract', 'dispatch', 'inbound']
+        .forEach(function (k) { if (o[k] != null && typeof o[k] !== 'object') o[k] = null; });
       return o;
     } catch (e) { return JSON.parse(JSON.stringify(EMPTY)); }
   }
@@ -209,6 +248,35 @@
       window.dispatchEvent(new CustomEvent('dg-case', { detail: load() }));
       return load();
     },
+    /* ---------- 케이스 보관함 (완료 케이스 이력) ---------- */
+    archives: function () {
+      try { return JSON.parse(localStorage.getItem(AKEY) || '[]'); } catch (e) { return []; }
+    },
+    /* 현재 케이스를 보관함에 넣고 새 케이스로 초기화 */
+    archive: function () {
+      var c = load();
+      if (!c.caseNo) return null;
+      var list = DGCase.archives().filter(function (x) { return x.caseNo !== c.caseNo; });
+      c.archivedAt = nowStamp();
+      list.unshift(c);
+      if (list.length > 20) list = list.slice(0, 20);   /* 최근 20건 유지 */
+      try { localStorage.setItem(AKEY, JSON.stringify(list)); } catch (e) { /* 무시 */ }
+      return DGCase.reset();
+    },
+    /* 보관 케이스를 현재 케이스로 복원 (현재 케이스는 덮어씀) */
+    restore: function (caseNo) {
+      var hit = DGCase.archives().filter(function (x) { return x.caseNo === caseNo; })[0];
+      if (!hit) return null;
+      var c = JSON.parse(JSON.stringify(hit));
+      delete c.archivedAt;
+      return save(c);
+    },
+    removeArchive: function (caseNo) {
+      var list = DGCase.archives().filter(function (x) { return x.caseNo !== caseNo; });
+      try { localStorage.setItem(AKEY, JSON.stringify(list)); } catch (e) { /* 무시 */ }
+      window.dispatchEvent(new CustomEvent('dg-case', { detail: load() }));
+    },
+
     /* 9단계 진행 상태 — done / active / todo */
     steps: function (c) {
       c = c || load();
@@ -237,6 +305,7 @@
     initTheme();
     initHeader();
     initReveal();
+    initTableWraps();
     bindTooltips(document);
     var y = document.querySelector('.footer-year');
     if (y) y.textContent = new Date().getFullYear();

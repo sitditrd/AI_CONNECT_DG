@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="ko" data-theme="dark">
 <head>
+  <script>/* 테마 FOUC 방지 — 저장된 테마를 스타일 로드 전에 적용 */
+  try{var t=localStorage.getItem('dg-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Connect DG — AI 기반 위험물 물류 통합 플랫폼</title>
   <meta name="description" content="MSDS 한 장에서 적법한 창고와 안전한 운송까지. 화주·위험물 창고·운송사를 하나로 잇는 AI 기반 위험물 물류 통합 플랫폼 Connect DG.">
   <meta name="theme-color" content="#0a0f1e">
   <link rel="canonical" href="https://sitditrd.github.io/AI_CONNECT_DG/">
-  <link rel="apple-touch-icon" href="assets/og-image.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/touch-icon.png">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Connect DG">
   <meta property="og:title" content="Connect DG — AI 기반 위험물 물류 통합 플랫폼">
@@ -16,8 +18,30 @@
   <meta property="og:image" content="https://sitditrd.github.io/AI_CONNECT_DG/assets/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-08-01a">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-01b">
   <link rel="icon" href="assets/twl_logo.ico">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "name": "TAEWOONG LOGISTICS",
+        "url": "https://www.e-tgl.com",
+        "email": "itt@twsc.co.kr"
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "Connect DG",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "description": "AI 기반 위험물 물류 통합 플랫폼 — MSDS 분석, 적법성 사전검토, 창고·차량 매칭, 안전경로, 배차·입고 관리",
+        "url": "https://sitditrd.github.io/AI_CONNECT_DG/",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" }
+      }
+    ]
+  }
+  </script>
 </head>
 <body class="hero-page">
   <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -148,25 +172,25 @@
       <div class="steps reveal">
         <a class="step card hover" href="msds.html">
           <span class="s-no">STEP 01</span>
-          <h4>MSDS 분석</h4>
+          <h3 style="margin:12px 0 6px; font-size:15.5px;">MSDS 분석</h3>
           <p>비정형 MSDS를 LLM-OCR로 구조화. CAS No.·UN Number·Hazard Class·Packing Group을 원문 위치와 함께 추출·저장.</p>
           <span class="s-out">→ 표준 위험물 프로파일</span>
         </a>
         <a class="step card hover" href="compliance.html">
           <span class="s-no">STEP 02</span>
-          <h4>적법성 사전검토</h4>
+          <h3 style="margin:12px 0 6px; font-size:15.5px;">적법성 사전검토</h3>
           <p>국내 법령·IMDG/IATA 교차검증 → 창고 인허가·저장한도 대조 → 전문가 확인. 4단계 방어 절차로 누락 최소화.</p>
           <span class="s-out">→ 적합 / 조건부 / 불가 판정</span>
         </a>
         <a class="step card hover" href="matching.html">
           <span class="s-no">STEP 03</span>
-          <h4>창고 · 차량 매칭</h4>
+          <h3 style="margin:12px 0 6px; font-size:15.5px;">창고 · 차량 매칭</h3>
           <p>적합성·가용성·안전성을 함께 평가해 창고/운송 후보 제시. 위험물 차량·터널 제한을 반영한 안전경로 검토.</p>
           <span class="s-out">→ 창고 · 안전경로 후보</span>
         </a>
         <a class="step card hover" href="dispatch.html">
           <span class="s-no">STEP 04</span>
-          <h4>계약 · 배차 · 관리</h4>
+          <h3 style="margin:12px 0 6px; font-size:15.5px;">계약 · 배차 · 관리</h3>
           <p>표준계약·보험·배차·입고검수까지 연결. 입출고 기록부·점검일지·감사 로그 자동 생성으로 이탈 방지.</p>
           <span class="s-out">→ 감사 로그 · 기록부</span>
         </a>
@@ -246,14 +270,15 @@
         <a href="route.html">안전경로</a>
         <a href="dispatch.html">배차·입고</a>
         <a href="insight.html">시장 현황</a>
+        <a href="report.html">적합성 리포트</a>
       </nav>
     </div>
   </footer>
 
-  <script src="js/common.js?v=2026-08-01a"></script>
-  <script src="js/data_dg.js?v=2026-08-01a"></script>
-  <script src="js/db.js?v=2026-08-01a"></script>
-  <script src="js/pipeline.js?v=2026-08-01a"></script>
-  <script src="js/landing.js?v=2026-08-01a"></script>
+  <script src="js/common.js?v=2026-08-01b"></script>
+  <script src="js/data_dg.js?v=2026-08-01b"></script>
+  <script src="js/db.js?v=2026-08-01b"></script>
+  <script src="js/pipeline.js?v=2026-08-01b"></script>
+  <script src="js/landing.js?v=2026-08-01b"></script>
 </body>
 </html>

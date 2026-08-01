@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <script>/* 테마 FOUC 방지 — 저장된 테마를 스타일 로드 전에 적용 */
+  try{var t=localStorage.getItem('dg-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>적합성 검토 리포트 — MSDS → 프로파일 → 판정 | Connect DG</title>
+  <meta name="description" content="케이스 전 과정(MSDS 프로파일 · 적법성 4단계 · 창고 매칭 · 안전경로 · 입고)의 근거를 한 장으로 담은 인쇄용 적합성 검토 리포트.">
+  <meta name="theme-color" content="#0a0f1e">
+  <meta name="robots" content="noindex">
+  <link rel="canonical" href="https://sitditrd.github.io/AI_CONNECT_DG/report.html">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-01b">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/touch-icon.png">
+  <link rel="icon" href="assets/twl_logo.ico">
+  <style>
+    /* ---------- 리포트 전용 ---------- */
+    .rpt-sheet { max-width: 900px; margin: 0 auto; }
+    .rpt-head {
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;
+      border-bottom: 3px solid var(--dg); padding-bottom: 16px; margin-bottom: 22px;
+    }
+    .rpt-head h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
+    .rpt-head .rpt-brand { font-size: 12px; font-weight: 800; letter-spacing: .14em; color: var(--dg); }
+    .rpt-meta { text-align: right; font-size: 12px; color: var(--muted); line-height: 1.7; }
+    .rpt-sec { margin: 0 0 22px; }
+    .rpt-sec > h2 {
+      font-size: 15px; font-weight: 800; margin: 0 0 10px; padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .rpt-sec > h2 .no { color: var(--dg); margin-right: 8px; }
+    .rpt-disclaimer {
+      border: 1px solid color-mix(in srgb, var(--dg) 40%, transparent); border-radius: 10px;
+      padding: 12px 14px; font-size: 12px; line-height: 1.7; color: var(--ink-2);
+      background: color-mix(in srgb, var(--dg) 7%, transparent);
+    }
+    .rpt-sign { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 10px; }
+    .rpt-sign .box { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; min-height: 74px; font-size: 12px; color: var(--muted); }
+    .rpt-sign .box b { display: block; color: var(--ink); margin-bottom: 18px; font-size: 12.5px; }
+    @media (max-width: 700px) { .rpt-sign { grid-template-columns: 1fr; } }
+
+    /* ---------- 인쇄 ---------- */
+    @media print {
+      :root, :root[data-theme='dark'] {
+        --bg: #fff; --surface: #fff; --surface-2: #f3f5f9; --ink: #101828; --ink-2: #333f55;
+        --muted: #5b6a84; --grid: #d9dee8; --border: #c9d0dd;
+        --shadow: none;
+      }
+      body { background: #fff !important; }
+      .site-header, .site-footer, .no-print, .skip-link { display: none !important; }
+      .dash-hero { display: none !important; }
+      main.rpt-wrap { padding-top: 0 !important; }
+      .panel, .card { box-shadow: none !important; break-inside: avoid; }
+      .rpt-sec { break-inside: avoid; }
+      a { text-decoration: none; color: inherit; }
+      @page { margin: 14mm 12mm; }
+    }
+  </style>
+</head>
+<body class="hero-page">
+  <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="Connect DG 홈"></a>
+      <button class="nav-burger" aria-label="메뉴 열기" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="site-nav" aria-label="주요 메뉴">
+        <a href="process.html">프로세스</a>
+        <a href="msds.html">MSDS 분석</a>
+        <a href="compliance.html">적법성 검토</a>
+        <a href="matching.html">창고·차량 매칭</a>
+        <a href="route.html">안전경로</a>
+        <a href="dispatch.html">배차·입고</a>
+        <a href="insight.html">시장 현황</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <section id="main-content" tabindex="-1" class="dash-hero no-print">
+    <div class="container">
+      <div class="dash-title-row">
+        <div>
+          <h1>적합성 검토 리포트 <span style="font-weight:300; opacity:.75;">— MSDS → 프로파일 → 판정</span></h1>
+          <p class="dash-sub">케이스 전 과정의 근거 · 승인 · 이력을 한 장으로 — 인쇄하면 PDF 보고서가 됩니다</p>
+        </div>
+        <div class="dash-badges">
+          <span class="dash-badge" id="caseBadge">케이스 미생성</span>
+        </div>
+      </div>
+      <div class="row" style="margin-top:16px;">
+        <button class="btn btn-dg" id="printBtn" type="button">인쇄 · PDF 저장</button>
+        <button class="btn btn-ghost btn-sm" id="csvBtn" type="button">감사 로그 CSV</button>
+        <a class="btn btn-ghost btn-sm" href="process.html">워크벤치</a>
+      </div>
+    </div>
+  </section>
+
+  <main class="dash-section rpt-wrap">
+    <div class="container">
+      <div class="panel">
+        <div class="panel-body rpt-sheet" id="reportBody">
+          <p class="muted" style="font-size:13px;">케이스 데이터가 없습니다. <a href="process.html" style="color:var(--dg); font-weight:700;">워크벤치</a>에서 케이스를 진행하거나 보관함에서 불러오세요.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer no-print">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="Connect DG"></a>
+        <p class="footer-note">
+          Connect DG · 적합성 검토 리포트(MVP 산출물) · 본 리포트는 법률 적합성 사전검토 + 전문가 검토 지원 자료입니다<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS.
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="process.html">프로세스</a>
+        <a href="compliance.html">적법성 검토</a>
+        <a href="dispatch.html">배차·입고</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="js/common.js?v=2026-08-01b"></script>
+  <script src="js/data_dg.js?v=2026-08-01b"></script>
+  <script src="js/export.js?v=2026-08-01b"></script>
+  <script src="js/report.js?v=2026-08-01b"></script>
+</body>
+</html>

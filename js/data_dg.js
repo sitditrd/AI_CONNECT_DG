@@ -73,7 +73,8 @@
         psn: 'LITHIUM ION BATTERIES',
         hazardClass: '9',
         subRisk: null,
-        packingGroup: 'II',
+        packingGroup: null,   /* UN 3480은 포장등급 미지정 품목 — 포장은 PG II '성능 기준' 충족 요구 */
+        packingNote: '포장등급 미지정 — 포장은 PG II 성능 기준 충족 요구 (IMDG/IATA)',
         marinePollutant: false,
         tunnelCode: 'E',
         specialProvisions: ['188', '230', '310', '348', '376', '377'],
@@ -92,7 +93,7 @@
         { field: 'UN Number', value: 'UN 3480', page: 8, section: 'Section 14', conf: 0.99 },
         { field: 'Proper Shipping Name', value: 'LITHIUM ION BATTERIES', page: 8, section: 'Section 14', conf: 0.99 },
         { field: 'Hazard Class', value: 'Class 9', page: 8, section: 'Section 14', conf: 0.99 },
-        { field: 'Packing Group', value: 'PG II', page: 8, section: 'Section 14', conf: 0.93 },
+        { field: 'Packing Group', value: '미지정 — 포장은 PG II 성능 기준 충족 요구', page: 8, section: 'Section 14', conf: 0.93 },
         { field: 'Marine Pollutant', value: 'No', page: 8, section: 'Section 14', conf: 0.95 },
         { field: '터널 제한코드', value: 'E', page: 8, section: 'Section 14', conf: 0.90 },
         { field: '특별주의사항', value: 'SP 188 · 230 · 310 · 348 · 376 · 377', page: 9, section: 'Section 14', conf: 0.87 }
@@ -120,8 +121,8 @@
         marinePollutant: false,
         tunnelCode: 'E',
         specialProvisions: ['274'],
-        korClass: '제6류(산화성 액체) 해당 여부 판정 필요',
-        korNote: '⚠ 문서상 「위험물안전관리법 비대상」 표기 — 과산화수소는 농도 36% 이상만 제6류. 신고 농도(2~6%)와 UN 분류(5.1)가 충돌 → 전문가 확인 필요',
+        korClass: '제6류 비해당 (H₂O₂ 농도 36% 미만 — 시행령 별표1 비고)',
+        korNote: '⚠ MSDS 기재 UN3098(Class 5.1/8 · PG II)이 신고 농도(H₂O₂ 2~6%, UN 운송규정 규제 하한 8% 미만)와 불일치 — 분류 과대표기 의심, 제조사 확인 필요',
         chemAct: '화관법 유독물질 해당 여부 농도 기준 확인 필요',
         state: '액체 · 무색',
         packing: 'HDPE Drum 200L × 20',
@@ -262,7 +263,7 @@
       classes: ['Class 9', '4류', '5류'], capacityPL: 16,
       heightM: 3.8, gvwT: 24.5, axleT: 10,
       driver: '운송자 교육 이수 · 위험물 운송 경력 9년', adr: 'ADR 교육 이수',
-      insurance: '적재물배상 30억', gps: true, tunnelLimit: 'E 코드 통행 가능(적재량 기준 충족)',
+      insurance: '적재물배상 30억', gps: true, tunnelLimit: '제한코드 E 화물 적재 시 E 카테고리 터널만 통행 금지',
       baseFare: 620000
     },
     {
@@ -270,7 +271,7 @@
       classes: ['4류', '6류', 'Class 5.1', 'Class 8'], capacityPL: 0,
       heightM: 3.9, gvwT: 39.0, axleT: 11.5,
       driver: '위험물운송자 자격 · 경력 14년', adr: 'ADR 교육 이수',
-      insurance: '적재물배상 50억', gps: true, tunnelLimit: 'D/E 코드 터널 통행 제한',
+      insurance: '적재물배상 50억', gps: true, tunnelLimit: '제4류 적재(제한코드 D) 시 D·E 카테고리 터널 통행 금지',
       baseFare: 880000
     },
     {
@@ -278,7 +279,7 @@
       classes: ['Class 9', 'Class 5.1', '4류', '5류'], capacityPL: 20,
       heightM: 4.1, gvwT: 40.0, axleT: 11.5,
       driver: '운송자 교육 이수 · 경력 6년', adr: 'IMDG 취급 교육',
-      insurance: '적재물배상 20억', gps: true, tunnelLimit: 'E 코드 제한 구간 우회 필요',
+      insurance: '적재물배상 20억', gps: true, tunnelLimit: 'E 카테고리 터널 회피 운행 원칙(제한코드 E 화물)',
       baseFare: 740000
     },
     {
@@ -294,7 +295,7 @@
       classes: ['Class 5.1', 'Class 8', '6류', '4류'], capacityPL: 12,
       heightM: 3.6, gvwT: 18.0, axleT: 9,
       driver: '위험물운송자 자격 · 경력 11년', adr: 'ADR 교육 이수',
-      insurance: '적재물배상 30억', gps: true, tunnelLimit: 'E 코드 통행 가능',
+      insurance: '적재물배상 30억', gps: true, tunnelLimit: 'E 카테고리 터널 외 전 구간 통행 가능',
       baseFare: 590000
     }
   ];
@@ -356,68 +357,162 @@
      6. 경로 후보 (DG Route Intelligence · 발표자료 20장)
      --------------------------------------------------------- */
   var ROUTE_CONDITIONS = [
-    { key: 'height', label: '차량 높이 · 총중량 · 축중', tip: '교량 높이 제한, 총중량 40t·축중 10t 제한 구간 대조' },
+    { key: 'height', label: '차량 높이 · 총중량 · 축중', tip: '경로의 통과 높이·중량 제한 구간과 차량 제원을 직접 대조' },
     { key: 'dgban', label: '위험물 차량 통행 제한', tip: '도심 통과 금지 구간·시간대, 지하차도 진입 제한' },
-    { key: 'tunnel', label: '터널 · 특정 도로 제한', tip: 'ADR 준용 터널 제한코드(A~E)와 적재 위험물 등급 대조' },
+    { key: 'tunnel', label: '터널 제한코드 (ADR 준용)', tip: '화물의 터널 제한코드 이상 카테고리 터널은 통행 금지 — 예: 코드 E 화물은 E 카테고리 터널만 금지(A~D 통행 가능), 코드 B 화물은 B~E 전부 금지' },
     { key: 'width', label: '도로 폭 · 회전반경', tip: '트레일러 회전반경 미달 구간, 협소 산업도로 회피' },
     { key: 'eta', label: '예상 도착시간 · 교통정보', tip: '입고 예약시간 대비 도착 여유 · 정체 예측' },
     { key: 'emg', label: '비상대응 접근성 · 운행거리', tip: '소방서·유해화학물질 대응기관 접근시간, 총 운행거리' }
   ];
 
-  /* 출발지(공장/항만) → 창고 경로 후보. 조건 위반은 blocked 로 표시 */
+  /* 출발지(공장/항만) → 창고 경로 후보. 조건 위반은 blocked 로 표시.
+     ADR 터널 규칙(준용): 터널 카테고리 A~E 중 E가 가장 엄격.
+     화물의 터널 제한코드 X = 'X 이상 카테고리 터널 통행 금지' (코드 E → E 카테고리만 금지).
+     · cat        : 터널 카테고리 (통행 가능 여부는 화물 제한코드와 대조해 동적 판정)
+     · clearanceM : 경로 최소 통과 높이(m) — 차량 높이와 직접 비교
+     · limitT     : 경로 최소 중량 제한(t) — 차량 총중량과 직접 비교
+     · narrow     : 협소 구간 존재(대형 트레일러·로리 회전반경 부족)
+     · checks     : 정적 조건 — dgban(위험물 통행 허용) · eta(도착 여유) · emg(비상대응 접근) */
   var ROUTES = {
     'W-01': [
       {
         id: 'R-A', name: '고속 최단 — 경부 · 평택제천선', distanceKm: 78, minutes: 71, tolls: 8600,
-        tunnels: [{ name: '오성터널', code: 'C' }, { name: '서평택터널', code: 'E' }],
-        checks: { height: true, dgban: true, tunnel: true, width: true, eta: true, emg: true },
-        emgMin: 8, note: '전 구간 위험물 통행 허용 · 터널 제한코드 E 이하'
+        clearanceM: 4.8, limitT: 40, narrow: false,
+        tunnels: [{ name: '오성터널', cat: 'C' }, { name: '서평택터널', cat: 'D' }],
+        checks: { dgban: true, eta: true, emg: true },
+        emgMin: 8, note: '전 구간 위험물 통행 허용 · 터널 카테고리 C·D — 제한코드 E 화물은 E 카테고리 터널만 통행 금지'
       },
       {
         id: 'R-B', name: '국도 우회 — 39번 국도 경유', distanceKm: 92, minutes: 96, tolls: 0,
-        tunnels: [], checks: { height: true, dgban: true, tunnel: true, width: false, eta: true, emg: true },
-        emgMin: 14, note: '터널 없음 · 일부 구간 도로 폭 6m 미만(트레일러 회전반경 부족)'
+        clearanceM: 4.3, limitT: 32, narrow: true,
+        tunnels: [], checks: { dgban: true, eta: true, emg: true },
+        emgMin: 14, note: '터널 없음 · 일부 구간 도로 폭 6m 미만 — 대형 트레일러·로리 회전반경 부족'
       },
       {
         id: 'R-C', name: '도심 통과 — 평택 시내 관통', distanceKm: 66, minutes: 62, tolls: 0,
-        tunnels: [{ name: '평택지하차도', code: 'B' }],
-        checks: { height: true, dgban: false, tunnel: false, width: true, eta: true, emg: false },
-        emgMin: 6, note: '위험물 운반차량 통행금지 구간 포함 · 제한코드 B 터널 진입 불가'
+        clearanceM: 3.5, limitT: 40, narrow: false,
+        tunnels: [{ name: '평택지하차도', cat: 'E' }],
+        checks: { dgban: false, eta: true, emg: false },
+        emgMin: 6, note: '위험물 운반차량 통행금지 구간 포함 · E 카테고리 지하차도 — 제한코드 E 화물 통행 금지 · 통과 높이 3.5m'
       }
     ],
-    'W-06': [
+    'W-02': [
       {
-        id: 'R-A', name: '고속 최단 — 서해안 · 향남IC', distanceKm: 64, minutes: 63, tolls: 6200,
-        tunnels: [{ name: '발안터널', code: 'D' }],
-        checks: { height: true, dgban: true, tunnel: true, width: true, eta: true, emg: true },
-        emgMin: 9, note: '이차전지(Class 9) 기준 제한코드 D 통행 가능'
+        id: 'R-A', name: '고속 — 서해안 · 제2경인', distanceKm: 92, minutes: 84, tolls: 7400,
+        clearanceM: 4.8, limitT: 40, narrow: false,
+        tunnels: [{ name: '문학터널', cat: 'C' }],
+        checks: { dgban: true, eta: true, emg: true },
+        emgMin: 9, note: '터널 카테고리 C — 제한코드 E 화물 통행 가능'
       },
       {
-        id: 'R-B', name: '지방도 우회 — 313번 지방도', distanceKm: 77, minutes: 84, tolls: 0,
-        tunnels: [], checks: { height: true, dgban: true, tunnel: true, width: true, eta: false, emg: true },
-        emgMin: 16, note: '터널 회피 · 입고 예약시간 대비 도착 지연 예상(+21분)'
+        id: 'R-B', name: '국도 — 77번 해안도로', distanceKm: 108, minutes: 118, tolls: 0,
+        clearanceM: 4.2, limitT: 28, narrow: true,
+        tunnels: [], checks: { dgban: true, eta: false, emg: true },
+        emgMin: 15, note: '교량 중량 제한 28t 구간 · 입고 예약시간 대비 지연 예상'
+      }
+    ],
+    'W-03': [
+      {
+        id: 'R-A', name: '고속 — 경부 · 남해선 · 신항배후로', distanceKm: 402, minutes: 292, tolls: 28400,
+        clearanceM: 4.8, limitT: 40, narrow: false,
+        tunnels: [{ name: '가락터널', cat: 'C' }, { name: '불모산터널', cat: 'D' }],
+        checks: { dgban: true, eta: true, emg: true },
+        emgMin: 10, note: '터널 카테고리 C·D — 제한코드 E 화물 통행 가능 · 장거리 운행(휴게 계획 포함)'
+      },
+      {
+        id: 'R-B', name: '중앙고속 우회 — 대동 경유', distanceKm: 445, minutes: 330, tolls: 26800,
+        clearanceM: 4.8, limitT: 40, narrow: false,
+        tunnels: [{ name: '대동터널', cat: 'E' }],
+        checks: { dgban: true, eta: false, emg: true },
+        emgMin: 13, note: 'E 카테고리 터널 포함 — 제한코드 E 화물 통행 금지'
+      }
+    ],
+    'W-04': [
+      {
+        id: 'R-A', name: '고속 — 경부 · 울산고속 · 온산산단로', distanceKm: 368, minutes: 272, tolls: 24200,
+        clearanceM: 4.8, limitT: 40, narrow: false,
+        tunnels: [{ name: '활천터널', cat: 'C' }],
+        checks: { dgban: true, eta: true, emg: true },
+        emgMin: 9, note: '터널 카테고리 C — 통행 가능 · 온산산단 소방 거점 인접'
+      },
+      {
+        id: 'R-B', name: '국도 7호 우회', distanceKm: 396, minutes: 318, tolls: 0,
+        clearanceM: 4.5, limitT: 40, narrow: false,
+        tunnels: [], checks: { dgban: false, eta: false, emg: true },
+        emgMin: 12, note: '산단 진입 구간 위험물 통행 시간제한(주간만) — 야간 배차 불가'
       }
     ],
     'W-05': [
       {
         id: 'R-A', name: '고속 — 남해선 · 여수산단로', distanceKm: 122, minutes: 108, tolls: 11200,
-        tunnels: [{ name: '율촌터널', code: 'E' }],
-        checks: { height: true, dgban: true, tunnel: true, width: true, eta: true, emg: true },
-        emgMin: 11, note: '산화성 액체 기준 제한코드 E 통행 가능'
+        clearanceM: 4.8, limitT: 40, narrow: false,
+        tunnels: [{ name: '율촌터널', cat: 'C' }],
+        checks: { dgban: true, eta: true, emg: true },
+        emgMin: 11, note: '터널 카테고리 C — 제한코드 E 화물 통행 가능'
       },
       {
         id: 'R-B', name: '국도 — 17번 국도', distanceKm: 138, minutes: 131, tolls: 0,
-        tunnels: [{ name: '덕양터널', code: 'C' }],
-        checks: { height: true, dgban: true, tunnel: false, width: true, eta: false, emg: true },
-        emgMin: 18, note: '제한코드 C 터널 — Class 5.1(8) 통행 불가'
+        clearanceM: 4.5, limitT: 40, narrow: false,
+        tunnels: [{ name: '덕양터널', cat: 'E' }],
+        checks: { dgban: true, eta: false, emg: true },
+        emgMin: 18, note: 'E 카테고리 터널 — 제한코드 E 화물 통행 금지'
+      }
+    ],
+    'W-06': [
+      {
+        id: 'R-A', name: '고속 최단 — 서해안 · 향남IC', distanceKm: 64, minutes: 63, tolls: 6200,
+        clearanceM: 4.8, limitT: 40, narrow: false,
+        tunnels: [{ name: '발안터널', cat: 'D' }],
+        checks: { dgban: true, eta: true, emg: true },
+        emgMin: 9, note: '터널 카테고리 D — 제한코드 E 화물 통행 가능'
+      },
+      {
+        id: 'R-B', name: '지방도 우회 — 313번 지방도', distanceKm: 77, minutes: 84, tolls: 0,
+        clearanceM: 4.3, limitT: 36, narrow: false,
+        tunnels: [], checks: { dgban: true, eta: false, emg: true },
+        emgMin: 16, note: '터널 회피 · 입고 예약시간 대비 도착 지연 예상(+21분)'
+      }
+    ],
+    'W-07': [
+      {
+        id: 'R-A', name: '고속 — 서해안 · 영동 · 반월IC', distanceKm: 86, minutes: 78, tolls: 6900,
+        clearanceM: 4.8, limitT: 40, narrow: false,
+        tunnels: [{ name: '수리터널', cat: 'D' }],
+        checks: { dgban: true, eta: true, emg: true },
+        emgMin: 9, note: '터널 카테고리 D — 제한코드 E 화물 통행 가능'
+      },
+      {
+        id: 'R-B', name: '해안 — 시화방조제 경유', distanceKm: 74, minutes: 70, tolls: 0,
+        clearanceM: 4.8, limitT: 40, narrow: false,
+        tunnels: [], checks: { dgban: false, eta: true, emg: false },
+        emgMin: 7, note: '방조제 구간 위험물 운반차량 통행 제한 · 비상대응 접근 취약'
+      }
+    ],
+    'W-08': [
+      {
+        id: 'R-A', name: '고속 — 남해선 · 이순신대교', distanceKm: 302, minutes: 232, tolls: 19800,
+        clearanceM: 4.8, limitT: 40, narrow: false,
+        tunnels: [{ name: '광양터널', cat: 'C' }],
+        checks: { dgban: true, eta: true, emg: true },
+        emgMin: 10, note: '터널 카테고리 C — 통행 가능 · 항만배후 소방 거점 인접'
+      },
+      {
+        id: 'R-B', name: '국도 2호 우회', distanceKm: 335, minutes: 290, tolls: 0,
+        clearanceM: 4.1, limitT: 32, narrow: true,
+        tunnels: [], checks: { dgban: true, eta: false, emg: true },
+        emgMin: 16, note: '통과 높이 4.1m · 중량 32t 제한 구간 · 협소 구간 포함'
       }
     ]
   };
 
-  /* 창고별 경로 데이터가 없으면 W-01 패턴을 거리 보정해 사용 */
+  /* 등록되지 않은 창고 id 는 W-01 패턴을 복제해 '유사 패턴 시연'으로 명시 후 재사용 */
   function routesFor(whId) {
     if (ROUTES[whId]) return ROUTES[whId];
-    return ROUTES['W-01'].map(function (r) { return r; });
+    return ROUTES['W-01'].map(function (r) {
+      var c = JSON.parse(JSON.stringify(r));
+      c.name += ' (유사 패턴 시연)';
+      return c;
+    });
   }
 
   /* ---------------------------------------------------------
@@ -485,6 +580,24 @@
   };
 
   /* ---------------------------------------------------------
+     8-1. 유별 혼재 저장 기준 (위험물안전관리법 시행규칙 별표19)
+          지정수량 1/10 이하 위험물은 적용 제외.
+          O = 혼재 가능 · X = 혼재 금지
+     --------------------------------------------------------- */
+  var MIX_RULES = {
+    note: '위험물안전관리법 시행규칙 별표19 「유별을 달리하는 위험물의 혼재 기준」 — 지정수량 1/10 이하 위험물에는 적용하지 않음',
+    classes: ['제1류', '제2류', '제3류', '제4류', '제5류', '제6류'],
+    labels: ['산화성 고체', '가연성 고체', '자연발화성 · 금수성', '인화성 액체', '자기반응성', '산화성 액체'],
+    /* 혼재 가능 쌍 (작은 번호-큰 번호) */
+    okPairs: ['1-6', '2-4', '2-5', '3-4', '4-5']
+  };
+  function mixOk(a, b) {
+    if (a === b) return null; /* 동일 유별 — 매트릭스 대상 아님 */
+    var lo = Math.min(a, b), hi = Math.max(a, b);
+    return MIX_RULES.okPairs.indexOf(lo + '-' + hi) >= 0;
+  }
+
+  /* ---------------------------------------------------------
      9. 수익 모델 (발표자료 22장) — 정산·금융 축 표시용
      --------------------------------------------------------- */
   var REVENUE = [
@@ -506,6 +619,8 @@
     EXEC_STEPS: EXEC_STEPS,
     AUTO_DOCS: AUTO_DOCS,
     STATS: STATS,
-    REVENUE: REVENUE
+    REVENUE: REVENUE,
+    MIX_RULES: MIX_RULES,
+    mixOk: mixOk
   };
 })();

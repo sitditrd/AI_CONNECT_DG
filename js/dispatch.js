@@ -9,7 +9,7 @@
   var STEPS = D.EXEC_STEPS;
 
   function $(id) { return document.getElementById(id); }
-  function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]; }); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]; }); }
   function money(n) { return window.DGUI.fmt(Math.round(n)) + '원'; }
 
   function progress() {
@@ -44,6 +44,16 @@
   }
 
   function renderQuote() {
+    var c = window.DGCase.get();
+    /* 빈 상태 — 선행 단계 없이 0원 견적을 노출하지 않음 */
+    if (!c.warehouse || !c.route || !c.request) {
+      $('quoteTable').innerHTML = '<tbody><tr><td class="muted" style="padding:16px 12px;">' +
+        '보관 요청 · 창고 · 경로가 확정되면 견적이 산출됩니다 — ' +
+        '<a href="' + (!c.request ? 'process.html' : (!c.warehouse ? 'matching.html' : 'route.html')) +
+        '" style="color:var(--dg); font-weight:700;">' +
+        (!c.request ? '보관 요청 등록' : (!c.warehouse ? '창고 매칭' : '안전경로 검토')) + ' 하러 가기</a></td></tr></tbody>';
+      return;
+    }
     var q = quote();
     var rows = [
       ['보관료', q.qty + 'PL × ' + window.DGUI.fmt(q.rate) + '원 × ' + q.days + '일', q.storage],
@@ -56,7 +66,10 @@
       return '<tr><td class="strong">' + r[0] + '</td><td class="muted">' + esc(r[1]) + '</td><td class="num">' + money(r[2]) + '</td></tr>';
     }).join('');
 
-    $('quoteTable').innerHTML = '<tbody>' + rows +
+    $('quoteTable').innerHTML =
+      '<caption class="hide">견적 내역 — 항목 · 산출 기준 · 금액</caption>' +
+      '<thead><tr><th style="width:170px;">항목</th><th>산출 기준</th><th style="width:130px;">금액</th></tr></thead>' +
+      '<tbody>' + rows +
       '<tr><td class="strong">합계</td><td class="muted">부가세 별도</td>' +
       '<td class="num" style="font-size:15px; font-weight:800; color:var(--dg);">' + money(q.total) + '</td></tr></tbody>';
   }
@@ -233,24 +246,31 @@
       $('docState').textContent = '미발행';
       return;
     }
-    var p = c.msds.profile;
+    /* 단계를 건너뛴 케이스(요청 미등록 등)에도 크래시 없이 렌더 — null 가드 */
+    var rq = c.request || {};
+    var p = (c.msds && c.msds.profile) || {};
+    var wh = c.warehouse || {};
+    var dp = c.dispatch || {};
+    var checks = c.inbound.checks || [];
     $('docState').textContent = '발행 완료 · ' + c.inbound.receiptNo;
     $('receiptBox').innerHTML =
       '<div class="row" style="margin-bottom:10px;"><span class="badge badge-ok"><i></i>전자인수증 발행</span>' +
       '<span class="badge badge-neutral"><i></i>' + esc(c.inbound.receiptNo) + '</span></div>' +
       '<div class="kv">' +
         '<div>케이스</div><div class="mono">' + esc(c.caseNo) + '</div>' +
-        '<div>화주</div><div>' + esc(c.request.shipper) + '</div>' +
-        '<div>품목 · UN</div><div>' + esc(p.productName) + ' · ' + esc(p.unNo) + ' Class ' + esc(p.hazardClass) + ' PG ' + esc(p.packingGroup) + '</div>' +
-        '<div>수량</div><div>' + c.request.qtyPL + ' PL</div>' +
-        '<div>보관 창고</div><div>' + esc(c.warehouse.name) + ' (' + esc(c.warehouse.addr) + ')</div>' +
+        '<div>화주</div><div>' + esc(rq.shipper || '미기재') + '</div>' +
+        '<div>품목 · UN</div><div>' + esc(p.productName || '-') + ' · ' + esc(p.unNo || '-') + ' Class ' + esc(p.hazardClass || '-') +
+          ' · ' + (p.packingGroup ? 'PG ' + esc(p.packingGroup) : 'PG 미지정') + '</div>' +
+        '<div>수량</div><div>' + (rq.qtyPL != null ? rq.qtyPL : '-') + ' PL</div>' +
+        '<div>보관 창고</div><div>' + esc(wh.name || '-') + (wh.addr ? ' (' + esc(wh.addr) + ')' : '') + '</div>' +
         '<div>보관 위치</div><div>' + esc(c.inbound.location) + '</div>' +
-        '<div>운송사 · 차량</div><div>' + esc(c.dispatch.carrier) + ' · ' + esc(c.dispatch.type) + '</div>' +
+        '<div>운송사 · 차량</div><div>' + esc(dp.carrier || '-') + ' · ' + esc(dp.type || '-') + '</div>' +
         '<div>입고 시각</div><div class="mono">' + esc(c.inbound.at) + '</div>' +
-        '<div>검수 결과</div><div>' + c.inbound.checks.filter(function (x) { return x.ok; }).length + ' / ' + c.inbound.checks.length + ' 항목 충족</div>' +
+        '<div>검수 결과</div><div>' + checks.filter(function (x) { return x.ok; }).length + ' / ' + checks.length + ' 항목 충족</div>' +
         '<div>적법성 근거</div><div>' + esc(c.compliance ? (c.compliance.label + ' · 승인 ' + (c.compliance.approver || '미승인')) : '-') + '</div>' +
       '</div>' +
-      '<p class="src-note">※ 계약 확정 이후이므로 창고 실제 상호·주소가 공개됩니다(단계별 정보 공개 원칙).</p>';
+      '<p class="src-note">※ 계약 확정 이후이므로 창고 실제 상호·주소가 공개됩니다(단계별 정보 공개 원칙).</p>' +
+      '<div class="row" style="margin-top:12px;"><a class="btn btn-dg btn-sm" href="report.html">적합성 리포트 · 인쇄</a></div>';
   }
 
   function renderDocs() {
@@ -298,5 +318,7 @@
     ['stayDays', 'feeRate'].forEach(function (id) { $(id).addEventListener('input', renderQuote); });
 
     renderAll();
+    /* Supabase 하이드레이션 완료 시 차량 단가 등 원격 데이터로 재렌더 */
+    window.addEventListener('dg-data', renderAll);
   });
 })();

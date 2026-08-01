@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko" data-theme="dark">
 <head>
+  <script>/* 테마 FOUC 방지 — 저장된 테마를 스타일 로드 전에 적용 */
+  try{var t=localStorage.getItem('dg-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>프로세스 워크벤치 — 9단계 흐름 | Connect DG</title>
@@ -10,9 +12,12 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Connect DG">
   <meta property="og:title" content="프로세스 워크벤치 — 9단계 흐름 | Connect DG">
+  <meta property="og:description" content="보관 요청부터 입고 관리까지 9단계 위험물 물류 프로세스를 하나의 케이스로 관리합니다.">
   <meta property="og:image" content="https://sitditrd.github.io/AI_CONNECT_DG/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-08-01a">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-01b">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/touch-icon.png">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
 <body class="hero-page">
@@ -100,9 +105,11 @@
           <div class="row" style="margin-top:16px;">
             <button class="btn btn-dg" id="rqSubmit" type="button">보관 요청 등록</button>
             <a class="btn btn-ghost btn-sm" href="msds.html" id="rqNext">다음 — MSDS 등록 ›</a>
+            <a class="btn btn-ghost btn-sm" href="report.html">적합성 리포트</a>
+            <button class="btn btn-ghost btn-sm" id="logCsvBtn" type="button">감사 로그 CSV</button>
             <button class="btn btn-ghost btn-sm right" id="caseReset" type="button">케이스 초기화</button>
           </div>
-          <p class="src-note" id="rqState">아직 등록된 요청이 없습니다.</p>
+          <p class="src-note" id="rqState" role="status">아직 등록된 요청이 없습니다.</p>
         </div>
       </div>
     </div>
@@ -114,7 +121,7 @@
       <div class="dash-head reveal">
         <span class="no">Pipeline</span>
         <h2>9단계 진행 현황</h2>
-        <span class="hint">완료(초록) · 진행 중(주황) · 대기(회색) — 각 단계 화면에서 처리하면 즉시 갱신됩니다</span>
+        <span class="hint">각 단계의 상태(완료 · 진행 중 · 대기)가 배지로 표시됩니다 — 단계 화면에서 처리하면 즉시 갱신</span>
       </div>
       <div class="pipeline reveal" id="pipeline"></div>
       <p class="notice">
@@ -136,7 +143,26 @@
     </div>
   </section>
 
-  <!-- ============ 4. 감사 로그 ============ -->
+  <!-- ============ 4. 케이스 보관함 ============ -->
+  <section class="dash-section" style="padding-top:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">Archive</span>
+        <h2>케이스 보관함</h2>
+        <span class="hint">완료 케이스를 보관하고 MSDS 3종 시나리오를 자유롭게 전환합니다 (브라우저 로컬 · 최근 20건)</span>
+      </div>
+      <div class="panel reveal">
+        <div class="panel-body">
+          <div class="row" style="margin-bottom:12px;">
+            <button class="btn btn-dg btn-sm" id="archiveBtn" type="button" disabled>현재 케이스 보관 → 새 케이스 시작</button>
+          </div>
+          <div id="archiveList"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5. 감사 로그 ============ -->
   <section class="dash-section" style="padding-top:0;">
     <div class="container">
       <div class="dash-head reveal">
@@ -171,10 +197,11 @@
     </div>
   </footer>
 
-  <script src="js/common.js?v=2026-08-01a"></script>
-  <script src="js/data_dg.js?v=2026-08-01a"></script>
-  <script src="js/db.js?v=2026-08-01a"></script>
-  <script src="js/pipeline.js?v=2026-08-01a"></script>
-  <script src="js/process.js?v=2026-08-01a"></script>
+  <script src="js/common.js?v=2026-08-01b"></script>
+  <script src="js/data_dg.js?v=2026-08-01b"></script>
+  <script src="js/db.js?v=2026-08-01b"></script>
+  <script src="js/export.js?v=2026-08-01b"></script>
+  <script src="js/pipeline.js?v=2026-08-01b"></script>
+  <script src="js/process.js?v=2026-08-01b"></script>
 </body>
 </html>

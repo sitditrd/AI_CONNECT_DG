@@ -6,7 +6,7 @@
   'use strict';
 
   function $(id) { return document.getElementById(id); }
-  function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]; }); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]; }); }
 
   /* ---------- 기본 입고 예정일: 오늘 + 7일 ---------- */
   function defaultDue() {
@@ -24,8 +24,15 @@
       region: $('rqRegion').value,
       due: $('rqDue').value || defaultDue()
     };
-    window.DGCase.patch({ request: req },
-      '보관 요청 등록 — ' + req.shipper + ' · ' + req.item + ' · ' + req.qtyPL + 'PL · 입고예정 ' + req.due,
+    var prev = window.DGCase.get().request;
+    /* 수량·권역은 적법성 게이트·매칭의 입력값 — 변경 시 하류 판정을 무효화해 근거 정합 유지 */
+    var invalidate = prev && (prev.qtyPL !== req.qtyPL || prev.region !== req.region);
+    var patch = invalidate
+      ? { request: req, compliance: null, warehouse: null, route: null, contract: null, dispatch: null, inbound: null }
+      : { request: req };
+    window.DGCase.patch(patch,
+      '보관 요청 ' + (prev ? '변경' : '등록') + ' — ' + req.shipper + ' · ' + req.item + ' · ' + req.qtyPL + 'PL · 입고예정 ' + req.due +
+      (invalidate ? ' · 수량/권역 변경으로 검토·매칭 이하 단계 재수행 필요' : ''),
       '화주');
     renderAll();
   }
@@ -41,16 +48,18 @@
          ['희망 권역', c.request.region], ['입고 예정일', c.request.due]]
       : null, 'process.html#request', '요청 등록'));
 
+    var vlabel = function (v) { return (U.VERDICT[v] || U.VERDICT.REVIEW).ko; };
+
     cards.push(card('위험물 프로파일', c.msds && c.msds.profile
       ? [['제품명', c.msds.profile.productName], ['UN No.', c.msds.profile.unNo],
          ['등급', 'Class ' + c.msds.profile.hazardClass + (c.msds.profile.subRisk ? '(' + c.msds.profile.subRisk + ')' : '')],
-         ['포장등급', 'PG ' + c.msds.profile.packingGroup],
+         ['포장등급', c.msds.profile.packingGroup ? 'PG ' + c.msds.profile.packingGroup : '미지정 (PG II 성능 기준 포장)'],
          ['해양오염물질', c.msds.profile.marinePollutant ? 'Yes' : 'No'],
          ['원본', c.msds.fileName]]
       : null, 'msds.html', 'MSDS 등록'));
 
     cards.push(card('적법성 검토', c.compliance
-      ? [['판정', U.VERDICT[c.compliance.verdict].ko],
+      ? [['판정', vlabel(c.compliance.verdict)],
          ['통과 게이트', c.compliance.passed + ' / 4'],
          ['검토 시각', c.compliance.checkedAt],
          ['승인자', c.compliance.approver || '미승인']]
@@ -58,14 +67,14 @@
 
     cards.push(card('확정 창고', c.warehouse
       ? [['창고', c.warehouse.alias], ['권역', c.warehouse.region],
-         ['종합 점수', c.warehouse.score + '점'], ['판정', U.VERDICT[c.warehouse.verdict].ko],
+         ['종합 점수', c.warehouse.score + '점'], ['판정', vlabel(c.warehouse.verdict)],
          ['보관료', window.DGUI.fmt(c.warehouse.ratePLDay) + '원/PL·일']]
       : null, 'matching.html', '매칭 실행'));
 
     cards.push(card('확정 경로', c.route
       ? [['경로', c.route.name], ['거리', c.route.distanceKm + ' km'],
          ['예상 소요', c.route.minutes + ' 분'],
-         ['터널', (c.route.tunnels && c.route.tunnels.length) ? c.route.tunnels.map(function (t) { return t.name + '(' + t.code + ')'; }).join(', ') : '없음'],
+         ['터널', (c.route.tunnels && c.route.tunnels.length) ? c.route.tunnels.map(function (t) { return t.name + '(' + (t.cat || t.code) + ')'; }).join(', ') : '없음'],
          ['비상대응 접근', c.route.emgMin + ' 분']]
       : null, 'route.html', '경로 검토'));
 
@@ -107,6 +116,53 @@
     }).join('');
   }
 
+  /* ---------- 케이스 보관함 ---------- */
+  function renderArchive() {
+    var el = $('archiveList');
+    if (!el) return;
+    var list = window.DGCase.archives();
+    var cur = window.DGCase.get();
+
+    var archBtn = $('archiveBtn');
+    if (archBtn) archBtn.disabled = !cur.caseNo;
+
+    if (!list.length) {
+      el.innerHTML = '<p class="muted" style="font-size:13px;">보관된 케이스가 없습니다. 케이스를 완료(또는 전환)할 때 「현재 케이스 보관」을 누르면 이곳에 쌓입니다.</p>';
+      return;
+    }
+    el.innerHTML = list.map(function (a) {
+      var un = a.msds && a.msds.profile ? a.msds.profile.unNo : '-';
+      var verdict = a.compliance ? a.compliance.label : '검토 전';
+      var wh = a.warehouse ? a.warehouse.alias : '-';
+      return '<div class="arch-item">' +
+        '<div><div class="a-t">' + esc(a.caseNo) + ' · ' + esc(un) + ' · ' + esc(verdict) + '</div>' +
+        '<div class="a-d">' + esc((a.request && a.request.item) || '-') + ' · 창고 ' + esc(wh) +
+        ' · 보관 ' + esc(a.archivedAt || '-') + (a.inbound ? ' · 입고 완료' : '') + '</div></div>' +
+        '<div class="a-btns">' +
+        '<button class="btn btn-ghost btn-sm" data-act="restore" data-no="' + esc(a.caseNo) + '">불러오기</button>' +
+        '<button class="btn btn-ghost btn-sm" data-act="del" data-no="' + esc(a.caseNo) + '">삭제</button>' +
+        '</div></div>';
+    }).join('');
+
+    el.querySelectorAll('button[data-act]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var no = b.dataset.no;
+        if (b.dataset.act === 'restore') {
+          var cur2 = window.DGCase.get();
+          if (cur2.caseNo && cur2.caseNo !== no &&
+              !confirm('현재 케이스(' + cur2.caseNo + ')를 덮어쓰고 ' + no + ' 를 불러옵니다. 현재 케이스를 먼저 보관하려면 취소 후 「현재 케이스 보관」을 누르세요.')) return;
+          window.DGCase.restore(no);
+          renderAll();
+        } else {
+          if (confirm('보관 케이스 ' + no + ' 를 삭제합니다. 되돌릴 수 없습니다.')) {
+            window.DGCase.removeArchive(no);
+            renderArchive();
+          }
+        }
+      });
+    });
+  }
+
   /* ---------- 전체 렌더 ---------- */
   function renderAll() {
     var c = window.DGCase.get();
@@ -135,6 +191,7 @@
     var sum = $('caseSummary');
     if (sum) sum.innerHTML = summaryCards(c);
     renderLogs(c);
+    renderArchive();
     window.DGUI.initReveal();
   }
 
@@ -142,10 +199,23 @@
     if ($('rqDue') && !$('rqDue').value) $('rqDue').value = defaultDue();
     $('rqSubmit').addEventListener('click', submitRequest);
     $('caseReset').addEventListener('click', function () {
-      if (confirm('현재 케이스와 감사 로그를 모두 초기화합니다. 계속할까요?')) {
+      if (confirm('현재 케이스와 감사 로그를 모두 초기화합니다. (보관함의 케이스는 유지됩니다) 계속할까요?')) {
         window.DGCase.reset();
         renderAll();
       }
+    });
+    var archBtn = $('archiveBtn');
+    if (archBtn) archBtn.addEventListener('click', function () {
+      var cur = window.DGCase.get();
+      if (!cur.caseNo) return;
+      if (confirm('현재 케이스(' + cur.caseNo + ')를 보관함에 저장하고 새 케이스를 시작합니다. 계속할까요?')) {
+        window.DGCase.archive();
+        renderAll();
+      }
+    });
+    var csvBtn = $('logCsvBtn');
+    if (csvBtn) csvBtn.addEventListener('click', function () {
+      window.DGExport.auditCsv(window.DGCase.get());
     });
     renderAll();
     window.addEventListener('dg-case', renderAll);

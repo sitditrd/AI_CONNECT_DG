@@ -59,7 +59,7 @@ on conflict (id) do update set
 -- ---------- 법령 · 국제기준 ----------
 insert into public.dg_regulations (id, name, authority, revised, url, note) values
 ('REG-DGS','위험물안전관리법 시행령 별표1 (위험물 및 지정수량)','소방청','2025-07-01','https://www.law.go.kr','제1류~제6류 유별 정의 · 지정수량. 과산화수소는 농도 36% 이상만 제6류 해당'),
-('REG-DGS2','위험물안전관리법 시행규칙 별표5 (옥내저장소 기준)','소방청','2025-07-01','https://www.law.go.kr','저장창고 구조·설비·저장한도·혼재 저장 기준'),
+('REG-DGS2','위험물안전관리법 시행규칙 별표5 (옥내저장소 기준)','소방청','2025-07-01','https://www.law.go.kr','저장창고 구조·설비·저장한도·혼재 저장 기준(유별을 달리하는 위험물의 동일 저장소 저장 원칙 금지)'),
 ('REG-CCA','화학물질관리법 (유해화학물질 보관·저장업)','환경부 · 화학물질안전원','2026-01-01','https://www.me.go.kr','유해화학물질 취급시설 기준 · 영업허가. 전국 보관창고업 약 210개소'),
 ('REG-IMDG','IMDG Code (국제해상위험물규칙) Amdt. 42-24','IMO','2026-01-01(강제 시행)','https://www.imo.org','UN 번호 · 등급 · 포장등급 · 해양오염물질 · 분리(Segregation) 기준'),
 ('REG-IATA','IATA DGR 67th Edition','IATA','2026-01-01','https://www.iata.org','항공 위험물 포장기준 · 리튬배터리 SOC 30% 이하 규정(PI965~967)'),

@@ -9,27 +9,29 @@
   var routes = [], selectedRoute = null, vehicleId = null;
 
   function $(id) { return document.getElementById(id); }
-  function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]; }); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]; }); }
   function veh() { return D.VEHICLES.filter(function (v) { return v.id === vehicleId; })[0] || D.VEHICLES[0]; }
 
-  /* 차량 제원 + 위험물 등급을 반영한 조건 재판정
-     (데이터의 checks 는 표준 차량 기준 — 대형 차량이면 도로 폭·터널 판정을 강화) */
+  /* 차량 제원 + 화물 터널 제한코드(ADR 준용)를 반영한 6조건 판정
+     · 높이/중량 : 경로 물리 제한(clearanceM · limitT)과 차량 제원 직접 비교
+     · 터널     : 화물 제한코드 X → X 이상 카테고리(cat) 터널 통행 금지
+                  (예: 코드 E 화물은 E 카테고리만 금지 — A~D 통행 가능)
+     · 도로 폭  : 협소 구간(narrow)은 대형 차량(총중량 20t 이상)만 위반 */
   function evalRoute(r) {
     var v = veh();
     var c = window.DGCase.get();
-    var cls = c.msds && c.msds.profile ? c.msds.profile.hazardClass : '9';
-    var checks = JSON.parse(JSON.stringify(r.checks));
+    var cargoCode = (c.msds && c.msds.profile && c.msds.profile.tunnelCode) || null;
 
-    if (v.heightM >= 4.0 || v.gvwT >= 39) {
-      if (r.distanceKm > 0 && r.tunnels.length) checks.height = checks.height && r.tunnels.every(function (t) { return t.code >= 'C'; });
-      checks.width = checks.width && r.name.indexOf('국도') < 0 && r.name.indexOf('지방도') < 0;
-    }
-    /* 산화성·부식성(5.1/8)은 제한코드 D 이하 터널 통행 불가로 강화 */
-    if (cls === '5.1' || cls === '8' || cls === '3') {
-      checks.tunnel = checks.tunnel && r.tunnels.every(function (t) { return t.code === 'E'; });
-    }
+    var checks = {
+      height: v.heightM <= (r.clearanceM || 4.5) && v.gvwT <= (r.limitT || 40),
+      dgban: !!r.checks.dgban,
+      tunnel: !cargoCode || (r.tunnels || []).every(function (t) { return t.cat < cargoCode; }),
+      width: !r.narrow || v.gvwT < 20,
+      eta: !!r.checks.eta,
+      emg: !!r.checks.emg
+    };
     var fails = Object.keys(checks).filter(function (k) { return !checks[k]; });
-    return { r: r, checks: checks, fails: fails, ok: fails.length === 0 };
+    return { r: r, checks: checks, fails: fails, ok: fails.length === 0, cargoCode: cargoCode };
   }
 
   /* ---------- 조건 카드 ---------- */
@@ -93,7 +95,8 @@
           '<span><span class="rm-k">거리</span><span class="rm-v">' + r.distanceKm + ' km</span></span>' +
           '<span><span class="rm-k">소요</span><span class="rm-v">' + r.minutes + ' 분</span></span>' +
           '<span><span class="rm-k">통행료</span><span class="rm-v">' + window.DGUI.fmt(r.tolls) + ' 원</span></span>' +
-          '<span><span class="rm-k">터널</span><span class="rm-v">' + (r.tunnels.length ? r.tunnels.map(function (t) { return t.name + '(' + t.code + ')'; }).join(', ') : '없음') + '</span></span>' +
+          '<span><span class="rm-k">터널 (카테고리)</span><span class="rm-v">' + (r.tunnels.length ? r.tunnels.map(function (t) { return t.name + '(' + (t.cat || t.code) + ')'; }).join(', ') : '없음') + '</span></span>' +
+          '<span><span class="rm-k">통과 높이·중량</span><span class="rm-v">' + (r.clearanceM || 4.5) + 'm · ' + (r.limitT || 40) + 't</span></span>' +
           '<span><span class="rm-k">비상대응</span><span class="rm-v">' + r.emgMin + ' 분</span></span>' +
         '</div>' +
         '<div class="c-d" style="margin-top:8px;">' + esc(r.note) + '</div>' + fails +
@@ -125,11 +128,13 @@
 
     var marks = r.tunnels.map(function (t, i) {
       var x = pts[i + 1];
-      var bad = !e.checks.tunnel;
+      var cat = t.cat || t.code;
+      /* 이 터널이 화물 제한코드에 걸리는지 개별 판정 */
+      var bad = !!(e.cargoCode && cat >= e.cargoCode);
       return '<g>' +
         '<rect x="' + (x - 13) + '" y="' + (y - 13) + '" width="26" height="26" rx="7" fill="' + (bad ? 'var(--v-no)' : 'var(--dg)') + '" opacity=".92"/>' +
-        '<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" font-size="12" font-weight="800" fill="#1b1200">' + t.code + '</text>' +
-        '<text x="' + x + '" y="' + (y + 34) + '" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".8">' + t.name + '</text>' +
+        '<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" font-size="12" font-weight="800" fill="#1b1200">' + cat + '</text>' +
+        '<text x="' + x + '" y="' + (y + 34) + '" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".8">' + t.name + (bad ? ' · 통행 금지' : '') + '</text>' +
         '</g>';
     }).join('');
 
@@ -159,8 +164,11 @@
     }).join('') + '</div>';
     $('confirmBtn').disabled = !e.ok;
 
+    /* 선택 상태 — 색상 단독 전달 방지: .sel 클래스 + aria-pressed */
     $('routeList').querySelectorAll('.route-card').forEach(function (el) {
-      el.style.outline = el.dataset.id === selectedRoute ? '2px solid var(--dg)' : '';
+      var on = el.dataset.id === selectedRoute;
+      el.classList.toggle('sel', on);
+      el.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
   }
 
@@ -186,7 +194,9 @@
         tolls: e.r.tolls, tunnels: e.r.tunnels, emgMin: e.r.emgMin, note: e.r.note,
         vehicleId: v.id, carrier: v.carrier, vehicleType: v.type,
         checkedAt: window.DGCase.stamp()
-      }
+      },
+      /* 경로·차량 재확정 시 하류(계약·배차·입고) 무효화 — 다른 확정 함수들과 동일 패턴 */
+      contract: null, dispatch: null, inbound: null
     }, '안전경로 확정 — ' + e.r.name + ' (' + e.r.distanceKm + 'km · ' + e.r.minutes + '분) · 차량 ' + v.carrier + ' ' + v.type,
        'DG Route Intelligence');
     location.href = 'dispatch.html';
@@ -204,6 +214,8 @@
     renderSpec();
     run();
     $('confirmBtn').addEventListener('click', confirmRoute);
+    /* Supabase 하이드레이션 완료 시 원격 차량 데이터로 재렌더 */
+    window.addEventListener('dg-data', function () { renderVehChips(); renderSpec(); run(); });
     window.DGUI.initReveal();
   });
 })();

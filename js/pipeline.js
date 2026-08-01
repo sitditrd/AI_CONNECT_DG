@@ -32,6 +32,8 @@
     }
   ];
 
+  var STATE_KO = { done: '완료', active: '진행 중', todo: '대기' };
+
   function render(el, opts) {
     if (!el) return;
     opts = opts || {};
@@ -39,10 +41,13 @@
     var html = GROUPS.map(function (g) {
       var rows = g.items.map(function (it) {
         var st = states[it.no - 1];
-        var link = opts.links === false ? '' : '<a href="' + it.href + '">열기 ›</a>';
+        /* 상태는 색 + 텍스트 병기, 링크는 단계명을 포함한 접근 가능한 이름 부여 */
+        var link = opts.links === false ? '' :
+          '<a href="' + it.href + '" aria-label="' + it.label + ' 열기">열기 ›</a>';
         return '<div class="pipe-item ' + st + '">' +
-                 '<span class="n">' + it.no + '</span>' +
-                 '<span>' + it.label + '</span>' + link +
+                 '<span class="n" aria-hidden="true">' + it.no + '</span>' +
+                 '<span>' + it.label + '</span>' +
+                 '<span class="pipe-state">' + STATE_KO[st] + '</span>' + link +
                '</div>';
       }).join('');
       return '<div class="pipe-group"><div class="g-t">' + g.title + '</div>' + rows + '</div>';
