@@ -18,12 +18,21 @@
 
 ## 1. SQL 실행 (SQL Editor)
 
-순서대로 전체 붙여넣기 → Run:
+**가장 빠른 방법 — `sql/_ACTIVATE_ALL.sql` 파일 하나를 통째로 붙여넣고 Run.**
+아래 4개를 올바른 순서로 합쳐 둔 파일이며, 여러 번 실행해도 안전합니다(멱등).
 
-1. `sql/auth_setup.sql` — dg_users / dg_sessions / dg_email_codes + 로그인·가입·승인 RPC + 관리자 시드
-2. `sql/case_sync.sql` — dg_cases 소유자 컬럼 + dg_case_upsert/list/get/delete RPC
+개별로 실행하려면 반드시 이 순서를 지킬 것:
 
-> `sql/schema.sql` · `sql/seed.sql`(참조 데이터)이 아직 안 되어 있으면 그것부터 실행.
+1. `sql/schema.sql` — 창고·차량·법령·케이스 테이블
+2. `sql/seed.sql` — 참조 데이터 적재
+3. `sql/auth_setup.sql` — dg_users / dg_sessions / dg_email_codes + 로그인·가입·승인 RPC + 관리자 시드
+4. `sql/case_sync.sql` — dg_cases 소유자 컬럼 + dg_case_upsert/list/get/delete RPC (3번 선행 필요)
+
+실행 여부는 이걸로 바로 확인됩니다 — 함수가 없으면 `PGRST202`가 돌아옵니다:
+
+```bash
+curl -s -X POST "https://qgwmqbtkuvozszgaunlp.supabase.co/rest/v1/rpc/dg_login" -H "apikey: sb_publishable_b-KEOweYGIY9jWtRDLr2yQ_3eKxcLkc" -H "Authorization: Bearer sb_publishable_b-KEOweYGIY9jWtRDLr2yQ_3eKxcLkc" -H "Content-Type: application/json" -d "{\"p_login\":\"sitditrd2@naver.com\",\"p_password\":\"[REDACTED-CREDENTIAL]\"}"
+```
 
 ## 2. 관리자 계정
 
