@@ -50,6 +50,40 @@
   var translating = false;
   var observer = null;
 
+  /* ---------- 네비 전용 짧은 라벨 ----------
+     영문 풀 번역("Warehouse·vehicle matching" 등)은 헤더 폭을 넘치므로
+     상단 네비에만 href 기준 축약 라벨 사용(본문·푸터는 풀 번역 유지).
+     translateNode 내부에서 적용해 MutationObserver 재번역과 충돌하지 않음. */
+  var NAV_SHORT = {
+    en: {
+      'process.html': 'Process', 'msds.html': 'MSDS', 'compliance.html': 'Compliance',
+      'matching.html': 'Matching', 'route.html': 'Safe route', 'dispatch.html': 'Dispatch',
+      'insight.html': 'Market', 'report.html': 'Report', 'index.html': 'Home'
+    },
+    zh: {
+      'process.html': '流程', 'msds.html': 'MSDS 分析', 'compliance.html': '合规审查',
+      'matching.html': '仓库·车辆匹配', 'route.html': '安全路线', 'dispatch.html': '派车·入库',
+      'insight.html': '市场现状', 'report.html': '报告', 'index.html': '首页'
+    }
+  };
+  function navShortFor(n, lang) {
+    var map = NAV_SHORT[lang];
+    if (!map) return null;
+    var p = n.parentElement;
+    if (!p || p.tagName !== 'A' || !p.closest || !p.closest('.site-nav')) return null;
+    return map[p.getAttribute('href')] || null;
+  }
+
+  /* 영어 번역 시 인라인 요소(<b> 등) 경계 공백 보정 —
+     한국어는 조사("…MSDS 한 장</b>에서")가 붙어 원문에 공백이 없지만
+     영어에서는 요소 앞뒤에 공백이 필요("A single MSDS covers…"). */
+  function fixEnSpacing(n, text) {
+    var prev = n.previousSibling, next = n.nextSibling;
+    if (prev && prev.nodeType === 1 && /^[A-Za-z0-9(·—-]/.test(text)) text = ' ' + text;
+    if (next && next.nodeType === 1 && /[A-Za-z0-9,.)·—-]$/.test(text)) text = text + ' ';
+    return text;
+  }
+
   function translateNode(root, lang) {
     if (lang === 'ko' || !root || translating) return;
     translating = true;
@@ -61,7 +95,11 @@
         if (/[가-힣]/.test(n.nodeValue)) n.__dgOrig = n.nodeValue;
         else if (n.__dgLast && n.nodeValue !== n.__dgLast) return;   /* 앱이 새 값을 씀 */
         if (n.__dgOrig == null) return;
-        var next = translateValue(n.__dgOrig, lang);
+        var next = navShortFor(n, lang);   /* 상단 네비는 축약 라벨 우선 */
+        if (next == null) {
+          next = translateValue(n.__dgOrig, lang);
+          if (lang === 'en' && next !== n.__dgOrig) next = fixEnSpacing(n, next);
+        }
         n.__dgLast = next;
         if (n.nodeValue !== next) n.nodeValue = next;
       };
