@@ -92,6 +92,13 @@
   window.DGSync = {
     push: pushNow,
     state: function () { return lastState; },
+    /* 현재 로컬 케이스를 '이미 서버와 같음'으로 표시 —
+       로그인 직후 호출해, 로그아웃 상태에서 남아 있던 로컬 케이스가
+       catch-up으로 다른 기기의 최신본을 덮어쓰지 않도록 한다 */
+    markSynced: function () {
+      var c = window.DGCase && DGCase.get();
+      if (c && c.caseNo) mark(sign(c)); else mark(null);
+    },
     list: function () {
       if (!authed()) return Promise.resolve({ error: '로그인이 필요합니다' });
       return DGAUTH.rpc('dg_case_list', { p_token: DGAUTH.token() });

@@ -69,7 +69,8 @@
     (function () {
       var A = window.DGAUTH, S = window.DGSync;
       var rows = document.getElementById('caseRows'), msg = document.getElementById('caseMsg');
-      var VD = { OK: '적합', COND: '조건부', REVIEW: '전문가 확인', NO: '불가' };
+      /* 판정 문구는 사이트 공통(js/common.js VERDICT)과 동일하게 — 화면 간 표기 불일치·미번역 방지 */
+      var VD = { OK: '적합', COND: '조건부 검토', REVIEW: '전문가 확인 필요', NO: '보관 불가' };
       function show(t, k) { msg.hidden = false; msg.textContent = (window.DGI18N ? DGI18N.t(t) : t); msg.className = 'auth-msg ' + (k || ''); setTimeout(function () { msg.hidden = true; }, 3500); }
       function esc(s) { return (s == null ? '' : String(s)).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 

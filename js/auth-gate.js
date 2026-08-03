@@ -14,7 +14,26 @@
   var gateApplied = false, timers = [];
   var lastAuthed = false, lastName = null;
 
-  function acctHost() { return document.querySelector('.site-header .header-inner'); }
+  /* 언어 스위처(i18n.js)와 같은 호스트에 주입 — 모바일에서 헤더가 가로로 넘치지 않도록 */
+  function acctHost() {
+    return document.querySelector('.site-header .header-actions') ||
+           document.querySelector('.site-header .header-inner');
+  }
+
+  /* 번역 대상 라벨과 사용자 이름을 분리 —
+     '로그아웃 · 홍길동' 처럼 합치면 사전 키와 어긋나 통째로 미번역이 된다 */
+  function setLabel(el, label, name) {
+    el.textContent = '';
+    var lb = document.createElement('span');
+    lb.textContent = label;
+    el.appendChild(lb);
+    if (name) {
+      var nm = document.createElement('span');
+      nm.className = 'acct-name';
+      nm.textContent = ' · ' + name;   /* 고유명사 — 번역하지 않음 */
+      el.appendChild(nm);
+    }
+  }
 
   function injectAccount(authed, name) {
     lastAuthed = authed; lastName = name;
@@ -25,25 +44,25 @@
     var a = document.getElementById('acctBtn');
     if (!a) { a = document.createElement('a'); a.id = 'acctBtn'; a.className = 'acct-btn'; host.appendChild(a); }
     if (authed) {
-      a.textContent = '로그아웃' + (name ? ' · ' + name : '');
+      setLabel(a, '로그아웃', name);
       a.href = 'javascript:void(0)'; a.title = '로그아웃';
       a.onclick = function () { DGAUTH.logout().then(function () { location.reload(); }); };
     } else {
-      a.textContent = '로그인'; a.href = 'login.html'; a.title = '로그인'; a.onclick = null;
+      setLabel(a, '로그인', null); a.href = 'login.html'; a.title = '로그인'; a.onclick = null;
     }
 
     /* 로그인 사용자: '내 케이스' 링크(서버 케이스 보관함) */
     var cs = document.getElementById('casesBtn');
     if (authed) {
       if (!cs) { cs = document.createElement('a'); cs.id = 'casesBtn'; cs.className = 'acct-btn'; host.insertBefore(cs, a); }
-      cs.textContent = '내 케이스'; cs.href = 'cases.html'; cs.title = '내 케이스';
+      setLabel(cs, '내 케이스', null); cs.href = 'cases.html'; cs.title = '내 케이스';
     } else if (cs) { cs.remove(); }
 
     /* 관리자: '회원 승인' 링크 */
     var adm = document.getElementById('adminBtn');
     if (authed && role === 'admin') {
       if (!adm) { adm = document.createElement('a'); adm.id = 'adminBtn'; adm.className = 'acct-btn acct-btn-admin'; host.insertBefore(adm, cs || a); }
-      adm.textContent = '회원 승인'; adm.href = 'admin.html'; adm.title = '회원 승인';
+      setLabel(adm, '회원 승인', null); adm.href = 'admin.html'; adm.title = '회원 승인';
     } else if (adm) { adm.remove(); }
   }
 

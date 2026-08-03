@@ -640,7 +640,13 @@ input[type=range] { width: 100%; accent-color: var(--dg); }
 .acct-btn-admin { background: color-mix(in srgb, var(--dg) 18%, transparent); border-color: color-mix(in srgb, var(--dg) 45%, currentColor); opacity: 1; }
 .acct-btn-admin:hover { background: color-mix(in srgb, var(--dg) 30%, transparent); }
 .hero-page .site-header:not(.scrolled) .acct-btn { color: #e9eef8; }
-@media (max-width: 900px) { .acct-btn { font-size: 11.5px; padding: 5px 9px; } }
+.acct-btn .acct-name { opacity: .78; }
+/* 좁은 화면 — 계정 버튼 3종 + 언어 스위처가 헤더를 넘치지 않도록 압축 */
+@media (max-width: 900px) {
+  .acct-btn { font-size: 11.5px; padding: 5px 8px; margin-left: 2px; max-width: 33vw; overflow: hidden; text-overflow: ellipsis; }
+  .acct-btn .acct-name { display: none; }   /* 이름은 생략 — 로그아웃 라벨만 */
+  .header-actions { gap: 4px; min-width: 0; }
+}
 
 /* 미로그인 게이트 (일정시간 뒤 blur + 로그인 유도) */
 .auth-gated .dash-section { filter: blur(6px); pointer-events: none; user-select: none; }
@@ -690,7 +696,7 @@ input[type=range] { width: 100%; accent-color: var(--dg); }
 .gate-toast .gt-btn:hover { background: var(--dg-2); }
 
 /* ---------- 앱 토스트 (ui-kit.js) ---------- */
-.dg-toast-stack { position: fixed; z-index: 220; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 8px; max-width: min(360px, 90vw); }
+.dg-toast-stack { position: fixed; z-index: 220; right: 20px; bottom: 62px; display: flex; flex-direction: column; gap: 8px; max-width: min(360px, 90vw); }
 .dg-toast {
   background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--dg);
   border-radius: 12px; box-shadow: 0 14px 38px rgba(0, 0, 0, .28);
@@ -700,7 +706,8 @@ input[type=range] { width: 100%; accent-color: var(--dg); }
 .dg-toast.ok { border-left-color: var(--v-ok); }
 .dg-toast.err { border-left-color: var(--v-no); }
 @keyframes toastIn2 { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+/* 화면 하단 고정 — 상단은 고정 헤더·스킵링크 영역이라 덮으면 클릭을 가로챈다 */
 .dg-offline-bar {
-  position: fixed; z-index: 230; left: 0; right: 0; top: 0; text-align: center;
+  position: fixed; z-index: 230; left: 0; right: 0; bottom: 0; text-align: center;
   background: var(--v-no); color: #fff; font-size: 12.5px; font-weight: 700; padding: 5px 10px;
 }

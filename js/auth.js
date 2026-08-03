@@ -72,7 +72,13 @@
 
     login: function (login, pw) {
       return rpc('dg_login', { p_login: login, p_password: pw }).then(function (r) {
-        if (r && r.ok) save(r);
+        if (r && r.ok) {
+          save(r);
+          /* 로그아웃 상태에서 진행한 로컬 케이스가 곧바로 서버에 올라가
+             다른 기기의 최신본을 덮어쓰지 않도록, 현재 상태를 '동기화됨'으로 표시.
+             이후 변경분부터 업로드된다(케이스가 필요하면 cases.html에서 명시적으로 복원) */
+          if (window.DGSync && DGSync.markSynced) DGSync.markSynced();
+        }
         return r;
       });
     },

@@ -36,5 +36,6 @@ python -m http.server 8155   # http://localhost:8155  (file:// 로 열어도 동
 
 ## 키 관리
 
-- `js/db.js`의 publishable key는 공개 전제 키. **service_role 키는 어떤 경우에도 저장소·클라이언트에 넣지 않는다.**
-- 키 회전 시: Supabase 대시보드에서 재발급 → `js/db.js` CONFIG.key 교체 → push
+- publishable key는 공개 전제 키이며 **두 곳**에 있다 — `js/db.js` CONFIG.key(참조 데이터 조회), `js/auth.js` SB_KEY(인증·케이스 동기화 RPC/Edge).
+  **service_role 키는 어떤 경우에도 저장소·클라이언트에 넣지 않는다.**
+- 키 회전 시: Supabase 대시보드에서 재발급 → `js/db.js`·`js/auth.js` **두 파일 모두** 교체 → 캐시버스팅 `?v=` 갱신 → push → 로그인·케이스 동기화까지 동작 확인

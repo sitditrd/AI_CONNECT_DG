@@ -2150,3 +2150,67 @@ window.DGI18N_DICT = {
     "로그인 계정 — 분석 실행 시 실문서 AI 분석을 시도합니다(실패 시 데모 재생).": "已登录 — 执行分析时将尝试真实文档 AI 分析（失败时转为演示回放）。"
   });
 })();
+
+/* =========================================================
+   v2.0 보강 — 서버(RPC·Edge) 반환 오류 문구 · 판정 라벨 · 브랜드 부제
+   화면 문구와 달리 이 값들은 서버가 돌려주는 원문이 그대로 표시되므로
+   (login/admin/cases 의 `r.error` 우선 표시), 사전에 없으면 EN/中에서 한국어로 남는다.
+   ========================================================= */
+(function () {
+  function add(lang, map) {
+    var d = window.DGI18N_DICT[lang] = window.DGI18N_DICT[lang] || {};
+    Object.keys(map).forEach(function (k) { if (!(k in d)) d[k] = map[k]; });
+  }
+  add('en', {
+    /* sql/auth_setup.sql */
+    "아이디 또는 비밀번호가 올바르지 않습니다": "Incorrect email or password",
+    "승인 대기중입니다. 관리자 승인 후 이용 가능합니다.": "Your account is awaiting approval. You can sign in once an administrator approves it.",
+    "승인되지 않았거나 거부된 계정입니다.": "This account has not been approved, or was rejected.",
+    "세션이 만료되었습니다": "Your session has expired",
+    "인증코드가 올바르지 않거나 만료되었습니다": "The verification code is incorrect or has expired",
+    "이미 가입 신청되었거나 사용 중인 아이디입니다": "This email has already applied or is in use",
+    "비밀번호는 #자 이상이어야 합니다": "Password must be at least # characters",
+    "가입되지 않은 아이디입니다": "No account exists for this email",
+    "관리자 권한이 필요합니다": "Administrator permission required",
+    "잘못된 상태값": "Invalid status value",
+    "아이디(이메일)를 확인하세요": "Please check the email address",
+    /* sql/case_sync.sql */
+    "로그인이 필요합니다": "Login required",
+    "케이스 번호가 없습니다": "The case has no case number",
+    "케이스 데이터가 너무 큽니다": "Case data is too large",
+    "케이스를 찾을 수 없습니다": "Case not found",
+    /* js/auth.js */
+    "네트워크 오류": "Network error",
+    /* 판정 라벨 (js/common.js VERDICT · cases.html) */
+    "조건부 검토": "Conditional review",
+    "전문가 확인 필요": "Expert review required",
+    /* login.html 브랜드 부제 (단독형) */
+    "AI 기반 위험물 물류 통합 플랫폼": "AI-powered integrated dangerous goods logistics platform"
+  });
+  add('zh', {
+    /* sql/auth_setup.sql */
+    "아이디 또는 비밀번호가 올바르지 않습니다": "邮箱或密码不正确",
+    "승인 대기중입니다. 관리자 승인 후 이용 가능합니다.": "账户正在等待审批。管理员批准后即可使用。",
+    "승인되지 않았거나 거부된 계정입니다.": "该账户尚未获批准或已被拒绝。",
+    "세션이 만료되었습니다": "会话已过期",
+    "인증코드가 올바르지 않거나 만료되었습니다": "验证码不正确或已过期",
+    "이미 가입 신청되었거나 사용 중인 아이디입니다": "该邮箱已申请注册或正在使用中",
+    "비밀번호는 #자 이상이어야 합니다": "密码须不少于#位",
+    "가입되지 않은 아이디입니다": "该邮箱尚未注册",
+    "관리자 권한이 필요합니다": "需要管理员权限",
+    "잘못된 상태값": "状态值无效",
+    "아이디(이메일)를 확인하세요": "请检查邮箱地址",
+    /* sql/case_sync.sql */
+    "로그인이 필요합니다": "需要登录",
+    "케이스 번호가 없습니다": "案例缺少编号",
+    "케이스 데이터가 너무 큽니다": "案例数据过大",
+    "케이스를 찾을 수 없습니다": "未找到案例",
+    /* js/auth.js */
+    "네트워크 오류": "网络错误",
+    /* 판정 라벨 (js/common.js VERDICT · cases.html) */
+    "조건부 검토": "有条件审查",
+    "전문가 확인 필요": "需专家确认",
+    /* login.html 브랜드 부제 (단독형) */
+    "AI 기반 위험물 물류 통합 플랫폼": "基于 AI 的危险品物流综合平台"
+  });
+})();

@@ -94,7 +94,7 @@ AI_CONNECT_DG/
   `js/db.js`가 자동으로 원격 데이터(`dg_warehouses` · `dg_vehicles` · `dg_regulations`)를 읽어 시드를 덮어쓰고,
   `dg-data` 이벤트로 각 화면이 즉시 재렌더됩니다.
   **워크벤치 · 적법성 검토 · 매칭 화면**의 우측 상단 배지가 "내장 시드 데이터" → "Supabase 연결"로 바뀝니다.
-- 프로젝트: `https://qgwmqbtkuvozszgaunlp.supabase.co` (publishable key는 `js/db.js` — 클라이언트 노출 전제 키, 보호는 RLS가 담당. **service key 사용 금지**)
+- 프로젝트: `https://qgwmqbtkuvozszgaunlp.supabase.co` (publishable key는 `js/db.js · js/auth.js` — 클라이언트 노출 전제 키, 보호는 RLS가 담당. **service key 사용 금지**)
 - `dg_cases`는 insert-only 정책(조회 차단) — 입고 확정 시 케이스 스냅샷을 적재 시도하며 실패해도 화면 동작에 영향 없음.
 - 케이스 진행 상태는 **브라우저 localStorage**(`dg-case`)에 저장 — 워크벤치의 "케이스 초기화"로 리셋.
 
@@ -131,7 +131,7 @@ AI_CONNECT_DG/
 
 ## 7. 남은 작업 (운영 전환 시)
 
-1. **LLM-OCR 실연동** — 현재는 실제 MSDS 3종의 사전 추출 결과 재생(데모 모드). 운영 시 문서 인식 AI 사용료 발생(발표자료 26장 '실제 현금 지출 항목').
+1. **LLM-OCR 비용 통제** — 실문서 분석은 v2.0에서 구현 완료(Edge `msds-extract` → Claude 문서 AI, `js/msds.js` 실분석 경로). `ANTHROPIC_API_KEY` 등록 시 활성화되며 그 시점부터 문서 인식 AI 사용료가 실제 발생(발표자료 26장 '실제 현금 지출 항목'). 호출은 승인 계정 토큰 필수·8MB 제한으로 익명 과금은 차단되지만, 월 상한·사용량 모니터링 정책은 별도 수립 필요. 키 미등록 시에는 데모 재생 폴백이라 과금 없음.
 2. **법령 DB 구독** — `dg_regulations`의 개정일 자동 갱신(법령·인허가 DB 구독).
 3. **지도·경로 API** — 위험물 통행 제한 반영 실경로(현재는 사전계산 경로 카드).
 4. **전자계약·PG** — 표준계약 서명·에스크로 정산 실연동.

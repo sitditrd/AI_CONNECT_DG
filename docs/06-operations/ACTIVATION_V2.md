@@ -39,10 +39,14 @@ update public.dg_users
 
 ```bash
 supabase login
+supabase init          # supabase/config.toml 이 없을 때만 — 이미 있으면 건너뜀(중복 실행 시 거부됨)
 supabase link --project-ref qgwmqbtkuvozszgaunlp
 supabase functions deploy send-code     --no-verify-jwt
 supabase functions deploy msds-extract  --no-verify-jwt
 ```
+
+> 저장소에는 `supabase/functions/` 소스만 있고 `config.toml` 은 없습니다 —
+> `link` 이전에 `init` 을 한 번 실행해야 CLI가 프로젝트로 인식합니다.
 
 (대시보드 → Edge Functions 에서 소스 붙여넣기로 만들어도 동일 — `supabase/functions/*/index.ts`)
 
