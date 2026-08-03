@@ -150,11 +150,14 @@ grant execute on function public.dg_login(text,text), public.dg_me(uuid), public
   public.dg_signup_verified(text,text,text,text), public.dg_reset_with_code(text,text,text),
   public.dg_admin_list(uuid), public.dg_admin_set_status(uuid,uuid,text), public.dg_admin_reset_pw(uuid,uuid,text) to anon;
 
--- 관리자 계정 시드 (초기 비번 CHANGE_ME — 활성화 직후 반드시 변경).
+-- 관리자 계정 시드 — 운영 관리자: sitditrd2@naver.com
+-- ⚠ 비밀번호는 이 파일에 절대 넣지 않는다(공개 저장소 · 깃 이력 영구 보존).
+--    아래는 추측 불가능한 임의값으로 계정만 생성하며, 이 상태로는 로그인할 수 없다.
+--    활성화 절차 2단계(docs/06-operations/ACTIVATION_V2.md)에서 SQL Editor로 비밀번호를 지정할 것.
 -- 이메일 인증코드 발송: Edge Function send-code + SMTP(예: smtp.naver.com:465, 앱 비밀번호).
 --   시크릿(대시보드 → Edge Functions → Secrets): SMTP_HOST/PORT/USER/PASS/FROM
 insert into public.dg_users(login_id, pass_hash, status, role, display_name)
-values ('sitditrd2@naver.com', crypt('CHANGE_ME', gen_salt('bf')), 'approved', 'admin', '관리자')
+values ('sitditrd2@naver.com', crypt(gen_random_uuid()::text, gen_salt('bf')), 'approved', 'admin', '관리자')
 on conflict (login_id) do nothing;
 
 notify pgrst, 'reload schema';
