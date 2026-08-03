@@ -28,8 +28,9 @@
 - **재로그인 시 케이스 덮어쓰기 방지** — 로그인 직후 `DGSync.markSynced()`로 현재 로컬 상태를 동기화됨으로 표시(이후 변경분부터 업로드)
 - **문서 정정** — 활성화 절차에 `supabase init` 누락 보완, 키 회전 절차에 `js/auth.js` 두 번째 publishable key 위치 명시, README '남은 작업'의 MSDS 실연동 서술을 구현 완료 기준으로 갱신
 
-### 보안 — 관리자 시드 자격증명 제거
-- 저장소가 **공개**이므로 관리자 초기 비밀번호를 파일에서 제거. `sql/auth_setup.sql` 은 계정만 `gen_random_uuid()` 임의값으로 생성하고(그 상태로는 로그인 불가), 실제 비밀번호는 활성화 2단계에서 SQL Editor로 지정 — 기존 `CHANGE_ME` 는 알려진 기본값이라 그 자체가 취약점이었음
+### 관리자 계정 시드
+- `sql/auth_setup.sql` 실행 시 관리자 `sitditrd2@naver.com` / `[REDACTED-CREDENTIAL]` 가 승인 상태로 즉시 생성되도록 지정(사용자 요청). 재실행 시에도 동일 값으로 재설정되도록 `on conflict do update` 적용
+- ⚠ 저장소가 공개이므로 이 비밀번호는 열람 가능 — 시연 종료 후 교체 필요(교체 시 기존 세션 자동 무효화). ACTIVATION_V2 2장에 계정표와 교체 SQL 명시
 
 ### 운영
 - 활성화 런북 `docs/06-operations/ACTIVATION_V2.md` — SQL 2본 실행 → 관리자 비번 교체 → Edge 2종 배포 → 시크릿(SMTP·ANTHROPIC) → 체크리스트 6항

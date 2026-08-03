@@ -25,20 +25,23 @@
 
 > `sql/schema.sql` · `sql/seed.sql`(참조 데이터)이 아직 안 되어 있으면 그것부터 실행.
 
-## 2. 관리자 비밀번호 지정 (필수 — 이 단계 전에는 로그인 불가)
+## 2. 관리자 계정
 
-`sql/auth_setup.sql` 은 관리자 계정 `sitditrd2@naver.com` 을 **임의값(추측 불가)** 으로 생성합니다.
-저장소가 공개이므로 비밀번호는 파일에 두지 않습니다 — SQL Editor에서 직접 지정하세요.
+`sql/auth_setup.sql` 실행 시 아래 계정이 **승인 상태**로 바로 생성됩니다(재실행하면 비밀번호가 이 값으로 되돌아갑니다).
 
-```sql
-update public.dg_users
-   set pass_hash = crypt('여기에_실제_비밀번호', gen_salt('bf'))
- where login_id = 'sitditrd2@naver.com';
-```
+| 항목 | 값 |
+|---|---|
+| 아이디 | `sitditrd2@naver.com` |
+| 초기 비밀번호 | `[REDACTED-CREDENTIAL]` |
 
-> 조건: 8자 이상 + 특수문자 포함(화면 검증 기준과 동일).
-> 이 SQL은 실행 이력이 남지 않도록 SQL Editor에서 실행 후 편집기 내용을 지우는 것을 권장합니다.
-> 비밀번호 변경 시 해당 계정의 기존 세션은 자동으로 모두 무효화됩니다.
+> ⚠ **이 저장소는 공개(PUBLIC)입니다** — 위 비밀번호는 누구나 열람할 수 있습니다.
+> 시연·검증이 끝나면 아래 SQL로 반드시 교체하세요(교체 시 기존 세션은 자동 무효화):
+>
+> ```sql
+> update public.dg_users
+>    set pass_hash = crypt('새비밀번호(8자+특수문자)', gen_salt('bf'))
+>  where login_id = 'sitditrd2@naver.com';
+> ```
 
 ## 3. Edge Function 배포
 
