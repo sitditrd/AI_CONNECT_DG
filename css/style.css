@@ -120,6 +120,7 @@ button { font-family: inherit; cursor: pointer; }
 .hero-page .site-header:not(.scrolled) .logo-slot,
 .hero-page .site-header:not(.scrolled) .site-nav a,
 .hero-page .site-header:not(.scrolled) .icon-btn,
+.hero-page .site-header:not(.scrolled) .lang-switch,
 .hero-page .site-header:not(.scrolled) .nav-burger { color: #eaf1fb; }
 .hero-page .site-header:not(.scrolled) .logo-text .l1 { color: #eaf1fb; }
 .hero-page .site-header:not(.scrolled) .logo-text .l2 { color: #ffc266; }
@@ -134,6 +135,11 @@ button { font-family: inherit; cursor: pointer; }
 
 .header-actions { display: flex; align-items: center; gap: 8px; flex: none; }
 .header-actions .btn { white-space: nowrap; flex: none; padding: 8px 14px; font-size: 13.5px; }
+/* 언어 전환기 (한 · EN · 中) — i18n.js 가 자동 주입 */
+.lang-switch { display: inline-flex; align-items: center; border: 1px solid currentColor; border-radius: 999px; overflow: hidden; opacity: .8; flex: none; }
+.lang-btn { border: 0; background: transparent; color: inherit; font-size: 12px; font-weight: 800; padding: 5px 8px; cursor: pointer; line-height: 1; white-space: nowrap; }
+.lang-btn:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+.lang-btn.active { background: color-mix(in srgb, currentColor 20%, transparent); }
 .icon-btn {
   width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border);
   background: transparent; color: var(--ink-2);

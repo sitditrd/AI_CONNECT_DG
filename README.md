@@ -1,6 +1,6 @@
 # Connect DG — AI 기반 위험물 물류 통합 플랫폼
 
-> **TaeSLA 4기 최종 과제** — '창고 매칭'을 넘어, 분석 · 보관 · 운송 · 관리를 하나로.
+> '창고 매칭'을 넘어, 분석 · 보관 · 운송 · 관리를 하나로.
 > 저장소 https://github.com/sitditrd/AI_CONNECT_DG · 배포 **https://sitditrd.github.io/AI_CONNECT_DG/** · 문의 itt@twsc.co.kr
 
 화주 · 위험물 창고 · 운송사를 하나의 네트워크로 연결하는 **위험물(DG) 물류 통합 플랫폼**의 기능 시연 웹.
@@ -58,6 +58,7 @@ AI_CONNECT_DG/
 │  ├─ db.js               Supabase REST 연동(publishable key) — 실패 시 시드로 동작, dg-data 이벤트로 재렌더
 │  ├─ match-engine.js     매칭·적합성 평가 엔진 (가중 점수 + 판정 4종 + 국내 유별 대조)
 │  ├─ pipeline.js         9단계 파이프라인 렌더러 (상태 텍스트 배지)
+│  ├─ i18n.js · i18n-dict.js  다국어(한/영/중) 엔진 + 자동 생성 사전(하베스트→번역 워크플로→빌드)
 │  ├─ export.js           CSV 내보내기 (UTF-8 BOM · Excel 호환)
 │  └─ landing/process/msds/compliance/matching/route/dispatch/insight/report.js  화면별
 ├─ sql/schema.sql         Supabase 테이블 + RLS (참조 공개읽기 · 케이스 insert-only)
@@ -98,6 +99,8 @@ AI_CONNECT_DG/
 
 ## 6. 검증 이력
 
+**2026-08-03 (v1.2 다국어)** — 한/영/중 전환(전 화면·동적 렌더 포함), i18n E2E 13/13 · 회귀 16/16 + 25/25 PASS. TaeSLA 표기 제거.
+
 **2026-08-01 (v1.1 고도화)** — 멀티에이전트 감사(19 에이전트) 확정 버그 14건 전량 수정 후:
 - `node --check` — JS 15종 문법 통과.
 - jsdom 스모크 — **9개 페이지**(리포트 포함) 콘솔 에러 0 · 빈 컨테이너 0.
@@ -119,4 +122,4 @@ AI_CONNECT_DG/
 
 ---
 
-*Connect DG · 태웅로직스 TaeSLA 4기 · itt@twsc.co.kr · 본 문서는 이어받기용 단일 진입점입니다.*
+*Connect DG · 태웅로직스 · itt@twsc.co.kr · 본 문서는 이어받기용 단일 진입점입니다.*

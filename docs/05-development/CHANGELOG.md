@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 2026-08-03 — v1.2 다국어(한/영/중) · TaeSLA 표기 제거
+
+### 신규
+- **다국어 전환(한/EN/中)** — AI_SCM(TWL Control Tower) i18n 아키텍처 계승 확장:
+  - `js/i18n.js` 엔진: 구문(phrase) 사전 자동 번역 · 숫자 `#` 템플릿 매칭(동적 수치 대응) · MutationObserver 로 JS 동적 렌더(후보 카드·감사 로그·리포트) 실시간 번역 · placeholder/aria-label/data-tip/title 속성 · alert/confirm · 문서 title · ko 복귀 시 원문 복원
+  - `js/i18n-dict.js` 사전(자동 생성 109KB): 전 화면 렌더 하베스트 965건 → 정규화 931 템플릿 × 영/중 — 커버리지 100% · 플레이스홀더 불일치 0
+  - 언어 스위처(한·EN·中) 헤더 자동 주입 · localStorage `dg-lang` 유지
+  - 생성 파이프라인: harvest.js(빈 케이스+완료 케이스 전 화면 렌더 수집) → 8-에이전트 병렬 번역 워크플로 → build_dict.js
+- **TaeSLA 4기 표기 제거** — 히어로·푸터·OG 공유 이미지에서 제거(TAEWOONG LOGISTICS · CONNECT DG 로 대체)
+
+### 검증
+- i18n E2E 13/13 (EN/中 전환·KO 복원·언어 유지·동적 렌더 번역·title) · 스모크 9페이지 에러 0 · 기존 E2E 16/16 + 25/25 회귀 통과
+
 ## 2026-08-01 — v1.1 고도화 (멀티에이전트 감사 반영)
 
 ### 신규 기능
