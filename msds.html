@@ -8,6 +8,7 @@
   <title>MSDS Document AI — 표준 위험물 프로파일 | Connect DG</title>
   <meta name="description" content="비정형 MSDS를 LLM-OCR로 구조화해 CAS No.·UN Number·Hazard Class·Packing Group을 원문 위치·신뢰도와 함께 추출합니다.">
   <meta name="theme-color" content="#0a0f1e">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="canonical" href="https://sitditrd.github.io/AI_CONNECT_DG/msds.html">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Connect DG">
@@ -16,7 +17,7 @@
   <meta property="og:image" content="https://sitditrd.github.io/AI_CONNECT_DG/assets/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-08-03b">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-03c">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/touch-icon.png">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
@@ -94,8 +95,9 @@
               <span class="muted" style="font-size:12px;" id="progressText" role="status"></span>
             </div>
             <p class="notice" style="margin-top:14px;">
-              <b>데모 모드</b> — 이 화면은 실제 LLM-OCR API를 호출하지 않고, 실제 MSDS 3종에서 사전 추출·검증한 결과를 동일한 처리 순서로 재생합니다.
-              운영 전환 시 문서 인식 AI(LLM-OCR) 사용료가 실제 현금 지출 항목이 됩니다.
+              <b>두 가지 분석 모드</b> — 샘플 선택 시 실제 MSDS 3종에서 사전 추출·검증한 결과를 동일한 처리 순서로 재생합니다(데모).
+              <b>로그인 후 파일을 업로드하면 문서 AI가 실문서를 직접 분석</b>하며, 실패 시 데모 재생으로 자동 전환됩니다.
+              운영 시 문서 인식 AI 사용료가 실제 현금 지출 항목이 됩니다.
             </p>
           </div>
         </div>
@@ -178,11 +180,15 @@
     </div>
   </footer>
 
-  <script src="js/common.js?v=2026-08-03b"></script>
-  <script src="js/i18n-dict.js?v=2026-08-03b"></script>
-  <script src="js/i18n.js?v=2026-08-03b"></script>
-  <script src="js/data_dg.js?v=2026-08-03b"></script>
-  <script src="js/db.js?v=2026-08-03b"></script>
-  <script src="js/msds.js?v=2026-08-03b"></script>
+  <script src="js/common.js?v=2026-08-03c"></script>
+  <script src="js/i18n-dict.js?v=2026-08-03c"></script>
+  <script src="js/i18n.js?v=2026-08-03c"></script>
+  <script src="js/auth.js?v=2026-08-03c"></script>
+  <script src="js/auth-gate.js?v=2026-08-03c"></script>
+  <script src="js/ui-kit.js?v=2026-08-03c"></script>
+  <script src="js/case-sync.js?v=2026-08-03c"></script>
+  <script src="js/data_dg.js?v=2026-08-03c"></script>
+  <script src="js/db.js?v=2026-08-03c"></script>
+  <script src="js/msds.js?v=2026-08-03c"></script>
 </body>
 </html>

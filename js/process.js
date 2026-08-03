@@ -16,6 +16,14 @@
 
   /* ---------- 요청 등록 ---------- */
   function submitRequest() {
+    /* 입력 검증 — 핵심 필드가 비면 등록 차단(첫 오류 필드에 포커스) */
+    if (window.DGKit && !DGKit.validate([
+      { el: $('rqShipper'), test: function (v) { return v.length >= 2; }, msg: '화주사를 2자 이상 입력하세요.' },
+      { el: $('rqItem'), test: function (v) { return v.length >= 2; }, msg: '품목명을 2자 이상 입력하세요.' },
+      { el: $('rqQty'), test: function (v) { var n = Number(v); return n >= 1 && n <= 100000 && Number.isFinite(n); }, msg: '수량(파렛트)은 1 이상이어야 합니다.' },
+      { el: $('rqDue'), test: function (v) { return !v || !isNaN(new Date(v).getTime()); }, msg: '입고 예정일 형식을 확인하세요.' }
+    ])) return;
+
     var req = {
       shipper: $('rqShipper').value.trim() || '미기재',
       item: $('rqItem').value.trim() || '미기재',

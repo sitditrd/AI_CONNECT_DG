@@ -40,6 +40,9 @@ git add -A && git commit -m "..." && git push origin master
 | 배차·입고 | `dispatch.html` | 20 · 23 | **실행 6단계** · 견적/정산 · GPS 시뮬레이션 · 전자인수증 · 입고 검수 · 자동 생성 문서 6종 |
 | 적합성 리포트 | `report.html` | 34 (MVP 산출물) | **인쇄용 검토 보고서** — 프로파일·4게이트·매칭·경로·입고·감사 로그 전체를 A4 양식으로, `window.print()` → PDF |
 | 시장 현황 | `insight.html` | 4~8 · 12 | 소방청 통계(10.9만 개소 · 옥내저장소 8,702) · 권역/유별 편중 · 화학사고 추이 · 4대 문제 |
+| 로그인 (v2.0) | `login.html` | — | 이메일 OTP 가입 → 관리자 승인 → bcrypt 로그인 · 비밀번호 강도 미터 · 찾기/재설정 |
+| 회원 승인 (v2.0) | `admin.html` | — | 관리자 전용 — 가입 승인/거부 · 임시 비밀번호 재설정 |
+| 내 케이스 (v2.0) | `cases.html` | — | 서버 보관함 — 로그인 케이스 자동 동기화 · 다른 기기에서 열기/삭제 |
 
 **설계 원칙(발표자료 15 · 18 · 33장 반영)** — AI는 판단을 대신하지 않고 전문가가 검토할 근거를 구조화. "100% 적법·완전 면책"이 아닌 **'법률 적합성 사전검토 + 전문가 검토 지원'** 으로 표현. 추천점수는 우선순위 지표일 뿐 적법성 확률이 아님을 화면에 명시.
 
@@ -67,6 +70,20 @@ AI_CONNECT_DG/
 ├─ .github/workflows/     deploy-pages.yml (push → Pages 자동배포)
 └─ docs/                  01-overview · 02-requirements · 03-architecture · 05-development · 06-operations
 ```
+
+---
+
+## 3.5 v2.0 — 계정 · 서버 기능 (현업 완성도)
+
+| 기능 | 구성 | 미활성 시 폴백 |
+|---|---|---|
+| 커스텀 인증 | `js/auth.js`(DGAUTH) + `sql/auth_setup.sql` RPC + Edge `send-code` — 이메일 OTP · 관리자 승인 · bcrypt · 30일 세션 | 로그인 실패 안내만, 데모는 정상 |
+| 미로그인 게이트 | `js/auth-gate.js` — 워크벤치 12초 노출 → 카운트다운 → blur + 로그인 유도 | 티저로만 동작(보안 아님) |
+| 케이스 서버 동기화 | `js/case-sync.js` + `sql/case_sync.sql` — dg-case 이벤트 1.5초 디바운스 업서트, `cases.html` 보관함 | 로컬(localStorage)만 저장 |
+| MSDS 실문서 분석 | Edge `msds-extract` — 세션 토큰 검증 → Claude 문서 AI(JSON 스키마 출력) → 표준 프로파일 | 데모 재생 자동 폴백 |
+| 견고화 | `js/ui-kit.js` 토스트·오프라인 감지·폼 검증, PWA `manifest.webmanifest` | — |
+
+**활성화 절차**: `docs/06-operations/ACTIVATION_V2.md` — Connect DG 전용 Supabase(`qgwmqbtkuvozszgaunlp`) SQL Editor에서 `sql/auth_setup.sql`·`sql/case_sync.sql` 실행 → 관리자 초기 비번 교체 → Edge Functions 2종 배포 → 시크릿(SMTP_*, ANTHROPIC_API_KEY) 등록.
 
 ---
 

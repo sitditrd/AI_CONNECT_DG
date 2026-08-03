@@ -1,0 +1,14 @@
+{
+  "name": "Connect DG — AI 기반 위험물 물류 통합 플랫폼",
+  "short_name": "Connect DG",
+  "description": "MSDS 한 장으로 적법성 사전검토부터 안전한 운송과 입고 관리까지 — 위험물 물류 9단계 워크벤치",
+  "start_url": "./process.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a0f1e",
+  "theme_color": "#0a0f1e",
+  "lang": "ko",
+  "icons": [
+    { "src": "assets/touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ]
+}

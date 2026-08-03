@@ -13,6 +13,10 @@ python -m http.server 8155   # http://localhost:8155  (file:// 로 열어도 동
 2. 확인: https://sitditrd.github.io/AI_CONNECT_DG/
 3. 최초 1회만: Settings → Pages → Source = **GitHub Actions**
 
+## v2.0 백엔드 활성화 (인증 · 케이스 동기화 · 실문서 분석)
+
+→ **[ACTIVATION_V2.md](ACTIVATION_V2.md)** 참조 — SQL 2본(auth_setup/case_sync) 실행 → 관리자 비번 교체 → Edge Functions(send-code/msds-extract) 배포 → 시크릿(SMTP_*, ANTHROPIC_API_KEY). 미활성 상태에서도 사이트는 안전하게 폴백 동작.
+
 ## Supabase 전환 / 데이터 갱신
 
 1. https://supabase.com/dashboard → 프로젝트 `qgwmqbtkuvozszgaunlp` → SQL Editor

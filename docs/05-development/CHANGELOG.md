@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## 2026-08-03 — v2.0 현업 완성도 고도화 (인증 · 서버 동기화 · 실문서 분석)
+
+### 신규
+- **커스텀 인증 포팅(AI_SCM 계열)** — 이메일 OTP 가입 → 관리자 승인 → bcrypt 로그인 → 30일 세션 토큰
+  - `js/auth.js`(DGAUTH) · `login.html` · `admin.html` · `css/auth.css` · `sql/auth_setup.sql` · Edge `send-code`(60초 레이트리밋 · ASCII 제목)
+  - `js/auth-gate.js` — 워크벤치 화면 12초 노출 후 카운트다운 토스트 → blur 게이트, 로그인 시 해제 · 헤더 계정/내 케이스/회원 승인 버튼 주입
+- **케이스 서버 동기화(다기기)** — `sql/case_sync.sql`(owner 기반 upsert/list/get/delete RPC) · `js/case-sync.js`(dg-case 1.5초 디바운스 자동 업로드) · `cases.html`(서버 보관함: 열기/삭제/즉시 동기화)
+- **MSDS 실문서 분석** — Edge `msds-extract`: 세션 토큰 검증 후 Claude 문서 AI(document block + JSON 스키마 구조화 출력)로 PDF/이미지에서 표준 위험물 프로파일 추출(8MB 제한). `msds.js` 로그인+업로드 시 실분석, 실패 시 데모 재생 자동 폴백 · 케이스 복원 경로 지원
+- **견고화** — `js/ui-kit.js`(토스트 스택 · 오프라인 바 · 복구 시 재동기화 · 폼 검증 헬퍼) · process 요청 폼 검증(화주/품목/수량/일자) · PWA `manifest.webmanifest` · 신규 화면 noindex
+- **i18n 확장** — v2.0 문구 130키 × EN/中 병합(누락 키만) → 총 1,061 템플릿
+
+### 보안·정합성 강화 (6관점 적대 검증 확정 9건 반영)
+- **OTP 무차별 대입 차단** — `dg_email_codes.attempts` 추가, 오입력 5회 초과 시 코드 즉시 소각(가입·재설정 공통). 발송 측은 새 코드 발급 시 같은 주소·목적의 기존 미사용 코드를 무효화해 동시 유효 코드를 1개로 유지
+- **세션 회수** — `dg_me`가 `status='approved'`까지 확인(승인 취소 계정의 잔여 토큰 즉시 무력화 → 클라이언트 게이트·유료 MSDS 분석 경로 동시 차단) · 비밀번호 재설정(본인·관리자)과 승인 취소 시 해당 사용자 세션 삭제
+- **메일 발송 남용 방어** — 레이트리밋 조회 실패 시 통과하던 fail-open을 차단(fail-closed)으로, 주소당 60초 제한을 목적 무관으로 통합, 전역 시간당 30건 상한 추가, 인증코드를 `crypto.getRandomValues` 기반으로 교체
+- **케이스 동기화 유실 수정** — 확정 직후 화면 이동으로 1.5초 디바운스가 버려지던 문제를 `pagehide` 즉시 flush(keepalive) + 다음 페이지 catch-up으로 해소. catch-up은 마지막 업로드 서명과 다를 때만 전송해 오래된 브라우저가 타 기기 최신본을 덮어쓰지 않음. 세대 카운터로 늦게 도착한 구버전 응답 무시
+- **MSDS 실분석 견고화** — `validToken`이 status까지 확인 · `stop_reason=max_tokens`(출력 잘림)를 파싱 실패로 넘기지 않고 원인 안내 · `effort: medium`으로 thinking 토큰 여유 확보
+- **오프라인 오탐 수정** — `validate()`가 네트워크 오류를 세션 만료와 구분(일시 장애 시 로그인 세션 유지)
+
+### 운영
+- 활성화 런북 `docs/06-operations/ACTIVATION_V2.md` — SQL 2본 실행 → 관리자 비번 교체 → Edge 2종 배포 → 시크릿(SMTP·ANTHROPIC) → 체크리스트 6항
+- 미활성 상태에서도 전 기능 안전 폴백(로컬 케이스 · 데모 재생 · 게이트 티저)
+
 ## 2026-08-03 — v1.2 다국어(한/영/중) · TaeSLA 표기 제거
 
 ### 신규
