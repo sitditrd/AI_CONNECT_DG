@@ -154,13 +154,29 @@
       return;
     }
 
-    /* 데모 모드 — 업로드 문서는 분석되지 않는다는 점을 명확히 알리고,
-       재생할 샘플은 파일명 추측이 아니라 사용자가 직접 고르게 한다.
-       (파일명 숫자로 샘플을 찍던 기존 방식은 무관한 프로파일이 떠 '오인식'으로 보였다) */
+    /* 데모 모드 — 업로드 문서는 분석되지 않지만, 시연 흐름이 끊기지 않도록
+       재생할 샘플을 '무작위'로 하나 자동 선택해 분석 실행을 바로 활성화한다.
+       파일명 숫자로 샘플을 찍던 예전 방식과는 다르다 — 그때는 파일 내용과
+       관계있는 척했기 때문에 '오인식'으로 보였다. 지금은 무작위임을 화면에 명시하고,
+       사용자가 아래 칩으로 언제든 다른 샘플로 바꿀 수 있다. */
+    var sample = pickRandomSample();
+    if (sample) pick(sample.id);
     $('uploadState').innerHTML = '업로드 — <b>' + esc(f.name) + '</b> (' + kb + ' KB) · ' +
       '<b>데모 재생 모드</b>라 이 문서는 분석되지 않습니다. ' + esc(e.reason) +
-      '<br>아래에서 재생할 MSDS 샘플을 직접 선택하세요.';
+      (sample
+        ? '<br>재생할 샘플로 <b>' + esc(sample.title) + '</b>(' + esc(sample.profile.unNo) +
+          ')이 무작위로 선택되었습니다 — 아래에서 다른 샘플로 바꿀 수 있습니다.'
+        : '<br>아래에서 재생할 MSDS 샘플을 직접 선택하세요.');
     $('analyzeBtn').disabled = !selected;
+  }
+
+  /* 데모 재생용 샘플 무작위 선택 — 직전에 재생한 샘플은 가능하면 피해
+     연속 업로드 시 같은 프로파일만 반복되지 않게 한다. */
+  function pickRandomSample() {
+    var pool = (D.MSDS || []).filter(function (m) { return !selected || m.id !== selected.id; });
+    if (!pool.length) pool = D.MSDS || [];
+    if (!pool.length) return null;
+    return pool[Math.floor(Math.random() * pool.length)];
   }
 
   function initDrop() {

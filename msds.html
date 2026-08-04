@@ -84,7 +84,7 @@
           <div class="panel-body">
             <div class="drop-zone" id="dropZone">
               <div class="dz-t">MSDS 파일을 여기에 끌어다 놓으세요</div>
-              <div class="dz-d">또는 아래 실제 MSDS 3종 중 하나를 선택해 분석 과정을 재생합니다</div>
+              <div class="dz-d">데모 재생 모드에서는 업로드 시 아래 실제 MSDS 3종 중 하나가 무작위로 선택됩니다</div>
               <button class="btn btn-ghost btn-sm" type="button" onclick="document.getElementById('fileInput').click()">파일 선택</button>
               <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff" class="hide" aria-hidden="true" tabindex="-1">
             </div>
@@ -97,7 +97,8 @@
             </div>
             <p class="notice" style="margin-top:14px;">
               <b>현재 엔진은 위 배지에 표시됩니다.</b> <b>데모 재생</b>은 실제 MSDS 3종에서 사전 추출·검증한 결과를
-              동일한 처리 순서로 보여주며 비용이 들지 않습니다 — 업로드한 문서는 분석되지 않습니다.
+              동일한 처리 순서로 보여주며 비용이 들지 않습니다 — 업로드한 문서는 분석되지 않고,
+              재생할 샘플이 <b>무작위로</b> 하나 선택되어 바로 분석을 실행할 수 있습니다(칩으로 변경 가능).
               서버에 문서 AI 키가 등록되고 로그인하면 <b>AI 분석</b>으로 자동 전환되어 업로드한 문서를 직접 읽습니다(사용량 과금).
               분석에 실패하면 무관한 샘플로 대체하지 않고 원인을 그대로 알려 드립니다.
             </p>
