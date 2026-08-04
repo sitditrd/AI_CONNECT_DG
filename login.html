@@ -41,8 +41,10 @@
       <div id="msg" class="auth-msg" hidden></div>
 
       <!-- 로그인 -->
+      <!-- 로그인은 이메일·사번 모두 허용하므로 type=text (type=email 이면 사번 입력이 브라우저에서 차단됨).
+           가입·비밀번호 찾기는 인증코드 메일 발송이 필요해 type=email 유지 -->
       <form id="f-login" class="auth-form">
-        <label><span>이메일</span> <input type="email" name="login" autocomplete="username" placeholder="you@company.com" required></label>
+        <label><span>이메일 또는 사번</span> <input type="text" name="login" autocomplete="username" placeholder="you@company.com 또는 TW190708Z" required></label>
         <label><span>비밀번호</span> <input type="password" name="password" autocomplete="current-password" required></label>
         <button class="btn btn-dg btn-block" type="submit">로그인</button>
         <p class="auth-hint">승인된 계정만 로그인할 수 있습니다. 관리자 승인 후 이용하세요.</p>

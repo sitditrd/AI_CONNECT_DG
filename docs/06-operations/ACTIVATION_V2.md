@@ -38,10 +38,15 @@ curl -s -X POST "https://qgwmqbtkuvozszgaunlp.supabase.co/rest/v1/rpc/dg_login" 
 
 `sql/auth_setup.sql` 실행 시 아래 계정이 **승인 상태**로 바로 생성됩니다(재실행하면 비밀번호가 이 값으로 되돌아갑니다).
 
-| 항목 | 값 |
-|---|---|
-| 아이디 | `sitditrd2@naver.com` |
-| 초기 비밀번호 | `[REDACTED-CREDENTIAL]` |
+| 구분 | 아이디 | 비밀번호 |
+|---|---|---|
+| 관리자 | `sitditrd2@naver.com` | `[REDACTED-CREDENTIAL]` |
+| 사용자 | `TW190708Z` | `[REDACTED-CREDENTIAL]` |
+| 사용자 | `TW200106D` | `[REDACTED-CREDENTIAL]` |
+
+> 사번 형식 아이디도 로그인됩니다. `dg_login` 이 `lower(trim())` 으로 조회하므로
+> **DB에는 반드시 소문자로 저장**해야 하며(`tw190708z`), 사용자는 대소문자 구분 없이 입력해도 됩니다.
+> 로그인 폼 입력칸은 이 때문에 `type=email` 이 아니라 `type=text` 입니다(가입·재설정은 OTP 발송 때문에 이메일 전용).
 
 > ⚠ **이 저장소는 공개(PUBLIC)입니다** — 위 비밀번호는 누구나 열람할 수 있습니다.
 > 시연·검증이 끝나면 아래 SQL로 반드시 교체하세요(교체 시 기존 세션은 자동 무효화):

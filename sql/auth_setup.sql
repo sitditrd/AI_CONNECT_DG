@@ -162,4 +162,15 @@ values ('sitditrd2@naver.com', crypt('[REDACTED-CREDENTIAL]', gen_salt('bf')), '
 on conflict (login_id) do update
    set pass_hash = excluded.pass_hash, status = 'approved', role = 'admin';
 
+-- 일반 사용자 시드 (사번 형식 아이디 — 이메일이 아니어도 로그인 가능)
+-- ⚠ login_id 는 반드시 소문자로 저장할 것.
+--    dg_login 이 lower(trim(p_login)) 으로 조회하므로 대문자로 저장하면 절대 매칭되지 않는다.
+--    사용자는 대소문자 아무렇게나 입력해도 된다(TW190708Z / tw190708z 모두 동일).
+insert into public.dg_users(login_id, pass_hash, status, role, display_name)
+values
+  ('tw190708z', crypt('[REDACTED-CREDENTIAL]', gen_salt('bf')), 'approved', 'user', 'TW190708Z'),
+  ('tw200106d', crypt('[REDACTED-CREDENTIAL]', gen_salt('bf')), 'approved', 'user', 'TW200106D')
+on conflict (login_id) do update
+   set pass_hash = excluded.pass_hash, status = 'approved', role = 'user';
+
 notify pgrst, 'reload schema';
