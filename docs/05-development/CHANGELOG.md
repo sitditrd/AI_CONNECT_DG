@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 2026-08-03 — v2.0 백엔드 활성화 완료 (인증 · 메일)
+
+Supabase(qgwmqbtkuvozszgaunlp)에 SQL 적용 및 `send-code` 배포 완료. 실측 검증:
+- 참조 데이터 적재 확인(창고 8 · 차량 5 · 법령 7)
+- 로그인 동작 — 관리자 `sitditrd2@naver.com`, 사용자 `TW190708Z` · `TW200106D`
+- 인증코드 메일 실제 수신 확인(네이버 SMTP)
+- 레이트리밋 60초 및 purpose 우회 차단(429), `dg_email_codes` RLS 차단 확인
+- `msds-extract` 는 유료 API 회피를 위해 미배포 — 무료 추출 대안 검토 중
+
 ## 2026-08-03 — v2.0 현업 완성도 고도화 (인증 · 서버 동기화 · 실문서 분석)
 
 ### 신규

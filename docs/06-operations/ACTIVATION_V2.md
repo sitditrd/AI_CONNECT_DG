@@ -85,6 +85,20 @@ supabase functions deploy msds-extract  --no-verify-jwt
 
 `SUPABASE_URL` · `SUPABASE_SERVICE_ROLE_KEY` 는 자동 주입 — 등록 불필요.
 
+## 4-1. 활성화 현황 (2026-08-03 실측)
+
+| 구성요소 | 상태 | 검증 방법 |
+|---|---|---|
+| `dg_*` 테이블·RPC (schema/seed/auth/case_sync) | **활성** | 창고 8·차량 5·법령 7건 조회 확인 |
+| 계정 3종 (admin 1 · user 2) | **활성** | `dg_login` 호출 → `ok:true` + 토큰 발급 |
+| Edge Function `send-code` | **활성** | 실제 메일 수신 확인 |
+| SMTP (네이버) | **활성** | `{"ok":true}` — 인증 통과 |
+| 레이트리밋 60초 / purpose 우회 차단 | **동작** | 연속 호출 시 429 |
+| `dg_email_codes` RLS | **차단됨** | publishable key 조회 시 `[]` |
+| Edge Function `msds-extract` | **미배포** | 무료 추출 대안 검토 중 (유료 API 회피) |
+
+> `msds-extract` 미배포 상태에서는 MSDS 화면이 데모 재생으로 동작합니다 — 다른 기능에는 영향이 없습니다.
+
 ## 5. 동작 확인 체크리스트
 
 | # | 확인 | 기대 결과 |
