@@ -26,11 +26,24 @@ jobs:
         run: |
           mkdir -p _site
           cp *.html _site/ 2>/dev/null || true
-          cp sitemap.xml robots.txt _site/ 2>/dev/null || true
+          # manifest.webmanifest 는 전 페이지가 <link rel="manifest"> 로 참조한다 —
+          # 빠뜨리면 배포본에서 404 가 나고 PWA 설치가 동작하지 않는다.
+          cp sitemap.xml robots.txt manifest.webmanifest _site/ 2>/dev/null || true
           for d in css js assets data; do
             if [ -d "$d" ]; then cp -r "$d" _site/; fi
           done
           ls -1 _site/*.html
+
+      - name: 캐시 무효화 — ?v= 를 커밋 SHA로 치환
+        run: |
+          # 저장소의 ?v= 값은 손으로 올려야 하는데, 도입 이후 js/·css/ 를 바꾼 커밋
+          # 3건이 모두 갱신을 빠뜨렸다. 배포본에서만 커밋 SHA로 바꿔 사람 손을 뺀다
+          # (원본 파일은 건드리지 않으므로 소스는 그대로 유지된다).
+          SHA="${GITHUB_SHA:0:7}"
+          find _site -name '*.html' -print0 | xargs -0 sed -i "s/?v=[^\"]*/?v=$SHA/g"
+          echo "적용된 캐시 키: $SHA"
+          grep -ho '?v=[^"]*' _site/*.html | sort -u
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

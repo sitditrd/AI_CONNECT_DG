@@ -326,7 +326,7 @@ window.DGI18N_DICT = {
    "등급 미충족": "Class not met",
    "등록 완료 —": "Registration complete —",
    "등록 위험물 창고": "Registered dangerous goods warehouses",
-   "또는 아래 실제 MSDS #종 중 하나를 선택해 분석 과정을 재생합니다": "Or select one of the # real MSDS below to replay the analysis process",
+   "데모 재생 모드에서는 업로드 시 아래 실제 MSDS #종 중 하나가 무작위로 선택됩니다": "In demo replay mode, one of the # real MSDS below is chosen at random on upload",
    "라이트 모드로 전환": "Switch to light mode",
    "를 먼저 진행하세요.": "Please proceed with it first.",
    "리튬 · 코발트 산화물 혼합물": "Lithium · cobalt oxide mixture",
@@ -1259,7 +1259,7 @@ window.DGI18N_DICT = {
    "등급 미충족": "等级不符",
    "등록 완료 —": "登记完成 —",
    "등록 위험물 창고": "登记危险品仓库",
-   "또는 아래 실제 MSDS #종 중 하나를 선택해 분석 과정을 재생합니다": "或从下方#种真实MSDS中选择一种，重放分析过程",
+   "데모 재생 모드에서는 업로드 시 아래 실제 MSDS #종 중 하나가 무작위로 선택됩니다": "演示回放模式下，上传时会从下方#种真实MSDS中随机选择一种",
    "라이트 모드로 전환": "切换为浅色模式",
    "를 먼저 진행하세요.": "请先进行该步骤。",
    "리튬 · 코발트 산화물 혼합물": "锂 · 钴氧化物混合物",
@@ -2212,5 +2212,75 @@ window.DGI18N_DICT = {
     "전문가 확인 필요": "需专家确认",
     /* login.html 브랜드 부제 (단독형) */
     "AI 기반 위험물 물류 통합 플랫폼": "基于 AI 的危险品物流综合平台"
+  });
+})();
+
+/* =========================================================
+   MSDS 데모 재생 — 무작위 자동 선택 · 엔진 3상태 안내 문구 (2026-08-04)
+   문장 단위 키만 등록한다. 파일명·용량·UN번호처럼 한글이 없는 노드는
+   i18n.js 가 애초에 건너뛰므로(translateValue 의 /[가-힣]/ 검사) 키가 필요 없다.
+   ========================================================= */
+(function () {
+  function add(lang, map) {
+    var d = window.DGI18N_DICT[lang] = window.DGI18N_DICT[lang] || {};
+    Object.keys(map).forEach(function (k) { if (!(k in d)) d[k] = map[k]; });
+  }
+  add('en', {
+    /* js/msds.js — 업로드 상태 */
+    "업로드 —": "Uploaded —",
+    "데모 재생 모드입니다 — 업로드한 문서는 분석되지 않습니다.": "Demo replay mode — the uploaded document is not analyzed.",
+    "AI 분석 준비됨 — 분석 실행을 누르면 이 문서를 직접 읽습니다.": "AI analysis ready — running the analysis will read this document directly.",
+    "재생할 샘플이 무작위로 선택되었습니다.": "A sample to replay was chosen at random.",
+    "아래에서 다른 샘플로 바꿀 수 있습니다.": "You can switch to a different sample below.",
+    "아래에서 재생할 MSDS 샘플을 직접 선택하세요.": "Select an MSDS sample below to replay.",
+    "분석에 실패했습니다.": "Analysis failed.",
+    "다시 시도하거나, 아래에서 MSDS 샘플을 선택해 데모로 진행하세요.": "Try again, or pick an MSDS sample below to continue in demo mode.",
+    /* js/msds.js — 엔진 배지 */
+    "AI 분석": "AI analysis",
+    "데모 재생": "Demo replay",
+    "업로드한 문서를 문서 AI가 실제로 분석합니다. 원문이 분석 API로 전송됩니다.": "The uploaded document is genuinely analyzed by document AI. The original is sent to the analysis API.",
+    "사전 검증된 MSDS #종의 추출 결과를 재생합니다. 업로드한 문서는 분석되지 않습니다.": "Replays extraction results from # pre-verified MSDS. The uploaded document is not analyzed.",
+    /* js/msds.js — 엔진 판정 이유 */
+    "설정이 데모 고정입니다.": "Configuration is pinned to demo.",
+    "서버에 문서 AI 키가 등록되어 있지 않습니다.": "No document AI key is registered on the server.",
+    "로그인해야 실문서 분석을 사용할 수 있습니다.": "Sign in to use real-document analysis.",
+    "분석할 파일을 업로드하면 AI 분석이 실행됩니다.": "Upload a file to run AI analysis.",
+    "지원하지 않는 형식입니다(PDF·PNG·JPEG·WebP·GIF).": "Unsupported format (PDF · PNG · JPEG · WebP · GIF).",
+    "파일이 #MB 를 초과합니다.": "The file exceeds #MB.",
+    /* msds.html — 안내문 */
+    "현재 엔진은 위 배지에 표시됩니다.": "The current engine is shown in the badge above.",
+    "데모 재생은 실제 MSDS #종에서 사전 추출·검증한 결과를 동일한 처리 순서로 보여주며 비용이 들지 않습니다.": "Demo replay shows results pre-extracted and verified from # real MSDS in the same processing order, at no cost.",
+    "업로드한 문서는 분석되지 않고, 재생할 샘플이 무작위로 하나 선택되어 바로 분석을 실행할 수 있습니다(칩으로 변경 가능).": "The uploaded document is not analyzed; one sample is chosen at random so you can run the analysis right away (changeable via the chips).",
+    "서버에 문서 AI 키가 등록되고 로그인하면 AI 분석으로 자동 전환되어 업로드한 문서를 직접 읽습니다(사용량 과금).": "Once a document AI key is registered on the server and you sign in, it switches to AI analysis automatically and reads the uploaded document directly (usage-billed).",
+    "분석에 실패하면 무관한 샘플로 대체하지 않고 원인을 그대로 알려 드립니다.": "If analysis fails, the cause is reported as-is instead of substituting an unrelated sample."
+  });
+  add('zh', {
+    /* js/msds.js — 업로드 상태 */
+    "업로드 —": "已上传 —",
+    "데모 재생 모드입니다 — 업로드한 문서는 분석되지 않습니다.": "演示回放模式 — 不会分析已上传的文件。",
+    "AI 분석 준비됨 — 분석 실행을 누르면 이 문서를 직접 읽습니다.": "AI 分析已就绪 — 执行分析将直接读取该文件。",
+    "재생할 샘플이 무작위로 선택되었습니다.": "已随机选择用于回放的样本。",
+    "아래에서 다른 샘플로 바꿀 수 있습니다.": "可在下方切换为其他样本。",
+    "아래에서 재생할 MSDS 샘플을 직접 선택하세요.": "请在下方选择要回放的 MSDS 样本。",
+    "분석에 실패했습니다.": "分析失败。",
+    "다시 시도하거나, 아래에서 MSDS 샘플을 선택해 데모로 진행하세요.": "请重试，或在下方选择 MSDS 样本以演示模式继续。",
+    /* js/msds.js — 엔진 배지 */
+    "AI 분석": "AI 分析",
+    "데모 재생": "演示回放",
+    "업로드한 문서를 문서 AI가 실제로 분석합니다. 원문이 분석 API로 전송됩니다.": "文档 AI 将实际分析已上传的文件。原件会发送至分析 API。",
+    "사전 검증된 MSDS #종의 추출 결과를 재생합니다. 업로드한 문서는 분석되지 않습니다.": "回放 #种预先验证的 MSDS 提取结果。不会分析已上传的文件。",
+    /* js/msds.js — 엔진 판정 이유 */
+    "설정이 데모 고정입니다.": "配置已固定为演示模式。",
+    "서버에 문서 AI 키가 등록되어 있지 않습니다.": "服务器未登记文档 AI 密钥。",
+    "로그인해야 실문서 분석을 사용할 수 있습니다.": "需登录后才能使用真实文档分析。",
+    "분석할 파일을 업로드하면 AI 분석이 실행됩니다.": "上传待分析文件后将执行 AI 分析。",
+    "지원하지 않는 형식입니다(PDF·PNG·JPEG·WebP·GIF).": "不支持的格式（PDF·PNG·JPEG·WebP·GIF）。",
+    "파일이 #MB 를 초과합니다.": "文件超过 #MB。",
+    /* msds.html — 안내문 */
+    "현재 엔진은 위 배지에 표시됩니다.": "当前引擎显示在上方标识中。",
+    "데모 재생은 실제 MSDS #종에서 사전 추출·검증한 결과를 동일한 처리 순서로 보여주며 비용이 들지 않습니다.": "演示回放以相同处理顺序展示从 #种真实 MSDS 预先提取并验证的结果，不产生费用。",
+    "업로드한 문서는 분석되지 않고, 재생할 샘플이 무작위로 하나 선택되어 바로 분석을 실행할 수 있습니다(칩으로 변경 가능).": "不会分析已上传的文件，系统随机选择一种样本，可立即执行分析（可通过标签切换）。",
+    "서버에 문서 AI 키가 등록되고 로그인하면 AI 분석으로 자동 전환되어 업로드한 문서를 직접 읽습니다(사용량 과금).": "在服务器登记文档 AI 密钥并登录后，将自动切换为 AI 分析并直接读取已上传的文件（按用量计费）。",
+    "분석에 실패하면 무관한 샘플로 대체하지 않고 원인을 그대로 알려 드립니다.": "分析失败时不会替换为无关样本，而是如实告知原因。"
   });
 })();

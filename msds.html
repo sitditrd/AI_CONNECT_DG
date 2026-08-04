@@ -17,7 +17,7 @@
   <meta property="og:image" content="https://sitditrd.github.io/AI_CONNECT_DG/assets/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-08-03c">
+  <link rel="stylesheet" href="css/style.css?v=2026-08-04a">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/touch-icon.png">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
@@ -95,12 +95,14 @@
               <button class="btn btn-dg" id="analyzeBtn" type="button" disabled>LLM-OCR 분석 실행</button>
               <span class="muted" style="font-size:12px;" id="progressText" role="status"></span>
             </div>
+            <!-- 각 문장을 독립 노드로 둔다 — 문장 중간에 <b>가 들어가면 텍스트 노드가
+                 조사 단위로 쪼개져 다국어 사전이 문장을 매칭하지 못한다. -->
             <p class="notice" style="margin-top:14px;">
-              <b>현재 엔진은 위 배지에 표시됩니다.</b> <b>데모 재생</b>은 실제 MSDS 3종에서 사전 추출·검증한 결과를
-              동일한 처리 순서로 보여주며 비용이 들지 않습니다 — 업로드한 문서는 분석되지 않고,
-              재생할 샘플이 <b>무작위로</b> 하나 선택되어 바로 분석을 실행할 수 있습니다(칩으로 변경 가능).
-              서버에 문서 AI 키가 등록되고 로그인하면 <b>AI 분석</b>으로 자동 전환되어 업로드한 문서를 직접 읽습니다(사용량 과금).
-              분석에 실패하면 무관한 샘플로 대체하지 않고 원인을 그대로 알려 드립니다.
+              <b>현재 엔진은 위 배지에 표시됩니다.</b>
+              <span>데모 재생은 실제 MSDS 3종에서 사전 추출·검증한 결과를 동일한 처리 순서로 보여주며 비용이 들지 않습니다.</span>
+              <span>업로드한 문서는 분석되지 않고, 재생할 샘플이 무작위로 하나 선택되어 바로 분석을 실행할 수 있습니다(칩으로 변경 가능).</span>
+              <span>서버에 문서 AI 키가 등록되고 로그인하면 AI 분석으로 자동 전환되어 업로드한 문서를 직접 읽습니다(사용량 과금).</span>
+              <span>분석에 실패하면 무관한 샘플로 대체하지 않고 원인을 그대로 알려 드립니다.</span>
             </p>
           </div>
         </div>
@@ -183,16 +185,16 @@
     </div>
   </footer>
 
-  <script src="js/common.js?v=2026-08-03c"></script>
-  <script src="js/config.js?v=2026-08-03c"></script>
-  <script src="js/i18n-dict.js?v=2026-08-03c"></script>
-  <script src="js/i18n.js?v=2026-08-03c"></script>
-  <script src="js/auth.js?v=2026-08-03c"></script>
-  <script src="js/auth-gate.js?v=2026-08-03c"></script>
-  <script src="js/ui-kit.js?v=2026-08-03c"></script>
-  <script src="js/case-sync.js?v=2026-08-03c"></script>
-  <script src="js/data_dg.js?v=2026-08-03c"></script>
-  <script src="js/db.js?v=2026-08-03c"></script>
-  <script src="js/msds.js?v=2026-08-03c"></script>
+  <script src="js/common.js?v=2026-08-04a"></script>
+  <script src="js/config.js?v=2026-08-04a"></script>
+  <script src="js/i18n-dict.js?v=2026-08-04a"></script>
+  <script src="js/i18n.js?v=2026-08-04a"></script>
+  <script src="js/auth.js?v=2026-08-04a"></script>
+  <script src="js/auth-gate.js?v=2026-08-04a"></script>
+  <script src="js/ui-kit.js?v=2026-08-04a"></script>
+  <script src="js/case-sync.js?v=2026-08-04a"></script>
+  <script src="js/data_dg.js?v=2026-08-04a"></script>
+  <script src="js/db.js?v=2026-08-04a"></script>
+  <script src="js/msds.js?v=2026-08-04a"></script>
 </body>
 </html>

@@ -71,9 +71,11 @@
     if (!box) return;
     var e = engineFor(uploadedFile);
     var m = ENGINE_META[e.engine];
+    /* 이유는 별도 노드로 분리한다 — 사전(i18n)이 문장 단위로 매칭하므로
+       note 와 reason 을 한 텍스트 노드에 합치면 조합마다 다른 키가 되어 번역이 붙지 않는다. */
     box.innerHTML = '<span class="badge ' + m.cls + '"><i></i>' + m.label + '</span>' +
-      '<span class="muted" style="font-size:12px;margin-left:8px;">' + esc(m.note) +
-      (e.reason ? ' — ' + esc(e.reason) : '') + '</span>';
+      '<span class="muted" style="font-size:12px;margin-left:8px;">' + esc(m.note) + '</span>' +
+      (e.reason ? '<span class="muted" style="font-size:12px;margin-left:6px;">' + esc(e.reason) + '</span>' : '');
   }
 
   function liveReady() { return engineFor(uploadedFile).engine === 'ai'; }
@@ -124,6 +126,9 @@
       : '선택된 문서가 없습니다.';
     $('analyzeBtn').disabled = !selected;
     $('confirmBtn').disabled = true;
+    /* 진행 문구도 함께 되돌린다 — 안 그러면 추출표는 '분석 대기 중'인데
+       옆에는 직전의 '완료 — 추출 항목 N건'이 남아 서로 어긋난다. */
+    $('progressText').textContent = '';
     $('extractBody').innerHTML = '<tr><td colspan="5" class="muted center">분석 대기 중</td></tr>';
     $('profileBox').innerHTML = '<p class="muted" style="font-size:13px;">분석을 실행하면 표준 프로파일이 생성됩니다.</p>';
     $('lowConfNote').style.display = 'none';
@@ -149,8 +154,8 @@
       renderOcrSteps(1);
       $('analyzeBtn').disabled = false;
       $('confirmBtn').disabled = true;
-      $('uploadState').innerHTML = '업로드 — <b>' + esc(f.name) + '</b> (' + kb + ' KB) · ' +
-        '<b>AI 분석</b> 준비됨 — 분석 실행을 누르면 이 문서를 직접 읽습니다.';
+      $('uploadState').innerHTML = uploadHead(f, kb) +
+        '<br><span>AI 분석 준비됨 — 분석 실행을 누르면 이 문서를 직접 읽습니다.</span>';
       return;
     }
 
@@ -161,13 +166,21 @@
        사용자가 아래 칩으로 언제든 다른 샘플로 바꿀 수 있다. */
     var sample = pickRandomSample();
     if (sample) pick(sample.id);
-    $('uploadState').innerHTML = '업로드 — <b>' + esc(f.name) + '</b> (' + kb + ' KB) · ' +
-      '<b>데모 재생 모드</b>라 이 문서는 분석되지 않습니다. ' + esc(e.reason) +
+    $('uploadState').innerHTML = uploadHead(f, kb) +
+      '<br><span>데모 재생 모드입니다 — 업로드한 문서는 분석되지 않습니다.</span> ' +
+      '<span>' + esc(e.reason) + '</span>' +
       (sample
-        ? '<br>재생할 샘플로 <b>' + esc(sample.title) + '</b>(' + esc(sample.profile.unNo) +
-          ')이 무작위로 선택되었습니다 — 아래에서 다른 샘플로 바꿀 수 있습니다.'
-        : '<br>아래에서 재생할 MSDS 샘플을 직접 선택하세요.');
+        ? '<br><span>재생할 샘플이 무작위로 선택되었습니다.</span> ' +
+          '<b>' + esc(sample.title) + '</b> · <b>' + esc(sample.profile.unNo) + '</b>' +
+          '<br><span>아래에서 다른 샘플로 바꿀 수 있습니다.</span>'
+        : '<br><span>아래에서 재생할 MSDS 샘플을 직접 선택하세요.</span>');
     $('analyzeBtn').disabled = !selected;
+  }
+
+  /* 업로드 머리말 — 파일명·크기는 번역 대상이 아니므로 별도 노드로 떼어
+     앞뒤 한국어가 온전한 문장 단위로 사전에 매칭되게 한다. */
+  function uploadHead(f, kb) {
+    return '<span>업로드 —</span> <b>' + esc(f.name) + '</b> · <b>' + kb + ' KB</b>';
   }
 
   /* 데모 재생용 샘플 무작위 선택 — 직전에 재생한 샘플은 가능하면 피해
@@ -284,14 +297,17 @@
     if (gen !== analyzeGen) return;
     if (window.DGKit) DGKit.toast('실문서 분석 실패 — ' + why, 'err');
     $('progressText').textContent = '실문서 분석 실패 — ' + why;
-    $('uploadState').innerHTML = '<b>분석에 실패했습니다</b> — ' + esc(why) +
-      '<br>다시 시도하거나, 아래에서 MSDS 샘플을 선택해 데모로 진행하세요.';
+    $('uploadState').innerHTML = '<span><b>분석에 실패했습니다.</b></span> <span>' + esc(why) + '</span>' +
+      '<br><span>다시 시도하거나, 아래에서 MSDS 샘플을 선택해 데모로 진행하세요.</span>';
     renderOcrSteps(1);
     btn.disabled = false;
   }
 
   function analyze() {
-    if (!selected) return;
+    /* AI 분석 경로는 selected 없이 uploadedFile 로만 동작한다(결과가 문서에서 나오므로
+       업로드 시 샘플을 고르지 않는다). selected 만 보고 막으면 실문서 분석이
+       영원히 도달 불가한 '죽은 버튼'이 된다 — 실행 엔진 기준으로 판단한다. */
+    if (!selected && !liveReady()) return;
     var gen = ++analyzeGen;
     var btn = $('analyzeBtn');
     btn.disabled = true;
@@ -448,8 +464,10 @@
     if (c.msds && c.msds.id) {
       var exists = D.MSDS.some(function (m) { return m.id === c.msds.id; });
       if (exists) {
-        pick(c.msds.id);
+        /* pick() 이 uploadState 를 그릴 때 uploadedName 을 참조하므로 먼저 채운다 —
+           순서가 뒤바뀌면 사용자가 올린 파일명 대신 샘플 기본 파일명이 표시된다. */
         uploadedName = c.msds.fileName;
+        pick(c.msds.id);
         analyzed = true;
         renderOcrSteps(4);
         renderExtract();
