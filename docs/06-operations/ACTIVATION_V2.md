@@ -31,31 +31,29 @@
 실행 여부는 이걸로 바로 확인됩니다 — 함수가 없으면 `PGRST202`가 돌아옵니다:
 
 ```bash
-curl -s -X POST "https://qgwmqbtkuvozszgaunlp.supabase.co/rest/v1/rpc/dg_login" -H "apikey: sb_publishable_b-KEOweYGIY9jWtRDLr2yQ_3eKxcLkc" -H "Authorization: Bearer sb_publishable_b-KEOweYGIY9jWtRDLr2yQ_3eKxcLkc" -H "Content-Type: application/json" -d "{\"p_login\":\"sitditrd2@naver.com\",\"p_password\":\"[REDACTED-CREDENTIAL]\"}"
+curl -s -X POST "https://qgwmqbtkuvozszgaunlp.supabase.co/rest/v1/rpc/dg_login" -H "apikey: sb_publishable_b-KEOweYGIY9jWtRDLr2yQ_3eKxcLkc" -H "Authorization: Bearer sb_publishable_b-KEOweYGIY9jWtRDLr2yQ_3eKxcLkc" -H "Content-Type: application/json" -d "{\"p_login\":\"sitditrd2@naver.com\",\"p_password\":\"설정한_비밀번호\"}"
 ```
 
-## 2. 관리자 계정
+## 2. 계정 비밀번호 설정 (필수 — 이 단계 전에는 아무도 로그인 불가)
 
-`sql/auth_setup.sql` 실행 시 아래 계정이 **승인 상태**로 바로 생성됩니다(재실행하면 비밀번호가 이 값으로 되돌아갑니다).
+`auth_setup.sql` 은 계정 **골격만** 만듭니다. 비밀번호는 추측 불가능한 임의값이라 그대로는 로그인되지 않습니다.
+**저장소가 공개(PUBLIC)이고 깃 이력은 영구 보존되므로, 비밀번호는 저장소에 두지 않습니다.**
+
+`sql/set_passwords.sql` 을 열어 자리표시자를 실제 값으로 바꾼 뒤 SQL Editor에서 실행하세요.
 
 | 구분 | 아이디 | 비밀번호 |
 |---|---|---|
-| 관리자 | `sitditrd2@naver.com` | `[REDACTED-CREDENTIAL]` |
-| 사용자 | `TW190708Z` | `[REDACTED-CREDENTIAL]` |
-| 사용자 | `TW200106D` | `[REDACTED-CREDENTIAL]` |
+| 관리자 | `sitditrd2@naver.com` | set_passwords.sql 에서 지정 |
+| 사용자 | `TW190708Z` (DB 저장은 `tw190708z`) | " |
+| 사용자 | `TW200106D` (DB 저장은 `tw200106d`) | " |
+
+조건: 8자 이상 + 특수문자 포함. 실행 후 SQL Editor 편집기 내용을 지우세요(쿼리 이력이 남습니다).
 
 > 사번 형식 아이디도 로그인됩니다. `dg_login` 이 `lower(trim())` 으로 조회하므로
-> **DB에는 반드시 소문자로 저장**해야 하며(`tw190708z`), 사용자는 대소문자 구분 없이 입력해도 됩니다.
-> 로그인 폼 입력칸은 이 때문에 `type=email` 이 아니라 `type=text` 입니다(가입·재설정은 OTP 발송 때문에 이메일 전용).
+> **DB에는 반드시 소문자로 저장**해야 하며, 사용자는 대소문자 구분 없이 입력해도 됩니다.
+> 로그인 폼 입력칸이 `type=email` 이 아니라 `type=text` 인 이유입니다(가입·재설정은 OTP 발송 때문에 이메일 전용).
 
-> ⚠ **이 저장소는 공개(PUBLIC)입니다** — 위 비밀번호는 누구나 열람할 수 있습니다.
-> 시연·검증이 끝나면 아래 SQL로 반드시 교체하세요(교체 시 기존 세션은 자동 무효화):
->
-> ```sql
-> update public.dg_users
->    set pass_hash = crypt('새비밀번호(8자+특수문자)', gen_salt('bf'))
->  where login_id = 'sitditrd2@naver.com';
-> ```
+> 비밀번호를 바꾸면 해당 계정의 **기존 세션은 자동으로 전부 무효화**됩니다.
 
 ## 3. Edge Function 배포
 

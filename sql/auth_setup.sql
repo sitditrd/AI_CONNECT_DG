@@ -150,27 +150,33 @@ grant execute on function public.dg_login(text,text), public.dg_me(uuid), public
   public.dg_signup_verified(text,text,text,text), public.dg_reset_with_code(text,text,text),
   public.dg_admin_list(uuid), public.dg_admin_set_status(uuid,uuid,text), public.dg_admin_reset_pw(uuid,uuid,text) to anon;
 
--- 관리자 계정 시드 — 운영 관리자: sitditrd2@naver.com / 초기 비밀번호: [REDACTED-CREDENTIAL]
--- ⚠ 이 저장소는 공개(PUBLIC)이므로 위 비밀번호는 누구나 열람할 수 있다.
---    시연·검증 종료 후 아래 SQL로 반드시 교체할 것(교체 시 기존 세션은 자동 무효화된다):
---      update public.dg_users set pass_hash = crypt('새비밀번호', gen_salt('bf'))
---       where login_id = 'sitditrd2@naver.com';
+-- =========================================================
+-- 계정 시드 — 비밀번호는 이 파일에 넣지 않는다
+--
+-- ⚠ 이 저장소는 공개(PUBLIC)이며 깃 이력은 영구 보존된다.
+--    파일에 평문을 한 번이라도 적으면 이후 지워도 히스토리에서 계속 조회된다.
+--    따라서 아래는 '추측 불가능한 임의값'으로 계정 골격만 만들고,
+--    실제 비밀번호는 sql/set_passwords.sql 을 각자 값으로 채워 SQL Editor에서 실행한다.
+--
+-- 재실행 안전: on conflict do nothing — 이미 만들어 둔 비밀번호를 덮어쓰지 않는다.
+--
 -- 이메일 인증코드 발송: Edge Function send-code + SMTP(예: smtp.naver.com:465, 앱 비밀번호).
 --   시크릿(대시보드 → Edge Functions → Secrets): SMTP_HOST/PORT/USER/PASS/FROM
-insert into public.dg_users(login_id, pass_hash, status, role, display_name)
-values ('sitditrd2@naver.com', crypt('[REDACTED-CREDENTIAL]', gen_salt('bf')), 'approved', 'admin', '관리자')
-on conflict (login_id) do update
-   set pass_hash = excluded.pass_hash, status = 'approved', role = 'admin';
+-- =========================================================
 
--- 일반 사용자 시드 (사번 형식 아이디 — 이메일이 아니어도 로그인 가능)
+-- 관리자
+insert into public.dg_users(login_id, pass_hash, status, role, display_name)
+values ('sitditrd2@naver.com', crypt(gen_random_uuid()::text, gen_salt('bf')), 'approved', 'admin', '관리자')
+on conflict (login_id) do nothing;
+
+-- 일반 사용자 (사번 형식 아이디 — 이메일이 아니어도 로그인 가능)
 -- ⚠ login_id 는 반드시 소문자로 저장할 것.
 --    dg_login 이 lower(trim(p_login)) 으로 조회하므로 대문자로 저장하면 절대 매칭되지 않는다.
 --    사용자는 대소문자 아무렇게나 입력해도 된다(TW190708Z / tw190708z 모두 동일).
 insert into public.dg_users(login_id, pass_hash, status, role, display_name)
 values
-  ('tw190708z', crypt('[REDACTED-CREDENTIAL]', gen_salt('bf')), 'approved', 'user', 'TW190708Z'),
-  ('tw200106d', crypt('[REDACTED-CREDENTIAL]', gen_salt('bf')), 'approved', 'user', 'TW200106D')
-on conflict (login_id) do update
-   set pass_hash = excluded.pass_hash, status = 'approved', role = 'user';
+  ('tw190708z', crypt(gen_random_uuid()::text, gen_salt('bf')), 'approved', 'user', 'TW190708Z'),
+  ('tw200106d', crypt(gen_random_uuid()::text, gen_salt('bf')), 'approved', 'user', 'TW200106D')
+on conflict (login_id) do nothing;
 
 notify pgrst, 'reload schema';

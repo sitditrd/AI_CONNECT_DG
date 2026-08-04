@@ -1,10 +1,24 @@
 # CHANGELOG
 
+## 2026-08-03 — 자격증명 저장소 분리 (보안)
+
+공개 저장소에 계정 비밀번호 평문이 들어가 있던 것을 제거. bcrypt 해시 저장은
+DB 유출 시 역산을 막을 뿐, 소스에 원문이 적혀 있으면 아무 의미가 없다
+(익명 raw 접근으로 4개 파일 15군데 노출 확인).
+
+- `sql/auth_setup.sql` — 계정을 `gen_random_uuid()` 임의값으로 생성(그 상태로는 로그인 불가),
+  `on conflict do nothing` 으로 재실행 시 기존 비밀번호를 덮지 않음
+- `sql/set_passwords.sql` 신규 — 자리표시자 템플릿. 각자 값으로 채워 SQL Editor에서 실행
+- `_ACTIVATE_ALL.sql` 재생성, ACTIVATION_V2 2장을 '비밀번호 설정(필수)' 단계로 재작성
+- 문서·CHANGELOG의 평문 제거
+
+※ 깃 이력에는 남아 있으므로 노출된 비밀번호는 재사용하지 말 것.
+
 ## 2026-08-03 — v2.0 백엔드 활성화 완료 (인증 · 메일)
 
 Supabase(qgwmqbtkuvozszgaunlp)에 SQL 적용 및 `send-code` 배포 완료. 실측 검증:
 - 참조 데이터 적재 확인(창고 8 · 차량 5 · 법령 7)
-- 로그인 동작 — 관리자 `sitditrd2@naver.com`, 사용자 `TW190708Z` · `TW200106D`
+- 로그인 동작 — 관리자 `sitditrd2@naver.com`, 사용자 `TW190708Z` · `TW200106D` (비밀번호는 저장소 미포함)
 - 인증코드 메일 실제 수신 확인(네이버 SMTP)
 - 레이트리밋 60초 및 purpose 우회 차단(429), `dg_email_codes` RLS 차단 확인
 - `msds-extract` 는 유료 API 회피를 위해 미배포 — 무료 추출 대안 검토 중
@@ -38,7 +52,7 @@ Supabase(qgwmqbtkuvozszgaunlp)에 SQL 적용 및 `send-code` 배포 완료. 실�
 - **문서 정정** — 활성화 절차에 `supabase init` 누락 보완, 키 회전 절차에 `js/auth.js` 두 번째 publishable key 위치 명시, README '남은 작업'의 MSDS 실연동 서술을 구현 완료 기준으로 갱신
 
 ### 관리자 계정 시드
-- `sql/auth_setup.sql` 실행 시 관리자 `sitditrd2@naver.com` / `[REDACTED-CREDENTIAL]` 가 승인 상태로 즉시 생성되도록 지정(사용자 요청). 재실행 시에도 동일 값으로 재설정되도록 `on conflict do update` 적용
+- `sql/auth_setup.sql` 실행 시 관리자 `sitditrd2@naver.com` 계정을 승인 상태로 생성하도록 지정
 - ⚠ 저장소가 공개이므로 이 비밀번호는 열람 가능 — 시연 종료 후 교체 필요(교체 시 기존 세션 자동 무효화). ACTIVATION_V2 2장에 계정표와 교체 SQL 명시
 
 ### 운영
