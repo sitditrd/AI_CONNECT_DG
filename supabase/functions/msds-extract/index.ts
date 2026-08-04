@@ -89,9 +89,18 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return j({ error: "method" }, 405);
   try {
-    if (!ANTHROPIC_KEY) return j({ error: "ANTHROPIC_API_KEY not configured" }, 503);
+    const body = await req.json();
 
-    const { token, filename, media_type, data } = await req.json();
+    // 능력 조사(probe) — 클라이언트가 'AI 분석이 가능한 서버인지'만 확인한다.
+    // Anthropic API 를 호출하지 않으므로 과금 0. 키 값은 절대 내려보내지 않고 유무만 반환.
+    // 인증도 요구하지 않아 로그인 전에도 정확한 엔진 상태를 표시할 수 있다.
+    if (body && body.probe === true) {
+      return j({ ok: true, ai: !!ANTHROPIC_KEY, maxBytes: MAX_BYTES, mediaTypes: MEDIA_OK });
+    }
+
+    if (!ANTHROPIC_KEY) return j({ error: "ANTHROPIC_API_KEY not configured", code: "no_api_key" }, 503);
+
+    const { token, filename, media_type, data } = body;
     if (!(await validToken(String(token ?? "")))) return j({ error: "로그인이 필요합니다" }, 401);
     if (!MEDIA_OK.includes(media_type)) return j({ error: "unsupported media type" }, 400);
     const b64 = String(data ?? "");

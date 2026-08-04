@@ -88,16 +88,18 @@
               <button class="btn btn-ghost btn-sm" type="button" onclick="document.getElementById('fileInput').click()">파일 선택</button>
               <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff" class="hide" aria-hidden="true" tabindex="-1">
             </div>
-            <div class="chip-row" id="sampleChips" style="margin-top:14px;" role="group" aria-label="실제 MSDS 3종 샘플 선택"></div>
+            <div class="row" id="engineBadge" style="margin-top:14px; align-items:center;"></div>
+            <div class="chip-row" id="sampleChips" style="margin-top:12px;" role="group" aria-label="실제 MSDS 3종 샘플 선택"></div>
             <p class="src-note" id="uploadState" role="status">선택된 문서가 없습니다.</p>
             <div class="row" style="margin-top:12px;">
               <button class="btn btn-dg" id="analyzeBtn" type="button" disabled>LLM-OCR 분석 실행</button>
               <span class="muted" style="font-size:12px;" id="progressText" role="status"></span>
             </div>
             <p class="notice" style="margin-top:14px;">
-              <b>두 가지 분석 모드</b> — 샘플 선택 시 실제 MSDS 3종에서 사전 추출·검증한 결과를 동일한 처리 순서로 재생합니다(데모).
-              <b>로그인 후 파일을 업로드하면 문서 AI가 실문서를 직접 분석</b>하며, 실패 시 데모 재생으로 자동 전환됩니다.
-              운영 시 문서 인식 AI 사용료가 실제 현금 지출 항목이 됩니다.
+              <b>현재 엔진은 위 배지에 표시됩니다.</b> <b>데모 재생</b>은 실제 MSDS 3종에서 사전 추출·검증한 결과를
+              동일한 처리 순서로 보여주며 비용이 들지 않습니다 — 업로드한 문서는 분석되지 않습니다.
+              서버에 문서 AI 키가 등록되고 로그인하면 <b>AI 분석</b>으로 자동 전환되어 업로드한 문서를 직접 읽습니다(사용량 과금).
+              분석에 실패하면 무관한 샘플로 대체하지 않고 원인을 그대로 알려 드립니다.
             </p>
           </div>
         </div>
@@ -181,6 +183,7 @@
   </footer>
 
   <script src="js/common.js?v=2026-08-03c"></script>
+  <script src="js/config.js?v=2026-08-03c"></script>
   <script src="js/i18n-dict.js?v=2026-08-03c"></script>
   <script src="js/i18n.js?v=2026-08-03c"></script>
   <script src="js/auth.js?v=2026-08-03c"></script>

@@ -11,13 +11,72 @@
   var uploadedFile = null;  // 실문서 분석용 File 객체 (로그인 시)
   var analyzed = false;
 
-  /* 실문서 분석 허용 조건 — 로그인 + 지원 형식 + 8MB 이하 */
-  var LIVE_TYPES = { 'application/pdf': 1, 'image/png': 1, 'image/jpeg': 1, 'image/webp': 1, 'image/gif': 1 };
-  function liveReady() {
-    return !!(uploadedFile && LIVE_TYPES[uploadedFile.type] &&
-      uploadedFile.size <= 8 * 1024 * 1024 &&
-      typeof DGAUTH !== 'undefined' && DGAUTH.isAuthed());
+  /* ---------- 설정 (js/config.js — 없으면 기본값) ---------- */
+  function cfg() {
+    var c = (window.DGCONFIG && DGCONFIG.msds) || {};
+    return {
+      mode: c.mode || 'auto',
+      probeTtlMs: c.probeTtlMs || 600000,
+      accept: c.accept || ['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'image/gif'],
+      maxBytes: c.maxBytes || 8 * 1024 * 1024
+    };
   }
+
+  /* ---------- 엔진 3상태 ----------
+     ai   : 서버에 ANTHROPIC_API_KEY 가 있고 로그인 상태 — 실문서를 AI가 분석(유료)
+     demo : 사전 추출 결과 재생 — 비용 0, 업로드 문서는 분석되지 않음
+     (blocked: AI 모드인데 조건 미충족) */
+  var ENGINE_META = {
+    ai: { label: 'AI 분석', cls: 'badge-dg',
+      note: '업로드한 문서를 문서 AI가 실제로 분석합니다. 원문이 분석 API로 전송됩니다.' },
+    demo: { label: '데모 재생', cls: 'badge-neutral',
+      note: '사전 검증된 MSDS 3종의 추출 결과를 재생합니다. 업로드한 문서는 분석되지 않습니다.' }
+  };
+
+  var serverCaps = null;   /* probe 결과 캐시 */
+
+  /* 서버 능력 조사 — Anthropic API 를 호출하지 않으므로 과금 0 */
+  function probe() {
+    var C = cfg();
+    if (C.mode === 'demo') return Promise.resolve({ ai: false });
+    try {
+      var raw = sessionStorage.getItem('dg-msds-caps');
+      if (raw) {
+        var c = JSON.parse(raw);
+        if (c && (Date.now() - c.at) < C.probeTtlMs) return Promise.resolve(c.caps);
+      }
+    } catch (e) { /* 무시 */ }
+    if (typeof DGAUTH === 'undefined') return Promise.resolve({ ai: false });
+    return DGAUTH.edge('msds-extract', { probe: true }).then(function (r) {
+      var caps = { ai: !!(r && r.ok && r.ai) };
+      try { sessionStorage.setItem('dg-msds-caps', JSON.stringify({ at: Date.now(), caps: caps })); } catch (e) { /* 무시 */ }
+      return caps;
+    }).catch(function () { return { ai: false }; });
+  }
+
+  /* 현재 선택으로 어떤 엔진이 돌지 — 이유까지 함께 반환 */
+  function engineFor(file) {
+    var C = cfg();
+    if (C.mode === 'demo') return { engine: 'demo', reason: '설정이 데모 고정입니다.' };
+    if (!serverCaps || !serverCaps.ai) return { engine: 'demo', reason: '서버에 문서 AI 키가 등록되어 있지 않습니다.' };
+    if (typeof DGAUTH === 'undefined' || !DGAUTH.isAuthed()) return { engine: 'demo', reason: '로그인해야 실문서 분석을 사용할 수 있습니다.' };
+    if (!file) return { engine: 'demo', reason: '분석할 파일을 업로드하면 AI 분석이 실행됩니다.' };
+    if (C.accept.indexOf(file.type) < 0) return { engine: 'demo', reason: '지원하지 않는 형식입니다(PDF·PNG·JPEG·WebP·GIF).' };
+    if (file.size > C.maxBytes) return { engine: 'demo', reason: '파일이 ' + Math.round(C.maxBytes / 1048576) + 'MB 를 초과합니다.' };
+    return { engine: 'ai', reason: '' };
+  }
+
+  function renderEngineBadge() {
+    var box = $('engineBadge');
+    if (!box) return;
+    var e = engineFor(uploadedFile);
+    var m = ENGINE_META[e.engine];
+    box.innerHTML = '<span class="badge ' + m.cls + '"><i></i>' + m.label + '</span>' +
+      '<span class="muted" style="font-size:12px;margin-left:8px;">' + esc(m.note) +
+      (e.reason ? ' — ' + esc(e.reason) : '') + '</span>';
+  }
+
+  function liveReady() { return engineFor(uploadedFile).engine === 'ai'; }
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]; }); }
@@ -48,6 +107,7 @@
       b.addEventListener('click', function () {
         uploadedFile = null; uploadedName = null;   /* 샘플 선택 = 데모 재생 모드 */
         pick(b.dataset.id);
+        renderEngineBadge();
       });
     });
   }
@@ -75,18 +135,32 @@
     if (!f) return;
     uploadedName = f.name;
     uploadedFile = f;
-    /* 파일명으로 UN 번호 추정 → 없으면 첫 샘플로 재생 (실분석 실패 시 폴백용) */
-    var guess = D.MSDS.filter(function (m) {
-      return f.name.replace(/[^0-9]/g, '').indexOf(m.profile.unNo.replace(/[^0-9]/g, '')) >= 0;
-    })[0] || D.MSDS[1];
-    pick(guess.id);
-    if (liveReady()) {
-      $('uploadState').innerHTML = '업로드 — <b>' + esc(f.name) + '</b> (' + Math.max(1, Math.round(f.size / 1024)) + ' KB) · ' +
-        '로그인 계정 — 분석 실행 시 <b>실문서 AI 분석</b>을 시도합니다(실패 시 데모 재생).';
-    } else {
-      $('uploadState').innerHTML = '업로드 — <b>' + esc(f.name) + '</b> (' + Math.max(1, Math.round(f.size / 1024)) + ' KB) · ' +
-        '데모 모드이므로 <b>' + esc(guess.title) + '</b> 사전 추출 결과로 처리 과정을 재생합니다.';
+    var kb = Math.max(1, Math.round(f.size / 1024));
+    var e = engineFor(f);
+    renderEngineBadge();
+
+    if (e.engine === 'ai') {
+      /* 실분석 — 데모 샘플을 미리 고르지 않는다(결과는 문서에서 나온다) */
+      selected = null; analyzed = false; analyzeGen++;
+      $('sampleChips').querySelectorAll('.f-chip').forEach(function (b) { b.classList.remove('on'); });
+      $('extractBody').innerHTML = '<tr><td colspan="5" class="muted center">분석 대기 중</td></tr>';
+      $('profileBox').innerHTML = '<p class="muted" style="font-size:13px;">분석을 실행하면 이 문서에서 추출한 표준 프로파일이 표시됩니다.</p>';
+      $('lowConfNote').style.display = 'none';
+      renderOcrSteps(1);
+      $('analyzeBtn').disabled = false;
+      $('confirmBtn').disabled = true;
+      $('uploadState').innerHTML = '업로드 — <b>' + esc(f.name) + '</b> (' + kb + ' KB) · ' +
+        '<b>AI 분석</b> 준비됨 — 분석 실행을 누르면 이 문서를 직접 읽습니다.';
+      return;
     }
+
+    /* 데모 모드 — 업로드 문서는 분석되지 않는다는 점을 명확히 알리고,
+       재생할 샘플은 파일명 추측이 아니라 사용자가 직접 고르게 한다.
+       (파일명 숫자로 샘플을 찍던 기존 방식은 무관한 프로파일이 떠 '오인식'으로 보였다) */
+    $('uploadState').innerHTML = '업로드 — <b>' + esc(f.name) + '</b> (' + kb + ' KB) · ' +
+      '<b>데모 재생 모드</b>라 이 문서는 분석되지 않습니다. ' + esc(e.reason) +
+      '<br>아래에서 재생할 MSDS 샘플을 직접 선택하세요.';
+    $('analyzeBtn').disabled = !selected;
   }
 
   function initDrop() {
@@ -167,9 +241,12 @@
       renderOcrSteps(2);
       DGAUTH.edge('msds-extract', {
         token: DGAUTH.token(), filename: f.name, media_type: f.type, data: b64
+      }).catch(function (err) {
+        /* 네트워크·타임아웃 등 — catch 가 없으면 버튼이 영구히 잠긴다 */
+        fallbackDemo(gen, btn, String((err && err.message) || err || '네트워크 오류'));
       }).then(function (r) {
-        if (gen !== analyzeGen) return;
-        if (!r || !r.ok || !r.profile) { fallbackDemo(gen, btn, (r && r.error) || '분석 실패'); return; }
+        if (gen !== analyzeGen || !r) return;
+        if (!r.ok || !r.profile) { fallbackDemo(gen, btn, (r && r.error) || '분석 실패'); return; }
         $('progressText').textContent = msgs[2];
         renderOcrSteps(3);
         selected = buildLiveSelected(r.profile, f.name);
@@ -185,11 +262,16 @@
     };
     reader.readAsDataURL(f);
   }
+  /* 실분석 실패 — 무관한 샘플로 조용히 바꿔치지 않는다.
+     원인을 그대로 알리고 사용자가 재시도하거나 데모 샘플을 직접 고르게 한다. */
   function fallbackDemo(gen, btn, why) {
     if (gen !== analyzeGen) return;
-    if (window.DGKit) DGKit.toast('실문서 분석 불가(' + why + ') — 데모 재생으로 전환합니다.', 'err');
-    $('progressText').textContent = '실문서 분석 불가 — 데모 재생으로 전환';
-    analyzeDemo(gen, btn);
+    if (window.DGKit) DGKit.toast('실문서 분석 실패 — ' + why, 'err');
+    $('progressText').textContent = '실문서 분석 실패 — ' + why;
+    $('uploadState').innerHTML = '<b>분석에 실패했습니다</b> — ' + esc(why) +
+      '<br>다시 시도하거나, 아래에서 MSDS 샘플을 선택해 데모로 진행하세요.';
+    renderOcrSteps(1);
+    btn.disabled = false;
   }
 
   function analyze() {
@@ -338,6 +420,9 @@
 
     renderOcrSteps(null);
     renderChips();
+    renderEngineBadge();
+    /* 서버 능력 조사 → AI 분석 가능 여부에 따라 배지·안내를 자동 갱신(과금 0) */
+    probe().then(function (caps) { serverCaps = caps; renderEngineBadge(); });
     renderValidation();
     initDrop();
     $('analyzeBtn').addEventListener('click', analyze);
