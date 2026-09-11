@@ -148,6 +148,18 @@
       </div>
       <p class="notice" id="lowConfNote" style="display:none;"></p>
 
+      <section id="accuracyBox" class="panel" style="margin-top:16px;" hidden aria-labelledby="accuracyTitle">
+        <div class="panel-head">
+          <h3 id="accuracyTitle">문서 인식 적합도</h3>
+          <span id="accuracyBadge" class="badge badge-neutral"></span>
+        </div>
+        <div class="panel-body">
+          <div id="accuracyMetrics" class="grid-3"></div>
+          <p id="accuracyNote" class="notice" style="margin:12px 0 0;"></p>
+          <div id="accuracyIssues" class="src-note" style="margin-top:8px;"></div>
+        </div>
+      </section>
+
       <div class="row" style="margin-top:16px;">
         <button class="btn btn-dg" id="confirmBtn" type="button" disabled>이 프로파일로 확정 → 적법성 검토</button>
         <a class="btn btn-ghost btn-sm" href="process.html">워크벤치로 돌아가기</a>

@@ -20,6 +20,8 @@
 
     /* 1 · 원문 대조 검증 */
     var low = ex.filter(function (e) { return e.conf < 0.8; });
+    var accuracy = c.msds && c.msds.accuracy;
+    var accuracyOk = accuracy && accuracy.action === 'pass' && Number(accuracy.score) >= 85;
     var hasS3 = ex.some(function (e) { return e.section.indexOf('Section 3') >= 0; });
     var hasS14 = ex.some(function (e) { return e.section.indexOf('Section 14') >= 0; });
     gates.push({
@@ -28,9 +30,10 @@
         chk(hasS3 && hasS14, 'Section 3 · 14 위치 확인', hasS3 && hasS14 ? '두 섹션 모두 식별' : '섹션 누락'),
         chk(true, '추출값 – 원문 연결', ex.length + '개 항목 페이지·영역 연결'),
         chk(low.length === 0, 'OCR 신뢰도', low.length ? '저신뢰 ' + low.length + '건: ' + low.map(function (e) { return e.field; }).join(', ') : '전 항목 80% 이상'),
+        chk(!!accuracyOk, '문서 인식 적합도', accuracy ? accuracy.score + '점 · ' + (accuracy.mode === 'proxy' ? '원문 대조 필요' : '기준값 대조 완료') : '미측정 — MSDS 단계 재확인 필요'),
         chk(true, '누락 탐지', 'UN No. · 등급 · 포장등급 필수항목 충족')
       ],
-      warn: low.length > 0
+      warn: low.length > 0 || !accuracyOk
     });
 
     /* 2 · 규제 교차 검증 */

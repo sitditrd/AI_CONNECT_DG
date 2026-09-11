@@ -2252,7 +2252,17 @@ window.DGI18N_DICT = {
     "데모 재생은 실제 MSDS #종에서 사전 추출·검증한 결과를 동일한 처리 순서로 보여주며 비용이 들지 않습니다.": "Demo replay shows results pre-extracted and verified from # real MSDS in the same processing order, at no cost.",
     "업로드한 문서는 분석되지 않고, 재생할 샘플이 무작위로 하나 선택되어 바로 분석을 실행할 수 있습니다(칩으로 변경 가능).": "The uploaded document is not analyzed; one sample is chosen at random so you can run the analysis right away (changeable via the chips).",
     "서버에 문서 AI 키가 등록되고 로그인하면 AI 분석으로 자동 전환되어 업로드한 문서를 직접 읽습니다(사용량 과금).": "Once a document AI key is registered on the server and you sign in, it switches to AI analysis automatically and reads the uploaded document directly (usage-billed).",
-    "분석에 실패하면 무관한 샘플로 대체하지 않고 원인을 그대로 알려 드립니다.": "If analysis fails, the cause is reported as-is instead of substituting an unrelated sample."
+    "분석에 실패하면 무관한 샘플로 대체하지 않고 원인을 그대로 알려 드립니다.": "If analysis fails, the cause is reported as-is instead of substituting an unrelated sample.",
+    "문서 인식 적합도": "Document recognition fitness",
+    "종합 점수": "Overall score",
+    "필드 완전성": "Field completeness",
+    "필드 신뢰도": "Field confidence",
+    "원문 위치 추적성": "Source traceability",
+    "필드 정합성": "Field consistency",
+    "측정 기준": "Measurement basis",
+    "샘플 기준 대조": "Reference sample comparison",
+    "자동 산정 신뢰도": "Automatically estimated confidence",
+    "추가 확인이 필요한 항목이 없습니다.": "No additional checks are required."
   });
   add('zh', {
     /* js/msds.js — 업로드 상태 */
@@ -2281,6 +2291,16 @@ window.DGI18N_DICT = {
     "데모 재생은 실제 MSDS #종에서 사전 추출·검증한 결과를 동일한 처리 순서로 보여주며 비용이 들지 않습니다.": "演示回放以相同处理顺序展示从 #种真实 MSDS 预先提取并验证的结果，不产生费用。",
     "업로드한 문서는 분석되지 않고, 재생할 샘플이 무작위로 하나 선택되어 바로 분석을 실행할 수 있습니다(칩으로 변경 가능).": "不会分析已上传的文件，系统随机选择一种样本，可立即执行分析（可通过标签切换）。",
     "서버에 문서 AI 키가 등록되고 로그인하면 AI 분석으로 자동 전환되어 업로드한 문서를 직접 읽습니다(사용량 과금).": "在服务器登记文档 AI 密钥并登录后，将自动切换为 AI 分析并直接读取已上传的文件（按用量计费）。",
-    "분석에 실패하면 무관한 샘플로 대체하지 않고 원인을 그대로 알려 드립니다.": "分析失败时不会替换为无关样本，而是如实告知原因。"
+    "분석에 실패하면 무관한 샘플로 대체하지 않고 원인을 그대로 알려 드립니다.": "分析失败时不会替换为无关样本，而是如实告知原因。",
+    "문서 인식 적합도": "文档识别适配度",
+    "종합 점수": "综合分数",
+    "필드 완전성": "字段完整性",
+    "필드 신뢰도": "字段置信度",
+    "원문 위치 추적성": "原文位置可追溯性",
+    "필드 정합성": "字段一致性",
+    "측정 기준": "测量标准",
+    "샘플 기준 대조": "样本标准比对",
+    "자동 산정 신뢰도": "自动估算置信度",
+    "추가 확인이 필요한 항목이 없습니다.": "无需额外确认。"
   });
 })();

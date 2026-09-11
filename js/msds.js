@@ -83,6 +83,139 @@
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]; }); }
 
+  var ACCURACY_FIELDS = [
+    { key: 'productName', label: '제품명', weight: 1, required: true },
+    { key: 'casNo', label: 'CAS No.', weight: 1, required: false },
+    { key: 'components', label: '구성성분 · 함유량', weight: 1, required: false },
+    { key: 'unNo', label: 'UN Number', weight: 2, required: true },
+    { key: 'psn', label: 'Proper Shipping Name', weight: 2, required: true },
+    { key: 'hazardClass', label: 'Hazard Class', weight: 2, required: true },
+    { key: 'packingGroup', label: 'Packing Group', weight: 1, required: false },
+    { key: 'marinePollutant', label: 'Marine Pollutant', weight: 1, required: true }
+  ];
+  var ACCURACY_ALIASES = {
+    productName: ['제품명', 'productName', 'Product Name'],
+    casNo: ['CAS No.', 'CAS No', 'casNo'],
+    components: ['구성성분 · 함유량', '구성성분', 'components', 'component'],
+    unNo: ['UN Number', 'UN No.', 'unNo', 'unNumber'],
+    psn: ['Proper Shipping Name', 'psn', 'properShippingName'],
+    hazardClass: ['Hazard Class', 'hazardClass', 'class'],
+    packingGroup: ['Packing Group', 'packingGroup'],
+    marinePollutant: ['Marine Pollutant', 'marinePollutant']
+  };
+  function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+  function normalise(v) { return String(v == null ? '' : v).toLowerCase().replace(/[\s\-_,.():/]/g, ''); }
+  function extractionFor(rows, key) {
+    var aliases = ACCURACY_ALIASES[key] || [];
+    return (rows || []).find(function (row) {
+      var field = String(row.field == null ? '' : row.field);
+      return aliases.some(function (alias) { return field === alias || normalise(field) === normalise(alias); });
+    }) || null;
+  }
+  function profileValue(profile, key) {
+    if (!profile) return '';
+    var value = profile[key];
+    if (Array.isArray(value)) return value.join(', ');
+    return value == null ? '' : String(value);
+  }
+  function rowHasValue(row, key, profile) {
+    var value = row && String(row.value == null ? '' : row.value).trim();
+    if (value) return true;
+    return key === 'packingGroup' && !profileValue(profile, key);
+  }
+  function hasProfileValue(profile, key) {
+    var value = profileValue(profile, key).trim();
+    if (!value || value === '—' || value === '-') return false;
+    return !(key === 'casNo' && value.indexOf('제품') >= 0 && value.indexOf('물품') >= 0);
+  }
+  function consistentValue(key, row, profile) {
+    if (!row || !hasProfileValue(profile, key)) return true;
+    var actual = normalise(row.value);
+    if (key === 'components') return true;
+    if (Array.isArray(profile[key])) {
+      return profile[key].some(function (item) {
+        var token = typeof item === 'object' ? (item.cas || item.name || '') : item;
+        token = normalise(token);
+        return token && (actual.indexOf(token) >= 0 || token.indexOf(actual) >= 0);
+      });
+    }
+    var expected = normalise(profileValue(profile, key));
+    if (!actual || !expected) return true;
+    if (key === 'marinePollutant') {
+      return /true|yes|y|예|해당/.test(expected) === /true|yes|y|예|해당/.test(actual);
+    }
+    return actual.indexOf(expected) >= 0 || expected.indexOf(actual) >= 0;
+  }
+  function calculateAccuracy(item) {
+    if (!item || !item.profile) return null;
+    var profile = item.profile;
+    var rows = item.extraction || [];
+    var totalWeight = 0, presentWeight = 0, confidenceTotal = 0;
+    var traceabilityTotal = 0, consistencyTotal = 0;
+    var missing = [], lowConfidence = [], conflicts = [];
+    ACCURACY_FIELDS.forEach(function (field) {
+      var row = extractionFor(rows, field.key);
+      var weight = field.weight;
+      var optionalException = field.key === 'packingGroup' && !hasProfileValue(profile, field.key);
+      var required = field.required && !optionalException;
+      var present = rowHasValue(row, field.key, profile);
+      var confidence = row && typeof row.conf === 'number' ? clamp(row.conf, 0, 1) : 0;
+      var traceable = row && row.section && Number(row.page) > 0;
+      var consistent = consistentValue(field.key, row, profile);
+      totalWeight += weight;
+      if (present) presentWeight += weight;
+      confidenceTotal += confidence * weight;
+      traceabilityTotal += traceable ? weight : 0;
+      consistencyTotal += consistent ? weight : 0;
+      if (required && !hasProfileValue(profile, field.key) && !present) missing.push(field.label);
+      if (row && confidence < 0.8) lowConfidence.push(field.label + ' ' + Math.round(confidence * 100) + '%');
+      if (row && !consistent) conflicts.push(field.label);
+    });
+    var completeness = totalWeight ? Math.round(presentWeight / totalWeight * 100) : 0;
+    var confidence = totalWeight ? Math.round(confidenceTotal / totalWeight * 100) : 0;
+    var traceability = totalWeight ? Math.round(traceabilityTotal / totalWeight * 100) : 0;
+    var consistency = totalWeight ? Math.round(consistencyTotal / totalWeight * 100) : 0;
+    var score = Math.round(completeness * 0.35 + confidence * 0.30 + traceability * 0.20 + consistency * 0.15);
+    var mode = item.live ? 'proxy' : 'reference';
+    if (/^⚠/.test(String(profile.korNote || ''))) conflicts.push('국내 규제 주의사항');
+    var grade = score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : 'D';
+    var action = missing.length || conflicts.some(function (label) { return label === 'UN Number' || label === 'Hazard Class'; }) ? 'review' : 'pass';
+    if (mode === 'proxy' || lowConfidence.length || score < 85) action = 'review';
+    return {
+      score: score, grade: grade, mode: mode, action: action,
+      metrics: { completeness: completeness, confidence: confidence, traceability: traceability, consistency: consistency },
+      missing: missing, lowConfidence: lowConfidence, conflicts: conflicts,
+      calculatedAt: window.DGCase && window.DGCase.stamp ? window.DGCase.stamp() : new Date().toISOString()
+    };
+  }
+  function renderAccuracy() {
+    var box = $('accuracyBox');
+    if (!box || !selected || !analyzed) { if (box) box.hidden = true; return; }
+    selected.accuracy = selected.accuracy || calculateAccuracy(selected);
+    var accuracy = selected.accuracy;
+    if (!accuracy) return;
+    box.hidden = false;
+    var badge = $('accuracyBadge');
+    badge.className = 'badge ' + (accuracy.action === 'pass' ? 'badge-ok' : 'badge-cond');
+    badge.textContent = accuracy.score + '점 · ' + accuracy.grade + '등급';
+    $('accuracyMetrics').innerHTML = [
+      ['종합 점수', accuracy.score + '점'], ['필드 완전성', accuracy.metrics.completeness + '%'],
+      ['필드 신뢰도', accuracy.metrics.confidence + '%'], ['원문 위치 추적성', accuracy.metrics.traceability + '%'],
+      ['필드 정합성', accuracy.metrics.consistency + '%'],
+      ['측정 기준', accuracy.mode === 'reference' ? '샘플 기준 대조' : '자동 산정 신뢰도']
+    ].map(function (entry) { return '<div class="kv"><span>' + esc(entry[0]) + '</span><b>' + esc(entry[1]) + '</b></div>'; }).join('');
+    var note = $('accuracyNote');
+    note.className = 'notice ' + (accuracy.action === 'pass' ? 'ok' : 'warn');
+    note.innerHTML = accuracy.mode === 'reference'
+      ? '<b>사전 검증된 샘플 기준</b>과 추출 결과를 대조했습니다. 실제 운영 승인 전에는 원문과 최종 대조가 필요합니다.'
+      : '<b>정답지가 없는 실문서의 자동 산정 신뢰도</b>입니다. 점수는 정확도 확정값이 아니며 원문 대조 후 확정해야 합니다.';
+    var issues = [];
+    if (accuracy.missing.length) issues.push('필수 프로파일 누락: ' + accuracy.missing.join(', '));
+    if (accuracy.lowConfidence.length) issues.push('저신뢰 항목: ' + accuracy.lowConfidence.join(', '));
+    if (accuracy.conflicts.length) issues.push('정합성 확인 필요: ' + accuracy.conflicts.join(', '));
+    $('accuracyIssues').textContent = issues.length ? issues.join(' · ') : '추가 확인이 필요한 항목이 없습니다.';
+  }
+
   var OCR_STEPS = [
     { no: 1, t: '보안 문서 업로드', d: 'PDF · 스캔 · 이미지 형식 인식. 문서는 케이스 단위로 격리 저장.', out: '원본 문서 · 페이지 수' },
     { no: 2, t: 'LLM-OCR 분석', d: '표 · 문장 · 항목 구조를 자동 식별하고 Section 3 · 14를 우선 탐색.', out: '항목 후보 집합' },
@@ -132,6 +265,7 @@
     $('extractBody').innerHTML = '<tr><td colspan="5" class="muted center">분석 대기 중</td></tr>';
     $('profileBox').innerHTML = '<p class="muted" style="font-size:13px;">분석을 실행하면 표준 프로파일이 생성됩니다.</p>';
     $('lowConfNote').style.display = 'none';
+    if ($('accuracyBox')) $('accuracyBox').hidden = true;
     renderOcrSteps(1);
   }
 
@@ -151,6 +285,7 @@
       $('extractBody').innerHTML = '<tr><td colspan="5" class="muted center">분석 대기 중</td></tr>';
       $('profileBox').innerHTML = '<p class="muted" style="font-size:13px;">분석을 실행하면 이 문서에서 추출한 표준 프로파일이 표시됩니다.</p>';
       $('lowConfNote').style.display = 'none';
+      if ($('accuracyBox')) $('accuracyBox').hidden = true;
       renderOcrSteps(1);
       $('analyzeBtn').disabled = false;
       $('confirmBtn').disabled = true;
@@ -283,6 +418,7 @@
         renderOcrSteps(4);
         renderExtract();
         renderProfile();
+        renderAccuracy();
         $('confirmBtn').disabled = false;
         btn.disabled = false;
         $('progressText').textContent = '실문서 분석 완료 — 추출 항목 ' + selected.extraction.length + '건';
@@ -335,6 +471,7 @@
         analyzed = true;
         renderExtract();
         renderProfile();
+        renderAccuracy();
         $('confirmBtn').disabled = false;
         btn.disabled = false;
       }, 420);
@@ -410,6 +547,7 @@
   /* ---------- 확정 ---------- */
   function confirmProfile() {
     if (!selected || !analyzed) return;
+    selected.accuracy = selected.accuracy || calculateAccuracy(selected);
     window.DGCase.patch({
       msds: {
         id: selected.id,
@@ -418,6 +556,7 @@
         pages: selected.pages,
         profile: selected.profile,
         extraction: selected.extraction,
+        accuracy: selected.accuracy,
         analyzedAt: window.DGCase.stamp()
       },
       /* 프로파일이 바뀌면 이후 단계는 재검토 대상 */
@@ -472,6 +611,7 @@
         renderOcrSteps(4);
         renderExtract();
         renderProfile();
+        renderAccuracy();
         $('confirmBtn').disabled = false;
         $('progressText').textContent = '기존 케이스 프로파일 복원 — ' + c.msds.analyzedAt;
       } else if (c.msds.profile && c.msds.extraction) {
@@ -479,7 +619,7 @@
         selected = {
           id: c.msds.id, live: true, title: c.msds.title, fileName: c.msds.fileName,
           pages: c.msds.pages || 1, summary: '실문서 AI 분석 결과',
-          profile: c.msds.profile, extraction: c.msds.extraction
+          profile: c.msds.profile, extraction: c.msds.extraction, accuracy: c.msds.accuracy
         };
         uploadedName = c.msds.fileName;
         analyzed = true;
@@ -487,6 +627,7 @@
         renderOcrSteps(4);
         renderExtract();
         renderProfile();
+        renderAccuracy();
         $('confirmBtn').disabled = false;
         $('progressText').textContent = '기존 케이스 프로파일 복원(실문서) — ' + c.msds.analyzedAt;
       } else {
