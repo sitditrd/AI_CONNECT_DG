@@ -173,6 +173,16 @@
     });
     var completeness = totalWeight ? Math.round(presentWeight / totalWeight * 100) : 0;
     var confidence = totalWeight ? Math.round(confidenceTotal / totalWeight * 100) : 0;
+    var allConfidenceRows = rows.filter(function (row) { return typeof row.conf === 'number'; });
+    if (allConfidenceRows.length) {
+      var allConfidence = Math.round(allConfidenceRows.reduce(function (sum, row) { return sum + clamp(row.conf, 0, 1); }, 0) / allConfidenceRows.length * 100);
+      confidence = Math.round((confidence + allConfidence) / 2);
+      allConfidenceRows.forEach(function (row) {
+        if (row.conf < 0.8 && lowConfidence.every(function (label) { return label.indexOf(String(row.field)) !== 0; })) {
+          lowConfidence.push(String(row.field) + ' ' + Math.round(row.conf * 100) + '%');
+        }
+      });
+    }
     var traceability = totalWeight ? Math.round(traceabilityTotal / totalWeight * 100) : 0;
     var consistency = totalWeight ? Math.round(consistencyTotal / totalWeight * 100) : 0;
     var score = Math.round(completeness * 0.35 + confidence * 0.30 + traceability * 0.20 + consistency * 0.15);
@@ -197,7 +207,7 @@
     box.hidden = false;
     var badge = $('accuracyBadge');
     badge.className = 'badge ' + (accuracy.action === 'pass' ? 'badge-ok' : 'badge-cond');
-    badge.textContent = accuracy.score + '점 · ' + accuracy.grade + '등급';
+    badge.textContent = accuracy.score + '점 · ' + accuracy.grade + '등급' + (accuracy.action === 'pass' ? '' : ' · 확인 필요');
     $('accuracyMetrics').innerHTML = [
       ['종합 점수', accuracy.score + '점'], ['필드 완전성', accuracy.metrics.completeness + '%'],
       ['필드 신뢰도', accuracy.metrics.confidence + '%'], ['원문 위치 추적성', accuracy.metrics.traceability + '%'],
