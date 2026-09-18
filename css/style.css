@@ -711,3 +711,9 @@ input[type=range] { width: 100%; accent-color: var(--dg); }
   position: fixed; z-index: 230; left: 0; right: 0; bottom: 0; text-align: center;
   background: var(--v-no); color: #fff; font-size: 12.5px; font-weight: 700; padding: 5px 10px;
 }
+
+/* ---------- 신뢰성 검증 — 담당자 확인 전환 사유 · 소제목 ---------- */
+.trigger-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.trigger-list li { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.55; }
+.trigger-list .badge { flex: none; }
+.sub-h { font-size: 16px; font-weight: 800; color: var(--ink); }

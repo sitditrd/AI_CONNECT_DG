@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <script>/* 테마 FOUC 방지 — 저장된 테마를 스타일 로드 전에 적용 */
+  try{var t=localStorage.getItem('dg-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>시스템 구현 범위 · 신뢰성 검증 | Connect DG</title>
+  <meta name="description" content="위험물 운송 배차·경로, LLM·OCR 문서 판독, 법규 검증·창고 매칭의 현재 구현 범위와 추가 개발·검증 범위를 구분해 제시합니다.">
+  <meta name="theme-color" content="#0a0f1e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="canonical" href="https://sitditrd.github.io/AI_CONNECT_DG/verify.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Connect DG">
+  <meta property="og:title" content="시스템 구현 범위 · 신뢰성 검증 | Connect DG">
+  <meta property="og:description" content="현재 구현 범위와 추가 개발·검증 범위를 구분해 제시합니다.">
+  <meta property="og:image" content="https://sitditrd.github.io/AI_CONNECT_DG/assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-18a">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/touch-icon.png">
+  <link rel="icon" href="assets/twl_logo.ico">
+</head>
+<body class="hero-page">
+  <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo-slot" aria-label="Connect DG 홈"></a>
+      <button class="nav-burger" aria-label="메뉴 열기" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="site-nav" aria-label="주요 메뉴">
+        <a href="process.html">프로세스</a>
+        <a href="msds.html">MSDS 분석</a>
+        <a href="compliance.html">적법성 검토</a>
+        <a href="matching.html">창고·차량 매칭</a>
+        <a href="route.html">안전경로</a>
+        <a href="dispatch.html">배차·입고</a>
+        <a href="insight.html">시장 현황</a>
+        <a href="verify.html" class="active">구현·검증</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
+      </div>
+    </div>
+  </header>
+
+  <section id="main-content" tabindex="-1" class="dash-hero">
+    <div class="container">
+      <div class="dash-title-row">
+        <div>
+          <h1>시스템 구현 범위 · 신뢰성 검증</h1>
+          <p class="dash-sub">시연 화면은 실제로 동작하는 코드이고, 데이터는 검증용 샘플입니다 — 현재 구현과 추가 개발 · 검증 범위를 구분합니다</p>
+        </div>
+        <div class="dash-badges">
+          <span class="dash-badge" id="rulesetBadge">규칙 세트</span>
+          <span class="dash-badge" id="lawBadge">법령 현행 확인</span>
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px; gap:8px;">
+        <span class="badge badge-ok"><i></i>구현</span><span class="muted" style="font-size:12.5px;">시연에서 실제 동작</span>
+        <span class="badge badge-cond"><i></i>부분</span><span class="muted" style="font-size:12.5px;">로직은 동작 · 데이터 또는 연동이 샘플</span>
+        <span class="badge badge-no"><i></i>미구현</span><span class="muted" style="font-size:12.5px;">추가 개발 필요</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 구현 범위 총괄 ============ -->
+  <section class="dash-section" id="scope">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">Scope</span>
+        <h2>구현 범위 총괄</h2>
+        <span class="hint">영역별로 현재 구현된 내용과 추가 개발 · 검증이 필요한 내용을 나눠 적었습니다</span>
+      </div>
+      <div class="panel reveal">
+        <div class="table-wrap">
+          <table class="dg-table" aria-label="구현 범위 총괄">
+            <thead>
+              <tr>
+                <th style="width:150px;">영역</th>
+                <th style="width:190px;">기능</th>
+                <th style="width:90px;">상태</th>
+                <th>현재 구현</th>
+                <th>추가 개발 · 검증</th>
+              </tr>
+            </thead>
+            <tbody id="scopeBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ① 운송 배차 · 경로 ============ -->
+  <section class="dash-section" id="route" style="padding-top:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">① 운송</span>
+        <h2>위험물 운송 배차 및 경로 안내</h2>
+        <span class="hint">단순 차량 배차와 위험물 운송 경로 검증은 판단 대상이 다릅니다</span>
+      </div>
+      <div class="panel reveal">
+        <div class="table-wrap">
+          <table class="dg-table" aria-label="단순 배차와 위험물 경로 검증 비교">
+            <thead>
+              <tr><th style="width:140px;">구분</th><th>단순 차량 배차</th><th>위험물 운송 경로 검증</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="strong">판단 대상</td><td>차량 가용 · 운임 · 거리</td><td>화물 특성 × 차량 조건 × 통행 제한</td></tr>
+              <tr><td class="strong">입력 정보</td><td>출발지 · 도착지 · 물량</td><td>UN No. · 등급 · 터널 제한코드 + 차량 높이 · 중량 · 운송 자격</td></tr>
+              <tr><td class="strong">산출 결과</td><td>차량 지정 · 운임</td><td>통행 가능 · 불가 경로와 위반 사유, 운송 기준(운전자 수 · 운행허가)</td></tr>
+              <tr><td class="strong">오판 시 영향</td><td>지연 · 비용 증가</td><td>통행 위반 · 사고 · 법적 책임</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 class="sub-h" style="margin:22px 0 10px;">국내 적용 범위와 제한정보 확보 · 갱신 방안</h3>
+      <div class="panel reveal">
+        <div class="table-wrap">
+          <table class="dg-table" aria-label="제한정보 확보 및 갱신 방안">
+            <thead>
+              <tr><th style="width:150px;">제한 정보</th><th>국내 근거</th><th>확보 방안</th><th style="width:80px;">갱신</th><th style="width:90px;">현재</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="strong">차량 높이 · 중량 · 폭</td><td>도로법 시행령 제79조 — 축하중 10t · 총중량 40t · 폭 2.5m · 높이 4.0m 초과 시 운행허가</td><td>차량 제원 대조는 구현, 구간별 제한은 공공데이터 터널 · 교량 제원과 화물차 경로 API로 확보</td><td>분기</td><td><span class="badge badge-cond"><i></i>부분</span></td></tr>
+              <tr><td class="strong">터널 · 지하차도 통행</td><td>도로관리청 · 지자체 지정 통행제한 구간</td><td>현재 ADR(유럽) 터널 코드를 참조값으로 사용 — 국내 지정 구간을 수집해 자체 제한구간 DB로 대체</td><td>월</td><td><span class="badge badge-cond"><i></i>부분</span></td></tr>
+              <tr><td class="strong">통행 구간 · 시간 제한</td><td>지자체 고시 · 산업단지 운영 기준</td><td>고시 수집과 운송사 현장 피드백으로 갱신</td><td>월 · 수시</td><td><span class="badge badge-cond"><i></i>부분</span></td></tr>
+              <tr><td class="strong">운송 기준</td><td>위험물안전관리법 시행규칙 별표21 — 이동탱크저장소 장거리 운송 시 운전자 2명 이상</td><td>배차 규칙으로 코드화 완료, 예외(운송책임자 동승 · 휴식)는 배차 시 확인</td><td>개정 시</td><td><span class="badge badge-ok"><i></i>구현</span></td></tr>
+              <tr><td class="strong">실시간 통제 · 정체</td><td>도로 공사 · 사고 통제 정보</td><td>국가교통정보센터 등 교통정보 API 연동</td><td>실시간</td><td><span class="badge badge-no"><i></i>미구현</span></td></tr>
+              <tr><td class="strong">운행 관제</td><td>물류정책기본법 제29조의2 — 위험물질 운송차량 단말장치</td><td>위험물질 운송안전관리센터 연계 협의</td><td>실시간</td><td><span class="badge badge-no"><i></i>미구현</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="notice">
+        <span>적용 범위(안) — 1단계는 수도권 · 충청 산업단지와 평택 · 인천항 사이 구간의 제한구간 DB를 먼저 구축합니다.</span>
+        <span>2단계는 울산 · 여수 · 광양 등 석유화학 · 항만 권역으로 넓히고, 실제 운행 건의 판정 결과와 실제 통행 가능 여부를 사후 대조해 검증합니다.</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ ② 문서 판독 ============ -->
+  <section class="dash-section" id="doc" style="padding-top:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">② 문서</span>
+        <h2>LLM · OCR 기반 문서 판독</h2>
+        <span class="hint">분석 파이프라인은 구현되어 있고, 정확도는 실제 샘플로 검증하는 단계입니다</span>
+      </div>
+      <div class="split">
+        <div class="panel reveal">
+          <div class="panel-head"><h3>실측 결과</h3><span class="sub">실제 MSDS 3종 원본 기준</span></div>
+          <div class="table-wrap">
+            <table class="dg-table" aria-label="문서 판독 실측 결과">
+              <thead><tr><th style="width:130px;">항목</th><th>결과</th><th style="width:90px;">판단</th></tr></thead>
+              <tbody>
+                <tr><td class="strong">규칙 기반 파서</td><td>39칸 중 12칸 적중(약 30%) — 섹션 헤더 · 2단 레이아웃 · 라벨 표기가 문서마다 다름</td><td>기각</td></tr>
+                <tr><td class="strong">무료 OCR · 문서 AI 5종</td><td>문서당 2페이지 제한(Section 14는 6~10쪽), OCR 노이즈, 정확도 근거 없음</td><td>기각</td></tr>
+                <tr><td class="strong">CAS 체크디짓</td><td>원문 오타 검출 — 12190-79-7 → 12190-79-3 (동일 성분 타 문서로 교차 확인)</td><td>적용</td></tr>
+                <tr><td class="strong">농도 · 분류 교차검증</td><td>UN3098 기재 문서의 H₂O₂ 2~6% — UN 운송 규제 하한(8%) 미만과 상충 검출</td><td>적용</td></tr>
+                <tr><td class="strong">LLM 분석 정확도</td><td>미측정 — 분석 서버 배포와 샘플셋 구축 후 측정</td><td>검증 필요</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel reveal">
+          <div class="panel-head"><h3>정확도 검증 계획</h3><span class="sub">실제 샘플 · 정답지 기반</span></div>
+          <div class="table-wrap">
+            <table class="dg-table" aria-label="정확도 검증 계획">
+              <tbody>
+                <tr><td class="strong" style="width:110px;">샘플 구성</td><td>30건 이상 — 제조사(국내 · 해외) · 언어(국 · 영 · 중 · 일) · 형식(텍스트 PDF · 스캔 · 사진) · 스캔 품질(상 · 중 · 하)로 층화</td></tr>
+                <tr><td class="strong">정답지</td><td>위험물 담당자 2인이 독립 판독한 뒤 불일치 항목을 합의</td></tr>
+                <tr><td class="strong">측정 지표</td><td>CAS · UN · Class · PG · 성분 · 함유량별 정확도, 누락률, 오인식률, 원문 위치 일치율, 처리 시간</td></tr>
+                <tr><td class="strong">합격 기준(안)</td><td>UN · Class · PG 오인식이 '확인 필요' 없이 통과되는 건 0건 — 나머지 필드는 측정 후 기준 설정</td></tr>
+                <tr><td class="strong">다른 문서</td><td>B/L 등 비정형 문서 — 분석 엔진은 출력 스키마만 바꾸는 구조이며, 문서별 스키마와 샘플 검증 후 적용</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub-h" style="margin:22px 0 10px;">누락 · 오인식 처리와 원문 확인 절차</h3>
+      <div class="steps reveal" id="docSteps"></div>
+      <p class="src-note">원칙 — 읽지 못한 값은 빈칸으로 두지 않고 '확인 필요'로 넘깁니다. 틀린 값이 '확정'으로 넘어가지 않게 하는 것이 목표입니다.</p>
+    </div>
+  </section>
+
+  <!-- ============ ③ 법규 · 매칭 ============ -->
+  <section class="dash-section" id="law" style="padding-top:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">③ 법규</span>
+        <h2>법규 검증 및 창고 매칭</h2>
+        <span class="hint">문서를 읽는 기능과 보관 적합성을 판단하는 기능을 분리합니다</span>
+      </div>
+      <div class="grid-3 reveal">
+        <div class="card">
+          <span class="badge badge-neutral"><i></i>읽기 — 문서 AI</span>
+          <h3 style="margin-top:10px;">표준 위험물 프로파일</h3>
+          <p>UN No. · Class · PG · CAS · 농도를 원문 위치와 함께 추출합니다. 판단은 하지 않습니다.</p>
+        </div>
+        <div class="card">
+          <span class="badge badge-neutral"><i></i>판단 — 규칙 엔진</span>
+          <h3 style="margin-top:10px;">근거 조문과 연결된 규칙</h3>
+          <p>국내 유별 판정 → 요구 허가 산출 → 창고 인허가 · CAS 허가 품목 대조 → 적합 · 조건부 · 보류 · 불가와 사유.</p>
+        </div>
+        <div class="card">
+          <span class="badge badge-neutral"><i></i>확정 — 담당자</span>
+          <h3 style="margin-top:10px;">전문가 승인</h3>
+          <p>승인 전에는 최종 판정을 확정하지 않고, 전환 사유가 남아 있으면 승인 후에도 조건부로 둡니다.</p>
+        </div>
+      </div>
+
+      <h3 class="sub-h" id="triggers" style="margin:22px 0 10px;">담당자 확인 전환 기준</h3>
+      <div class="panel reveal">
+        <div class="table-wrap">
+          <table class="dg-table" aria-label="담당자 확인 전환 기준">
+            <thead><tr><th style="width:220px;">조건</th><th>예시</th><th style="width:90px;">현재</th></tr></thead>
+            <tbody id="triggerBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 class="sub-h" style="margin:22px 0 10px;">법령 변경 관리 — 현행 시행일 대조</h3>
+      <div class="panel reveal">
+        <div class="table-wrap">
+          <table class="dg-table" aria-label="법령 현행 시행일 대조">
+            <thead><tr><th>법령 · 기준</th><th style="width:120px;">카탈로그 기준</th><th style="width:110px;">현행 시행일</th><th style="width:150px;">상태</th><th>영향 규칙</th></tr></thead>
+            <tbody id="lawBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="src-note" id="lawNote"></p>
+      <div class="steps reveal" id="lawSteps" style="margin-top:12px;"></div>
+    </div>
+  </section>
+
+  <section class="dash-section" style="padding-top:0;">
+    <div class="container">
+      <p class="notice">
+        <span>시연 데이터(창고 8곳 · 차량 5대 · 경로 후보 · 실제 MSDS 3종)는 검증용 샘플입니다.</span>
+        <span>운영 전환 전에 실데이터 연동과 실제 샘플 기반 정확도 검증을 먼저 마칩니다.</span>
+      </p>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a href="index.html" class="logo-slot" aria-label="Connect DG"></a>
+        <p class="footer-note">
+          Connect DG · 시스템 구현 범위 · 신뢰성 검증 · 국내 법령은 국가법령정보(현행)로 시행일을 확인했습니다<br>
+          © <span class="footer-year">2026</span> TAEWOONG LOGISTICS.
+        </p>
+      </div>
+      <nav class="footer-links" aria-label="푸터 메뉴">
+        <a href="process.html">프로세스</a>
+        <a href="compliance.html">적법성 검토</a>
+        <a href="route.html">안전경로</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="js/common.js?v=2026-09-18a"></script>
+  <script src="js/i18n-dict.js?v=2026-09-18a"></script>
+  <script src="js/i18n.js?v=2026-09-18a"></script>
+  <script src="js/auth.js?v=2026-09-18a"></script>
+  <script src="js/auth-gate.js?v=2026-09-18a"></script>
+  <script src="js/ui-kit.js?v=2026-09-18a"></script>
+  <script src="js/case-sync.js?v=2026-09-18a"></script>
+  <script src="js/data_dg.js?v=2026-09-18a"></script>
+  <script src="js/db.js?v=2026-09-18a"></script>
+  <script src="js/match-engine.js?v=2026-09-18a"></script>
+  <script src="js/verify-rules.js?v=2026-09-18a"></script>
+  <script src="js/verify.js?v=2026-09-18a"></script>
+</body>
+</html>

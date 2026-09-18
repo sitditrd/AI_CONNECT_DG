@@ -45,7 +45,29 @@
     return rest(table, { method: 'POST', body: rows, headers: { Prefer: 'return=representation' } });
   }
 
-  /* 원격 데이터로 시드 교체 — 실패해도 화면은 시드로 정상 동작 */
+  /* 원격 행을 시드에 id 기준으로 병합한다.
+     통째로 교체하면 원격 스키마에 아직 없는 로컬 전용 필드(창고 허가 품목 CAS, 법령 현행 시행일 등)가
+     조용히 사라진다. 원격 값이 있는 필드만 덮고 나머지는 시드 값을 유지한다.
+     appendSeed — 원격에 없는 시드 행을 뒤에 붙일지(법령처럼 카탈로그가 늘어나는 경우) */
+  function mergeById(seed, remote, appendSeed) {
+    var byId = {};
+    (seed || []).forEach(function (s) { byId[s.id] = s; });
+    var out = remote.map(function (r) {
+      var m = {};
+      var base = byId[r.id] || {};
+      Object.keys(base).forEach(function (k) { m[k] = base[k]; });
+      Object.keys(r).forEach(function (k) { if (r[k] !== undefined && r[k] !== null) m[k] = r[k]; });
+      return m;
+    });
+    if (appendSeed) {
+      (seed || []).forEach(function (s) {
+        if (!remote.some(function (r) { return r.id === s.id; })) out.push(s);
+      });
+    }
+    return out;
+  }
+
+  /* 원격 데이터로 시드 갱신 — 실패해도 화면은 시드로 정상 동작 */
   function hydrate() {
     if (!window.DGDATA) return Promise.resolve(state);
     return Promise.all([
@@ -54,12 +76,13 @@
       select('dg_regulations', 'select=*&order=id').catch(function () { return null; })
     ]).then(function (r) {
       var got = false;
-      if (r[0] && r[0].length) { window.DGDATA.WAREHOUSES = r[0].map(normWarehouse); got = true; }
-      if (r[1] && r[1].length) { window.DGDATA.VEHICLES = r[1].map(normVehicle); got = true; }
+      var D = window.DGDATA;
+      if (r[0] && r[0].length) { D.WAREHOUSES = mergeById(D.WAREHOUSES, r[0].map(normWarehouse), false); got = true; }
+      if (r[1] && r[1].length) { D.VEHICLES = mergeById(D.VEHICLES, r[1].map(normVehicle), false); got = true; }
       if (r[2] && r[2].length) {
         /* 시드의 의도된 순서(국내법 → 국제기준 → 운송) 유지 — id 알파벳순 정렬 방지 */
-        var seedOrder = window.DGDATA.REGULATIONS.map(function (x) { return x.id; });
-        window.DGDATA.REGULATIONS = r[2].slice().sort(function (a, b) {
+        var seedOrder = D.REGULATIONS.map(function (x) { return x.id; });
+        D.REGULATIONS = mergeById(D.REGULATIONS, r[2].map(normRegulation), true).sort(function (a, b) {
           var ia = seedOrder.indexOf(a.id), ib = seedOrder.indexOf(b.id);
           return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
         });
@@ -86,7 +109,14 @@
       inspectionValidUntil: w.inspection_valid_until, lastAudit: w.last_audit,
       incidents3y: w.incidents_3y, safetyManagers: w.safety_managers, certs: w.certs || [],
       portKm: w.port_km, icKm: w.ic_km, ratePLDay: w.rate_pl_day,
-      ops: w.ops, tempZones: w.temp_zones || [], insurance: w.insurance
+      ops: w.ops, tempZones: w.temp_zones || [], insurance: w.insurance,
+      permitItems: w.permit_items   /* 컬럼이 없으면 undefined → 병합 시 시드 값 유지 */
+    };
+  }
+  function normRegulation(g) {
+    return {
+      id: g.id, name: g.name, authority: g.authority, revised: g.revised, url: g.url, note: g.note,
+      effective: g.effective, checkedAt: g.checked_at, lawId: g.law_id
     };
   }
   function normVehicle(v) {

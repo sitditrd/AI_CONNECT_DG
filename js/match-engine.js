@@ -94,6 +94,27 @@
     return Math.round(100 - ((w.ratePLDay - min) / (max - min)) * 100);
   }
 
+  /* ---------- CAS 단위 허가 품목 대조 ----------
+     현업 매칭은 '유별 허가'만이 아니라 창고에 등록된 허가 품목(CAS)과 MSDS 성분을 직접 대조한다.
+     화관법 관리 대상 성분(DGDATA.REG_CAS)이 있을 때만 적용한다.
+     · match   : 관리 대상 성분이 모두 허가 품목에 있음
+     · missing : 허가 품목 목록은 있으나 일부 성분이 없음 → 조건부
+     · unknown : 창고의 허가 품목 목록이 등록되지 않음 → 인허가 원본 확인 필요(판정 영향 없음)
+     · na      : 관리 대상 성분 없음 */
+  function casPermit(w, profile) {
+    var D = window.DGDATA || {};
+    var norm = function (s) { return String(s == null ? '' : s).replace(/\s+/g, ''); };
+    var comps = profile ? (profile.components || []).map(function (c) { return norm(c.cas); })
+      .concat((profile.casNo || []).map(norm)) : [];
+    var regulated = (D.REG_CAS || []).filter(function (r) {
+      return comps.some(function (c) { return c.indexOf(r.cas) >= 0; });
+    });
+    if (!regulated.length) return { status: 'na', regulated: [], missing: [] };
+    if (!w.permitItems) return { status: 'unknown', regulated: regulated, missing: [] };
+    var missing = regulated.filter(function (r) { return w.permitItems.indexOf(r.cas) < 0; });
+    return { status: missing.length ? 'missing' : 'match', regulated: regulated, missing: missing };
+  }
+
   /* ---------- 종합 평가 ---------- */
   function evaluate(w, ctx, weights, all) {
     var req = requiredPermits(ctx.profile);
@@ -140,7 +161,16 @@
       reason = '복수 지표가 기준 미만 — 위험물/법률 담당자 확인 후 결정';
     }
 
-    return { wh: w, parts: parts, score: score, verdict: verdict, label: label, reason: reason };
+    /* 유별 · 등급 허가는 충족해도 등록 품목(CAS)에 없는 성분이 있으면 적합으로 확정하지 않는다 */
+    var cas = casPermit(w, ctx.profile);
+    if (cas.status === 'missing' && (verdict === 'OK' || verdict === 'COND')) {
+      var prior = verdict === 'COND' ? ' / ' + reason : '';   /* 이미 조건부였던 사유는 함께 남긴다 */
+      verdict = 'COND'; label = '조건부 검토';
+      reason = '허가 품목(CAS) 미등재 — ' + cas.missing.map(function (x) { return x.name + ' ' + x.cas; }).join(', ') +
+        ' · 품목 추가 허가 또는 담당자 확인 필요' + prior;
+    }
+
+    return { wh: w, parts: parts, score: score, verdict: verdict, label: label, reason: reason, cas: cas };
   }
 
   function rank(list, ctx, weights) {
@@ -174,6 +204,7 @@
     daysUntil: daysUntil,
     evaluate: evaluate,
     rank: rank,
-    rankVehicles: rankVehicles
+    rankVehicles: rankVehicles,
+    casPermit: casPermit
   };
 })();

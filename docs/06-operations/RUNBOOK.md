@@ -10,7 +10,7 @@ python -m http.server 8155   # http://localhost:8155  (file:// 로 열어도 동
 ## 회귀 테스트
 
 ```bash
-cd test && npm install && npm test    # jsdom 39개 단언
+cd test && npm install && npm test    # jsdom 119개 단언 (업로드 39 + 신뢰성 검증 80)
 ```
 
 `test/` 는 배포 대상이 아니다(워크플로가 `*.html` 과 `css/ js/ assets/ data/` 만 `_site` 로 옮긴다).
@@ -36,6 +36,18 @@ cd test && npm install && npm test    # jsdom 39개 단언
 2. `sql/schema.sql` 실행 (최초 1회) → `sql/seed.sql` 실행 (갱신 시마다 — upsert 멱등)
 3. 웹 새로고침 → **워크벤치(process.html) · 적법성 검토 · 매칭 화면** 우측 상단 배지 "Supabase 연결" 확인
 4. 창고·차량·법령 데이터 수정은 seed.sql 편집 후 재실행 (또는 Table Editor 직접 수정)
+
+## 신뢰성 검증 — 법령 점검 · DB 동기화
+
+- **DB 동기화** — `sql/verify_2026-09.sql` 을 SQL Editor에서 실행. 창고 허가 품목(CAS) · 법령 현행 시행일 컬럼을 추가하고
+  카탈로그를 현행으로 맞춘다. 실행 전에는 적법성 화면 법령 표에 '카탈로그 갱신 필요'가 표시된다(동작에는 영향 없음)
+- **법령 정기 점검(월 1회 권장)** — 국가법령정보센터에서 `js/data_dg.js` `REGULATIONS` 의 국내 법령 현행 시행일을 확인
+  1. 시행일이 바뀌었으면 `effective` · `checkedAt` 갱신 → 해당 법령의 `rules` 에 연결된 판정 규칙 검토
+  2. 규칙 검토를 마치면 `RULESET.version` · `RULESET.reviewedAt` 갱신 — 검토 전에는 `effective > reviewedAt` 인 법령이
+     '규칙 재검토 필요'로 표시되고, 해당 케이스는 담당자 확인으로 전환된다
+  3. DB 카탈로그(`dg_regulations`)의 `revised` 도 같은 값으로 갱신
+- **국제기준(IMDG · IATA · ADR)** 은 개정판 발행 시 수동 확인
+- 기준값 출처와 점검 이력은 `docs/04-design/시스템_구현범위_신뢰성검증.md`
 
 ## 트러블슈팅
 

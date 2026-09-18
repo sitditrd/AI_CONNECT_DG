@@ -29,6 +29,7 @@ create table if not exists public.dg_warehouses (
   ops                   text,
   temp_zones            jsonb default '[]'::jsonb,
   insurance             text,
+  permit_items          jsonb,                  -- 허가 품목(CAS) — 화관법 보관·저장업 등록 품목
   updated_at            timestamptz default now()
 );
 
@@ -56,11 +57,19 @@ create table if not exists public.dg_regulations (
   id         text primary key,
   name       text not null,
   authority  text,
-  revised    text,
+  revised    text,                            -- 카탈로그 기준 개정 · 시행일
+  effective  text,                            -- 현행 시행일(국가법령정보 확인값)
+  checked_at text,                            -- 현행 확인일
+  law_id     text,                            -- 국가법령정보 법령ID
   url        text,
   note       text,
   updated_at timestamptz default now()
 );
+-- 기존 설치본에 컬럼 보강 (create table if not exists 는 컬럼을 추가하지 않는다)
+alter table public.dg_warehouses  add column if not exists permit_items jsonb;
+alter table public.dg_regulations add column if not exists effective   text;
+alter table public.dg_regulations add column if not exists checked_at  text;
+alter table public.dg_regulations add column if not exists law_id      text;
 
 -- ---------- 4. 케이스 (요청 → 입고 전 과정 스냅샷) ----------
 create table if not exists public.dg_cases (

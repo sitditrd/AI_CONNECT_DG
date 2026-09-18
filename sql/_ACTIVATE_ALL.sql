@@ -54,6 +54,7 @@ create table if not exists public.dg_warehouses (
   ops                   text,
   temp_zones            jsonb default '[]'::jsonb,
   insurance             text,
+  permit_items          jsonb,                  -- 허가 품목(CAS) — 화관법 보관·저장업 등록 품목
   updated_at            timestamptz default now()
 );
 
@@ -81,11 +82,19 @@ create table if not exists public.dg_regulations (
   id         text primary key,
   name       text not null,
   authority  text,
-  revised    text,
+  revised    text,                            -- 카탈로그 기준 개정 · 시행일
+  effective  text,                            -- 현행 시행일(국가법령정보 확인값)
+  checked_at text,                            -- 현행 확인일
+  law_id     text,                            -- 국가법령정보 법령ID
   url        text,
   note       text,
   updated_at timestamptz default now()
 );
+-- 기존 설치본에 컬럼 보강 (create table if not exists 는 컬럼을 추가하지 않는다)
+alter table public.dg_warehouses  add column if not exists permit_items jsonb;
+alter table public.dg_regulations add column if not exists effective   text;
+alter table public.dg_regulations add column if not exists checked_at  text;
+alter table public.dg_regulations add column if not exists law_id      text;
 
 -- ---------- 4. 케이스 (요청 → 입고 전 과정 스냅샷) ----------
 create table if not exists public.dg_cases (
@@ -117,7 +126,6 @@ create policy "public read regulations" on public.dg_regulations for select usin
 
 -- 데모 케이스 적재만 허용(조회는 금지 — 화주 정보 보호)
 create policy "anon insert cases" on public.dg_cases for insert with check (true);
-
 
 -- ======================================================================================
 -- ▼▼▼ 2 / 4 · 참조 데이터 적재   [원본: sql/seed.sql]
@@ -181,19 +189,44 @@ on conflict (id) do update set
   adr = excluded.adr, insurance = excluded.insurance, gps = excluded.gps, tunnel_limit = excluded.tunnel_limit,
   base_fare = excluded.base_fare, updated_at = now();
 
--- ---------- 법령 · 국제기준 ----------
-insert into public.dg_regulations (id, name, authority, revised, url, note) values
-('REG-DGS','위험물안전관리법 시행령 별표1 (위험물 및 지정수량)','소방청','2025-07-01','https://www.law.go.kr','제1류~제6류 유별 정의 · 지정수량. 과산화수소는 농도 36% 이상만 제6류 해당'),
-('REG-DGS2','위험물안전관리법 시행규칙 별표5 (옥내저장소 기준)','소방청','2025-07-01','https://www.law.go.kr','저장창고 구조·설비·저장한도·혼재 저장 기준(유별을 달리하는 위험물의 동일 저장소 저장 원칙 금지)'),
-('REG-CCA','화학물질관리법 (유해화학물질 보관·저장업)','환경부 · 화학물질안전원','2026-01-01','https://www.me.go.kr','유해화학물질 취급시설 기준 · 영업허가. 전국 보관창고업 약 210개소'),
-('REG-IMDG','IMDG Code (국제해상위험물규칙) Amdt. 42-24','IMO','2026-01-01(강제 시행)','https://www.imo.org','UN 번호 · 등급 · 포장등급 · 해양오염물질 · 분리(Segregation) 기준'),
-('REG-IATA','IATA DGR 67th Edition','IATA','2026-01-01','https://www.iata.org','항공 위험물 포장기준 · 리튬배터리 SOC 30% 이하 규정(PI965~967)'),
-('REG-ADR','위험물 운반차량 통행제한 · 터널 제한코드(ADR 준용)','국토교통부 · 도로공사','2025-03-01','https://www.molit.go.kr','터널 등급별 통행 제한(A~E), 위험물 운반차량 통행금지 구간·시간대'),
-('REG-KOTSA','위험물질 운송안전관리센터 실시간 모니터링 기준','TS한국교통안전공단','2024-01-01','https://main.kotsa.or.kr','위험물 1만ℓ 이상 · 유해화학물질 5톤 이상 운송차량 단말 장착 · 실시간 모니터링 대상')
+-- ---------- 창고 허가 품목(CAS) — 시연 매핑 ----------
+update public.dg_warehouses set permit_items = '["1308-06-1","12190-79-3","7722-84-1"]'::jsonb where id = 'W-01';
+update public.dg_warehouses set permit_items = '["7664-93-9","1310-73-2","7722-84-1"]'::jsonb  where id = 'W-07';
+update public.dg_warehouses set permit_items = '["7664-93-9","1310-73-2"]'::jsonb              where id = 'W-08';
+
+-- ---------- 법령 · 국제기준 (현행 시행일 2026-09-18 국가법령정보 확인) ----------
+insert into public.dg_regulations (id, name, authority, revised, effective, checked_at, law_id, url, note) values
+  ('REG-DGS',  '위험물안전관리법 시행령 별표1 (위험물 및 지정수량)', '소방청',
+   '2026-07-01', '2026-07-01', '2026-09-18', '009707', 'https://www.law.go.kr',
+   '제1류~제6류 유별 정의 · 지정수량. 과산화수소는 농도 36중량% 이상만 제6류 해당(비고 22)'),
+  ('REG-DGS2', '위험물안전관리법 시행규칙 별표5 · 별표19 (옥내저장소 · 혼재기준)', '소방청',
+   '2026-07-01', '2026-07-01', '2026-09-18', '009732', 'https://www.law.go.kr',
+   '저장창고 구조·설비·저장한도, 유별을 달리하는 위험물의 혼재 기준(지정수량 1/10 이하 적용 제외)'),
+  ('REG-DGT',  '위험물안전관리법 시행규칙 별표21 (위험물의 운송기준)', '소방청',
+   '2026-07-01', '2026-07-01', '2026-09-18', '009732', 'https://www.law.go.kr',
+   '이동탱크저장소 장거리 운송(고속국도 340km · 그 밖 200km 이상) 시 운전자 2명 이상. 예외 — 운송책임자 동승, 제2류·제3류(탄화물)·제4류(특수인화물 제외), 2시간마다 20분 이상 휴식'),
+  ('REG-CCA',  '화학물질관리법 (유해화학물질 보관·저장업)', '기후에너지환경부 · 화학물질안전원',
+   '2025-10-01', '2025-10-01', '2026-09-18', '000162', 'https://www.law.go.kr',
+   '유해화학물질 취급시설 기준 · 영업허가. 창고 허가 품목은 CAS 단위로 관리'),
+  ('REG-ROAD', '도로법 시행령 제79조 (차량의 운행 제한)', '국토교통부 · 도로관리청',
+   '2026-09-18', '2026-09-18', '2026-09-18', '003400', 'https://www.law.go.kr',
+   '축하중 10t · 총중량 40t · 폭 2.5m · 높이 4.0m(도로관리청 고시 구간 4.2m) · 길이 16.7m 초과 차량은 운행제한 — 제한차량 운행허가 필요'),
+  ('REG-KOTSA', '물류정책기본법 제29조의2 (위험물질 운송안전관리센터 · 단말장치)', '국토교통부 · TS한국교통안전공단',
+   '2025-10-01', '2025-10-01', '2026-09-18', '000092', 'https://www.law.go.kr',
+   '위험물질 운송차량 단말장치 장착 · 실시간 모니터링(대상 기준은 하위법령 — 시행령 2026-09-15 개정)'),
+  ('REG-IMDG', 'IMDG Code (국제해상위험물규칙) Amdt. 42-24', 'IMO',
+   '2026-01-01(강제 시행)', '2026-01-01', null, null, 'https://www.imo.org',
+   'UN 번호 · 등급 · 포장등급 · 해양오염물질 · 분리(Segregation) 기준 — 국제기준은 개정판 발행 시 수동 확인'),
+  ('REG-IATA', 'IATA DGR 67th Edition', 'IATA',
+   '2026-01-01', '2026-01-01', null, null, 'https://www.iata.org',
+   '항공 위험물 포장기준 · 리튬배터리 SOC 30% 이하 규정(PI965~967)'),
+  ('REG-ADR',  'ADR 터널 제한코드 (유럽 기준 — 참조용)', 'UNECE',
+   '2025-01-01', '2025-01-01', null, null, 'https://unece.org',
+   '터널 카테고리 A~E. 국내 공식 체계가 아니므로 참조값으로만 사용 — 국내 적용은 도로관리청·지자체 지정 통행제한 구간으로 대체 필요')
 on conflict (id) do update set
   name = excluded.name, authority = excluded.authority, revised = excluded.revised,
+  effective = excluded.effective, checked_at = excluded.checked_at, law_id = excluded.law_id,
   url = excluded.url, note = excluded.note, updated_at = now();
-
 
 -- ======================================================================================
 -- ▼▼▼ 3 / 4 · 인증 (로그인 · 계정 골격 · 세션)   [원본: sql/auth_setup.sql]
@@ -382,7 +415,6 @@ on conflict (login_id) do nothing;
 
 notify pgrst, 'reload schema';
 
-
 -- ======================================================================================
 -- ▼▼▼ 4 / 4 · 케이스 서버 동기화 (3 구간 선행 필요)   [원본: sql/case_sync.sql]
 -- ======================================================================================
@@ -477,6 +509,7 @@ grant execute on function public.dg_case_upsert(uuid,jsonb), public.dg_case_list
   public.dg_case_get(uuid,text), public.dg_case_delete(uuid,text) to anon;
 
 notify pgrst, 'reload schema';
+
 
 
 -- ========== 다음 단계 ==========

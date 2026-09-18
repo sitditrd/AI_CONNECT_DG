@@ -17,7 +17,7 @@
   <meta property="og:image" content="https://sitditrd.github.io/AI_CONNECT_DG/assets/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-08-04a">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-18a">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/touch-icon.png">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
@@ -38,6 +38,7 @@
         <a href="route.html">안전경로</a>
         <a href="dispatch.html">배차·입고</a>
         <a href="insight.html">시장 현황</a>
+        <a href="verify.html">구현·검증</a>
       </nav>
       <div class="header-actions">
         <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
@@ -116,6 +117,23 @@
     </div>
   </section>
 
+  <!-- ============ 담당자 확인 전환 사유 ============ -->
+  <section class="dash-section" style="padding-top:0;">
+    <div class="container">
+      <div class="dash-head reveal">
+        <span class="no">Human-in-the-loop</span>
+        <h2>담당자 확인 전환 사유</h2>
+        <span class="hint">정보가 부족하거나 상충하면 자동 확정하지 않고 담당자 확인으로 전환합니다</span>
+      </div>
+      <div class="panel reveal">
+        <div class="panel-body" id="triggerBox">
+          <p class="muted" style="font-size:13px;">검토를 실행하면 전환 사유가 표시됩니다.</p>
+        </div>
+      </div>
+      <p class="src-note"><a href="verify.html#triggers" style="color:var(--dg); font-weight:700;">전환 기준 전체 보기 — 구현 · 검증 범위</a></p>
+    </div>
+  </section>
+
   <!-- ============ 혼재 저장 기준 매트릭스 ============ -->
   <section class="dash-section" style="padding-top:0;">
     <div class="container">
@@ -135,8 +153,8 @@
     <div class="container">
       <div class="dash-head reveal">
         <span class="no">2 · 규제 교차 검증</span>
-        <h2>적용 법령 · 국제기준 · 조회 시각</h2>
-        <span class="hint">모든 결과에 적용 근거 · 원문 페이지 · 데이터 출처 · 조회 시각 · 승인자 · 변경 이력을 함께 저장합니다</span>
+        <h2>적용 법령 · 국제기준 · 현행 시행일 대조</h2>
+        <span class="hint">카탈로그 기준일과 현행 시행일(국가법령정보 확인)을 대조해 갱신 · 재검토 대상을 표시하고, 판정마다 규칙 세트 버전을 기록합니다</span>
       </div>
       <div class="panel reveal">
         <div class="table-wrap">
@@ -145,15 +163,16 @@
               <tr>
                 <th style="width:300px;">법령 · 기준</th>
                 <th style="width:130px;">소관</th>
-                <th style="width:120px;">개정 · 시행</th>
+                <th style="width:120px;">카탈로그 기준</th>
+                <th style="width:150px;">현행 시행일 · 상태</th>
                 <th>적용 내용</th>
-                <th style="width:150px;">조회 시각</th>
               </tr>
             </thead>
             <tbody id="regBody"></tbody>
           </table>
         </div>
       </div>
+      <p class="src-note" id="rulesetLine"></p>
       <p class="notice">
         본 검토는 <b>법률 적합성 사전검토 및 전문가 검토 지원</b>이며, 완전 면책을 보장하지 않습니다.
         최종 보관·운송 결정은 화주 · 창고 · 전문가 · 관계기관 확인으로 확정됩니다.
@@ -178,16 +197,17 @@
     </div>
   </footer>
 
-  <script src="js/common.js?v=2026-08-04a"></script>
-  <script src="js/i18n-dict.js?v=2026-08-04a"></script>
-  <script src="js/i18n.js?v=2026-08-04a"></script>
-  <script src="js/auth.js?v=2026-08-04a"></script>
-  <script src="js/auth-gate.js?v=2026-08-04a"></script>
-  <script src="js/ui-kit.js?v=2026-08-04a"></script>
-  <script src="js/case-sync.js?v=2026-08-04a"></script>
-  <script src="js/data_dg.js?v=2026-08-04a"></script>
-  <script src="js/db.js?v=2026-08-04a"></script>
-  <script src="js/match-engine.js?v=2026-08-04a"></script>
-  <script src="js/compliance.js?v=2026-08-04a"></script>
+  <script src="js/common.js?v=2026-09-18a"></script>
+  <script src="js/i18n-dict.js?v=2026-09-18a"></script>
+  <script src="js/i18n.js?v=2026-09-18a"></script>
+  <script src="js/auth.js?v=2026-09-18a"></script>
+  <script src="js/auth-gate.js?v=2026-09-18a"></script>
+  <script src="js/ui-kit.js?v=2026-09-18a"></script>
+  <script src="js/case-sync.js?v=2026-09-18a"></script>
+  <script src="js/data_dg.js?v=2026-09-18a"></script>
+  <script src="js/db.js?v=2026-09-18a"></script>
+  <script src="js/match-engine.js?v=2026-09-18a"></script>
+  <script src="js/verify-rules.js?v=2026-09-18a"></script>
+  <script src="js/compliance.js?v=2026-09-18a"></script>
 </body>
 </html>

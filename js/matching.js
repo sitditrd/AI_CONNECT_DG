@@ -138,6 +138,7 @@
       '<div class="kv" style="margin-top:14px;">' +
         '<div>허가 유별 · 등급</div><div>' + esc(w.permitClasses.join(' · ')) + '</div>' +
         '<div>허가 비고</div><div>' + esc(w.permitNote) + '</div>' +
+        '<div>허가 품목(CAS)</div><div>' + casLine(r) + '</div>' +
         '<div>지정수량 배수</div><div class="mono">' + window.DGUI.fmt(w.designatedMultiple) + ' 배</div>' +
         '<div>보관 능력</div><div class="mono">' + window.DGUI.fmt(w.capacityPL) + ' PL (가용 ' + window.DGUI.fmt(w.availPL) + ' PL)</div>' +
         '<div>온도 구역</div><div>' + esc(w.tempZones.join(' · ')) + '</div>' +
@@ -149,6 +150,17 @@
       '</div>';
 
     $('confirmBtn').disabled = (r.verdict === 'NO');
+  }
+
+  /* CAS 단위 허가 품목 대조 결과 — 유별 허가만으로는 걸러지지 않는 성분 단위 차이를 보여준다 */
+  function casLine(r) {
+    var c = r.cas || { status: 'na' };
+    if (c.status === 'na') return '화관법 관리 대상 성분 없음 — 유별 · 등급 대조로 충분';
+    var names = c.regulated.map(function (x) { return x.name; }).join(' · ');
+    if (c.status === 'match') return '<span class="badge badge-ok"><i></i>일치</span> ' + esc(names);
+    if (c.status === 'missing') return '<span class="badge badge-cond"><i></i>미등재</span> ' +
+      esc(c.missing.map(function (x) { return x.name + ' ' + x.cas; }).join(' · '));
+    return '<span class="badge badge-neutral"><i></i>목록 미등록</span> 인허가 원본 확인 필요 — ' + esc(names);
   }
 
   /* ---------- 차량 ---------- */
@@ -164,6 +176,7 @@
           '<span class="ci-t">' + esc(v.carrier) + ' · ' + esc(v.type) + '</span><br>' +
           '<span class="ci-d">' + esc(x.note) + ' · 높이 ' + v.heightM + 'm · 총중량 ' + v.gvwT + 't · ' + esc(v.tunnelLimit) + '</span><br>' +
           '<span class="ci-d">' + esc(v.driver) + ' · ' + esc(v.adr) + ' · ' + esc(v.insurance) + ' · 기본운임 ' + window.DGUI.fmt(v.baseFare) + '원</span>' +
+          (window.DGVerify ? '<br><span class="ci-d">' + esc(window.DGVerify.roadLaw(v).note) + '</span>' : '') +
         '</span>' +
         '</div>';
     }).join('');

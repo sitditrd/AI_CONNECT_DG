@@ -22,6 +22,16 @@
     var low = ex.filter(function (e) { return e.conf < 0.8; });
     var accuracy = c.msds && c.msds.accuracy;
     var accuracyOk = accuracy && accuracy.action === 'pass' && Number(accuracy.score) >= 85;
+    var V = window.DGVerify;
+    var casBad = V ? V.casIssues(p, ex) : [];
+    var casCount = V && p ? (p.casNo || []).concat((p.components || []).map(function (x) { return x.cas; }))
+      .reduce(function (n, s) { return n + V.findCas(s).length; }, 0) : 0;
+    /* 필수 필드 — 적합도 산정 결과가 있으면 그것을, 없으면 프로파일로 직접 판단 */
+    var missing = (accuracy && accuracy.missing) || [];
+    if (!accuracy && p) {
+      if (!p.unNo) missing.push('UN Number');
+      if (!p.hazardClass) missing.push('Hazard Class');
+    }
     var hasS3 = ex.some(function (e) { return e.section.indexOf('Section 3') >= 0; });
     var hasS14 = ex.some(function (e) { return e.section.indexOf('Section 14') >= 0; });
     gates.push({
@@ -31,26 +41,45 @@
         chk(true, '추출값 – 원문 연결', ex.length + '개 항목 페이지·영역 연결'),
         chk(low.length === 0, 'OCR 신뢰도', low.length ? '저신뢰 ' + low.length + '건: ' + low.map(function (e) { return e.field; }).join(', ') : '전 항목 80% 이상'),
         chk(!!accuracyOk, '문서 인식 적합도', accuracy ? accuracy.score + '점 · ' + (accuracyOk ? '기준값 대조 완료' : '원문 대조 필요') : '미측정 — MSDS 단계 재확인 필요'),
-        chk(true, '누락 탐지', 'UN No. · 등급 · 포장등급 필수항목 충족')
+        chk(!missing.length, '누락 탐지', missing.length ? '필수 필드 누락: ' + missing.join(', ') : 'UN No. · 등급 · 포장등급 필수항목 충족'),
+        chk(!casBad.length, 'CAS 체크디짓',
+            casBad.length ? casBad.map(function (b) { return b.cas + '(기대 ' + b.expected + ')'; }).join(', ') + ' — 원문 대조 필요'
+                          : (casCount ? casCount + '개 CAS 번호 체크디짓 일치' : 'CAS 표기 없음(물품 · 혼합물)'))
       ],
-      warn: low.length > 0 || !accuracyOk
+      warn: low.length > 0 || !accuracyOk || missing.length > 0 || casBad.length > 0
     });
 
     /* 2 · 규제 교차 검증 */
     var korConflict = !!(p && p.korNote && p.korNote.indexOf('⚠') === 0);
     var marine = !!(p && p.marinePollutant);
+    /* IMDG 형식 검사 — UN 번호 4자리, 등급 1~9(소분류 포함), 포장등급 I~III 또는 미지정 사유 */
+    var unOk = !!(p && /^UN\s?\d{4}$/i.test(String(p.unNo || '').trim()));
+    var clsOk = !!(p && /^[1-9](\.[1-6])?$/.test(String(p.hazardClass || '').trim()));
+    var pgOk = !!(p && (/^(I|II|III)$/.test(String(p.packingGroup || '')) || (!p.packingGroup && p.packingNote)));
+    var imdgOk = unOk && clsOk && pgOk;
+    var conc = V ? V.concIssues(p) : [];
+    var laws = V ? V.lawStatus() : [];
+    var lawReview = laws.filter(function (s) { return s.ruleReview; });
+    var lawStale = laws.filter(function (s) { return s.catalogStale; });
+    var RS = D.RULESET || {};
     gates.push({
       no: 2, title: '규제 교차 검증',
       items: [
         chk(!korConflict, '국내 법령 · 고시 확인',
             korConflict ? '문서 표기와 UN 분류 충돌 — 전문가 확인 대상' : (p ? p.korNote : '-')),
-        chk(true, 'IMDG / IATA 기준 비교',
+        chk(imdgOk, 'IMDG / IATA 기준 비교',
             p ? ('IMDG ' + p.unNo + ' · Class ' + p.hazardClass + (p.subRisk ? '(' + p.subRisk + ')' : '') +
-                 ' · ' + (p.packingGroup ? 'PG ' + p.packingGroup : 'PG 미지정(포장은 PG II 성능 기준)')) : '-'),
+                 ' · ' + (p.packingGroup ? 'PG ' + p.packingGroup : 'PG 미지정(포장은 PG II 성능 기준)') +
+                 (imdgOk ? '' : ' — 형식 확인 필요(' + [!unOk && 'UN 번호', !clsOk && '등급', !pgOk && '포장등급'].filter(Boolean).join(' · ') + ')')) : '-'),
+        chk(!conc.length, '농도 · 분류 교차검증',
+            conc.length ? conc.map(function (x) { return x.text; }).join(' / ') : '농도 기준 대상 성분 없음 또는 분류와 일치'),
         chk(true, '해양오염물질 · 분리기준', marine ? 'Marine Pollutant — IMDG 분리·표기 기준 적용' : '해당 없음'),
-        chk(true, '개정일 · 시행일 · 출처 저장', D.REGULATIONS.length + '개 근거 스냅샷 저장')
+        chk(!lawReview.length, '근거 법령 현행 대조',
+            RS.version + ' (검토 ' + RS.reviewedAt + ') · ' +
+            (lawReview.length ? '재검토 필요 ' + lawReview.length + '건' : '규칙 재검토 대상 없음') +
+            (lawStale.length ? ' · 카탈로그 갱신 필요 ' + lawStale.length + '건' : ''))
       ],
-      warn: korConflict
+      warn: korConflict || !imdgOk || conc.length > 0 || lawReview.length > 0
     });
 
     /* 3 · 창고 인허가 대조 */
@@ -73,7 +102,16 @@
         chk(ranked.every(function (r) { return window.DGMatch.daysUntil(r.wh.inspectionValidUntil) >= 0; }),
             '검사 유효기간', '정기검사 만료 창고 자동 제외'),
         chk(ranked.some(function (r) { return r.wh.availPL >= qty; }), '가용공간',
-            '요청 ' + qty + 'PL 수용 가능 ' + ranked.filter(function (r) { return r.wh.availPL >= qty; }).length + '개소')
+            '요청 ' + qty + 'PL 수용 가능 ' + ranked.filter(function (r) { return r.wh.availPL >= qty; }).length + '개소'),
+        (function () {
+          var need = ranked.length ? ranked[0].cas.regulated : [];
+          if (!need.length) return chk(true, 'CAS 단위 허가 품목', '화관법 관리 대상 성분 없음 — 유별 · 등급 단위 대조로 충분');
+          var listed = ranked.filter(function (r) { return r.cas.status !== 'unknown'; });
+          var okN = listed.filter(function (r) { return r.cas.status === 'match'; }).length;
+          return chk(okN > 0, 'CAS 단위 허가 품목',
+            need.map(function (x) { return x.name; }).join(' · ') + ' — 허가 품목 등록 ' + listed.length + '개소 중 일치 ' + okN + '개소' +
+            (ranked.length - listed.length ? ' · 목록 미등록 ' + (ranked.length - listed.length) + '개소(인허가 원본 확인)' : ''));
+        })()
       ],
       warn: fit.length === 0,
       ranked: ranked, fit: fit
@@ -81,15 +119,17 @@
 
     /* 4 · 전문가 검토 · 승인 */
     var approved = !!(c.compliance && c.compliance.approver);
+    var triggers = (V ? V.evaluate(c) : []).filter(function (h) { return h.key !== 'approval'; });
     gates.push({
       no: 4, title: '전문가 검토 · 승인',
       items: [
         chk(!gates[0].warn, '저신뢰 항목 확인', gates[0].warn ? '확인 필요' : '해당 없음'),
         chk(!gates[1].warn, '충돌 · 예외 확인', gates[1].warn ? '확인 필요' : '해당 없음'),
+        chk(!triggers.length, '담당자 확인 전환 사유', triggers.length ? triggers.length + '건 — 아래 목록 참조' : '없음'),
         chk(approved, '위험물 / 법률 담당자 확인', approved ? c.compliance.approver : '미승인'),
         chk(true, '최종 의사결정 주체', '화주 · 창고 · 전문가 확인으로 확정')
       ],
-      warn: !approved, approved: approved
+      warn: !approved, approved: approved, triggers: triggers
     });
 
     return gates;
@@ -107,9 +147,9 @@
       return { verdict: 'REVIEW', label: '전문가 확인 필요',
                reason: 'AI 1차 검토는 통과했으나 전문가 승인 전입니다 — 최종 판정은 승인 후 확정됩니다.' };
     }
-    if (gates[0].warn || gates[1].warn) {
+    if (gates[0].warn || gates[1].warn || (g4.triggers && g4.triggers.length)) {
       return { verdict: 'COND', label: '조건부 검토',
-               reason: '저신뢰 · 충돌 항목이 전문가 확인을 거쳐 해소되었습니다 — 조건 준수 시 보관 가능.' };
+               reason: '저신뢰 · 충돌 · 전환 사유 항목을 전문가가 확인했습니다 — 확인 의견의 조건 준수 시 보관 가능.' };
     }
     return { verdict: 'OK', label: '적합', reason: '4단계 방어 절차를 모두 통과했습니다.' };
   }
@@ -157,16 +197,36 @@
   }
 
   function renderRegs() {
-    var now = window.DGCase.stamp();
-    $('regBody').innerHTML = D.REGULATIONS.map(function (r) {
+    var st = window.DGVerify ? window.DGVerify.lawStatus() : D.REGULATIONS.map(function (r) { return { reg: r, state: '' }; });
+    var cls = { '현행 일치': 'badge-ok', '카탈로그 갱신 필요': 'badge-cond', '규칙 재검토 필요': 'badge-no', '수동 확인': 'badge-neutral' };
+    $('regBody').innerHTML = st.map(function (s) {
+      var r = s.reg;
       return '<tr>' +
         '<td class="strong">' + esc(r.name) + '</td>' +
         '<td>' + esc(r.authority) + '</td>' +
         '<td class="mono">' + esc(r.revised) + '</td>' +
+        '<td><span class="mono">' + esc(r.effective || '-') + '</span>' +
+          (s.state ? '<br><span class="badge ' + (cls[s.state] || 'badge-neutral') + '"><i></i>' + esc(s.state) + '</span>' : '') + '</td>' +
         '<td>' + esc(r.note) + '</td>' +
-        '<td class="mono">' + now + '</td>' +
         '</tr>';
     }).join('');
+    var RS = D.RULESET || {};
+    if ($('rulesetLine')) {
+      $('rulesetLine').textContent = '판정 규칙 세트 ' + (RS.version || '-') + ' · 법령 대조 기준일 ' + (RS.reviewedAt || '-') + ' · ' + (RS.note || '');
+    }
+  }
+
+  /* 담당자 확인 전환 사유 — 자동 확정하지 않는 이유를 목록으로 보여준다 */
+  function renderTriggers(gates) {
+    var box = $('triggerBox');
+    if (!box) return;
+    var list = (gates && gates[3] && gates[3].triggers) || [];
+    box.innerHTML = list.length
+      ? '<ul class="trigger-list">' + list.map(function (h) {
+          return '<li><span class="badge badge-cond"><i></i>' + esc(h.label) + '</span> <span>' + esc(h.detail || '') + '</span></li>';
+        }).join('') + '</ul>' +
+        '<p class="src-note">위 사유가 하나라도 있으면 전문가 승인 후에도 판정은 \'적합\'이 아닌 \'조건부 검토\'로 남습니다.</p>'
+      : '<p class="muted" style="font-size:13px;">전환 사유가 없습니다 — 전문가 승인 후 \'적합\'으로 확정될 수 있습니다.</p>';
   }
 
   /* ---------- 혼재 저장 기준 매트릭스 (시행규칙 별표19) ---------- */
@@ -226,6 +286,7 @@
 
     renderGates(gates, true);
     renderVerdict(dec, gates, c);
+    renderTriggers(gates);
     $('approveBtn').disabled = false;
     $('runState').textContent = '검토 완료 — ' + window.DGCase.stamp();
 
@@ -237,7 +298,11 @@
           checkedAt: window.DGCase.stamp(),
           approver: (c.compliance && c.compliance.approver) || null,
           note: (c.compliance && c.compliance.note) || null,
-          candidates: (gates[2].fit || []).length
+          candidates: (gates[2].fit || []).length,
+          /* 어떤 규칙 버전 · 어떤 시행일의 법령으로 판정했는지 남긴다 — 법령 개정 후 재검토 대상 식별용 */
+          ruleset: (D.RULESET || {}).version || null,
+          regs: D.REGULATIONS.map(function (r) { return { id: r.id, effective: r.effective || r.revised }; }),
+          triggers: (gates[3].triggers || []).map(function (h) { return h.label + (h.detail ? ' — ' + h.detail : ''); })
         }
       };
       /* 재검토 결과가 '보관 불가'로 바뀌면 이미 확정된 창고·경로 이하도 무효화 */

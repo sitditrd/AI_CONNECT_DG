@@ -17,7 +17,7 @@
   <meta property="og:image" content="https://sitditrd.github.io/AI_CONNECT_DG/assets/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-08-04a">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-18a">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/touch-icon.png">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
@@ -38,6 +38,7 @@
         <a href="route.html" class="active">안전경로</a>
         <a href="dispatch.html">배차·입고</a>
         <a href="insight.html">시장 현황</a>
+        <a href="verify.html">구현·검증</a>
       </nav>
       <div class="header-actions">
         <button class="icon-btn theme-toggle" aria-label="테마 전환"></button>
@@ -68,6 +69,18 @@
         <h2>경로 검토 조건 6종</h2>
         <span class="hint">조건을 하나라도 위반하는 경로는 후보에서 자동 제외됩니다</span>
       </div>
+      <div class="grid-2 reveal" style="margin-bottom:16px;">
+        <div class="card">
+          <h3>단순 차량 배차</h3>
+          <p>차량 가용 · 운임 · 거리로 차량을 지정합니다.</p>
+          <span class="tagline">Connect DG — 운송 등급 · 차량 구조 · 필요 회차 매칭</span>
+        </div>
+        <div class="card">
+          <h3>위험물 운송 경로 검증</h3>
+          <p>화물 특성(UN · 등급 · 터널 제한코드) × 차량 조건(높이 · 중량 · 자격) × 통행 제한을 함께 판정합니다.</p>
+          <span class="tagline">하나라도 위반하면 통행 불가와 위반 사유를 표시하고 배차 확정을 막습니다</span>
+        </div>
+      </div>
       <div class="check-list reveal" id="condList"></div>
 
       <div class="panel reveal" style="margin-top:16px;">
@@ -94,6 +107,7 @@
             <span class="hint">출발지 → 확정 창고 · 조건 위반 항목 표시</span>
           </div>
           <div id="routeList" class="reveal"></div>
+          <p class="src-note">경로 후보는 시연 샘플(창고 8곳 × 2~3개)입니다. 실제 도로망 경로탐색 · 실시간 통제 정보는 미연동이며, 판정 조건 구조는 국내 도로 전반에 적용할 수 있습니다.</p>
         </div>
 
         <div class="panel reveal">
@@ -123,7 +137,7 @@
       <div>
         <a href="index.html" class="logo-slot" aria-label="Connect DG"></a>
         <p class="footer-note">
-          Connect DG · DG Route Intelligence · 터널 제한코드(A~E)는 ADR 기준을 준용한 예시입니다<br>
+          Connect DG · DG Route Intelligence · 터널 제한코드(A~E)는 ADR(유럽) 기준을 참조한 예시입니다 — 국내 적용 시 국내 통행제한 구간으로 대체<br>
           © <span class="footer-year">2026</span> TAEWOONG LOGISTICS.
         </p>
       </div>
@@ -135,16 +149,17 @@
     </div>
   </footer>
 
-  <script src="js/common.js?v=2026-08-04a"></script>
-  <script src="js/i18n-dict.js?v=2026-08-04a"></script>
-  <script src="js/i18n.js?v=2026-08-04a"></script>
-  <script src="js/auth.js?v=2026-08-04a"></script>
-  <script src="js/auth-gate.js?v=2026-08-04a"></script>
-  <script src="js/ui-kit.js?v=2026-08-04a"></script>
-  <script src="js/case-sync.js?v=2026-08-04a"></script>
-  <script src="js/data_dg.js?v=2026-08-04a"></script>
-  <script src="js/db.js?v=2026-08-04a"></script>
-  <script src="js/match-engine.js?v=2026-08-04a"></script>
-  <script src="js/route.js?v=2026-08-04a"></script>
+  <script src="js/common.js?v=2026-09-18a"></script>
+  <script src="js/i18n-dict.js?v=2026-09-18a"></script>
+  <script src="js/i18n.js?v=2026-09-18a"></script>
+  <script src="js/auth.js?v=2026-09-18a"></script>
+  <script src="js/auth-gate.js?v=2026-09-18a"></script>
+  <script src="js/ui-kit.js?v=2026-09-18a"></script>
+  <script src="js/case-sync.js?v=2026-09-18a"></script>
+  <script src="js/data_dg.js?v=2026-09-18a"></script>
+  <script src="js/db.js?v=2026-09-18a"></script>
+  <script src="js/match-engine.js?v=2026-09-18a"></script>
+  <script src="js/verify-rules.js?v=2026-09-18a"></script>
+  <script src="js/route.js?v=2026-09-18a"></script>
 </body>
 </html>

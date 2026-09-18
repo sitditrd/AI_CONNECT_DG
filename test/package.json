@@ -3,7 +3,7 @@
   "private": true,
   "description": "Connect DG 회귀 테스트 — 운영본은 빌드가 없는 정적 사이트이며, 이 디렉터리는 배포 대상에 포함되지 않습니다.",
   "scripts": {
-    "test": "node msds-upload.test.js"
+    "test": "node msds-upload.test.js && node verify-flow.test.js"
   },
   "devDependencies": {
     "jsdom": "^30.0.1"

@@ -82,8 +82,12 @@
 
     /* ---------- 4. 적법성 검토 ---------- */
     if (c.compliance) {
+      /* 판정 당시 기록한 근거 법령 시행일을 우선 표시 — 이후 법령이 바뀌어도 어떤 기준으로 판정했는지 남는다 */
+      var at = {};
+      (c.compliance.regs || []).forEach(function (x) { at[x.id] = x.effective; });
       var regRows = window.DGDATA.REGULATIONS.map(function (r) {
-        return '<tr><td class="strong">' + esc(r.name) + '</td><td>' + esc(r.authority) + '</td><td class="mono">' + esc(r.revised) + '</td></tr>';
+        return '<tr><td class="strong">' + esc(r.name) + '</td><td>' + esc(r.authority) + '</td><td class="mono">' +
+          esc(at[r.id] || r.effective || r.revised) + '</td></tr>';
       }).join('');
       html += sec('4', '적법성 사전검토 — 4단계 방어 절차',
         kv([
@@ -92,10 +96,12 @@
           ['적합 후보 창고', (c.compliance.candidates != null ? c.compliance.candidates + ' 개소' : '-')],
           ['검토 시각', c.compliance.checkedAt],
           ['전문가 승인', (c.compliance.approver || '미승인') + (c.compliance.approvedAt ? ' · ' + c.compliance.approvedAt : '')],
-          ['확인 의견', c.compliance.note || '-']
+          ['확인 의견', c.compliance.note || '-'],
+          ['판정 규칙 세트', c.compliance.ruleset || '-'],
+          ['담당자 확인 전환 사유', (c.compliance.triggers && c.compliance.triggers.length) ? c.compliance.triggers.join(' / ') : '없음']
         ]) +
         '<div class="table-wrap" style="margin-top:10px;"><table class="dg-table"><thead><tr>' +
-        '<th>적용 법령 · 기준</th><th style="width:150px;">소관</th><th style="width:130px;">개정 · 시행</th></tr></thead><tbody>' +
+        '<th>적용 법령 · 기준</th><th style="width:150px;">소관</th><th style="width:130px;">판정 당시 시행일</th></tr></thead><tbody>' +
         regRows + '</tbody></table></div>');
     }
 

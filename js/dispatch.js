@@ -158,7 +158,9 @@
       '<div>회차</div><div>' + q.trips + ' 회</div>' +
       '<div>목적지</div><div>' + esc(c.warehouse ? c.warehouse.alias : '-') + '</div>' +
       '<div>배차 상태</div><div>' + (c.dispatch ? ('배차 완료 · ' + esc(c.dispatch.at)) : '배차 전') + '</div>' +
-      '<div>모니터링</div><div>' + (q.vehicle.gps ? '실시간 위치(GPS) 추적 · 전자인수증 발행 가능' : '미지원') + '</div>';
+      '<div>모니터링</div><div>' + (q.vehicle.gps ? '실시간 위치(GPS) 추적 · 전자인수증 발행 가능' : '미지원') + '</div>' +
+      (c.route.driverRule ? '<div>운송 기준</div><div>' + esc(c.route.driverRule) + '</div>' : '') +
+      (c.route.roadLaw ? '<div>도로법 운행제한</div><div>' + esc(c.route.roadLaw) + '</div>' : '');
 
     $('gpsState').textContent = c.inbound ? '운행 완료' : (c.dispatch ? '배차 완료 · 추적 대기' : '배차 전');
     drawGps(c.inbound ? 1 : 0);

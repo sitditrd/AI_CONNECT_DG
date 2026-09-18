@@ -188,9 +188,16 @@
     var score = Math.round(completeness * 0.35 + confidence * 0.30 + traceability * 0.20 + consistency * 0.15);
     var mode = item.live ? 'proxy' : 'reference';
     if (/^⚠/.test(String(profile.korNote || ''))) conflicts.push('국내 규제 주의사항');
+    /* 체크디짓 · 농도 규칙(js/verify-rules.js) — 추출값끼리 서로 맞아도 값 자체가 틀린 경우를 잡는다 */
+    var ruleIssues = [];
+    if (window.DGVerify) {
+      window.DGVerify.casIssues(profile, rows).forEach(function (b) { ruleIssues.push('CAS 체크디짓 불일치 ' + b.cas); });
+      window.DGVerify.concIssues(profile).forEach(function (x) { ruleIssues.push(x.key === 'conc' ? '농도 · 분류 상충' : '국내 유별 판정 유보'); });
+    }
+    conflicts = conflicts.concat(ruleIssues);
     var grade = score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : 'D';
     var action = missing.length || conflicts.some(function (label) { return label === 'UN Number' || label === 'Hazard Class'; }) ? 'review' : 'pass';
-    if (mode === 'proxy' || lowConfidence.length || score < 85) action = 'review';
+    if (mode === 'proxy' || lowConfidence.length || score < 85 || ruleIssues.length) action = 'review';
     return {
       score: score, grade: grade, mode: mode, action: action,
       metrics: { completeness: completeness, confidence: confidence, traceability: traceability, consistency: consistency },
@@ -272,7 +279,7 @@
     /* 진행 문구도 함께 되돌린다 — 안 그러면 추출표는 '분석 대기 중'인데
        옆에는 직전의 '완료 — 추출 항목 N건'이 남아 서로 어긋난다. */
     $('progressText').textContent = '';
-    $('extractBody').innerHTML = '<tr><td colspan="5" class="muted center">분석 대기 중</td></tr>';
+    $('extractBody').innerHTML = '<tr><td colspan="6" class="muted center">분석 대기 중</td></tr>';
     $('profileBox').innerHTML = '<p class="muted" style="font-size:13px;">분석을 실행하면 표준 프로파일이 생성됩니다.</p>';
     $('lowConfNote').style.display = 'none';
     if ($('accuracyBox')) $('accuracyBox').hidden = true;
@@ -292,7 +299,7 @@
       /* 실분석 — 데모 샘플을 미리 고르지 않는다(결과는 문서에서 나온다) */
       selected = null; analyzed = false; analyzeGen++;
       $('sampleChips').querySelectorAll('.f-chip').forEach(function (b) { b.classList.remove('on'); });
-      $('extractBody').innerHTML = '<tr><td colspan="5" class="muted center">분석 대기 중</td></tr>';
+      $('extractBody').innerHTML = '<tr><td colspan="6" class="muted center">분석 대기 중</td></tr>';
       $('profileBox').innerHTML = '<p class="muted" style="font-size:13px;">분석을 실행하면 이 문서에서 추출한 표준 프로파일이 표시됩니다.</p>';
       $('lowConfNote').style.display = 'none';
       if ($('accuracyBox')) $('accuracyBox').hidden = true;
@@ -495,14 +502,27 @@
       '<span class="cbar"><span class="cfill" style="width:' + pct + '%"></span></span>' + pct + '%</span>';
   }
 
+  /* 수정 이력 — 원문 대조로 값을 바꾼 경우 전·후 값과 사유를 값 아래에 남긴다 */
+  function editTrail(e) {
+    if (!e.edits || !e.edits.length) return '';
+    return e.edits.map(function (x) {
+      return '<div class="src-note" style="margin-top:4px;">' +
+        '<span class="badge badge-cond"><i></i>원문 대조 수정</span> ' +
+        '<span class="mono">' + esc(x.before) + '</span> → <span class="mono">' + esc(x.after) + '</span> · ' +
+        /* 사유 · 수정자 · 일시를 별도 노드로 — 한 노드로 합치면 조합마다 번역 키가 달라진다 */
+        '<span>' + esc(x.reason || '') + '</span> · <span>' + esc(x.by || '') + '</span> <span class="mono">' + esc(x.at || '') + '</span></div>';
+    }).join('');
+  }
+
   function renderExtract() {
-    var rows = selected.extraction.map(function (e) {
+    var rows = selected.extraction.map(function (e, i) {
       return '<tr>' +
         '<td class="strong">' + esc(e.field) + '</td>' +
-        '<td>' + esc(e.value) + '</td>' +
+        '<td>' + esc(e.value) + editTrail(e) + '</td>' +
         '<td>' + esc(e.section) + '</td>' +
         '<td class="num">p.' + e.page + '</td>' +
         '<td>' + confBar(e.conf) + '</td>' +
+        '<td><button class="btn btn-ghost btn-sm edit-btn" type="button" data-i="' + i + '">수정</button></td>' +
         '</tr>';
     }).join('');
     $('extractBody').innerHTML = rows;
@@ -554,6 +574,66 @@
       '<div class="table-wrap"><table class="dg-table"><thead><tr><th>성분</th><th style="width:130px;">CAS No.</th><th style="width:90px;">함유량</th></tr></thead><tbody>' + comp + '</tbody></table></div>';
   }
 
+  /* ---------- 원문 대조 수정 ----------
+     담당자가 원문을 보고 값을 고치면: 값 교체 · 신뢰도 100%(담당자 확인) · 전/후 · 사유 · 수정자 기록.
+     핵심 필드는 표준 프로파일에도 반영해 이후 적법성 판정이 고친 값으로 돌도록 한다. */
+  var EDIT_TO_PROFILE = {
+    '제품명': 'productName', 'UN Number': 'unNo', 'Proper Shipping Name': 'psn',
+    'Hazard Class': 'hazardClass', 'Packing Group': 'packingGroup', 'CAS No.': 'casNo'
+  };
+  function editorName() {
+    try {
+      var s = JSON.parse(localStorage.getItem('dg-auth') || 'null');
+      return (s && (s.name || s.login)) || '담당자';
+    } catch (e) { return '담당자'; }
+  }
+  function applyToProfile(field, value) {
+    var key = EDIT_TO_PROFILE[field];
+    if (!key) return;
+    var p = selected.profile;
+    if (key === 'unNo') p.unNo = /^UN/i.test(value) ? value : 'UN ' + value;
+    else if (key === 'hazardClass') {
+      var m = /(\d(\.\d)?)/.exec(value); if (m) p.hazardClass = m[1];
+    } else if (key === 'packingGroup') {
+      var g = /\b(III|II|I)\b/.exec(value); p.packingGroup = g ? g[1] : null;
+    } else if (key === 'casNo') {
+      var list = window.DGVerify ? window.DGVerify.findCas(value) : [];
+      if (list.length) p.casNo = list;
+    } else p[key] = value;
+  }
+  function editRow(i) {
+    if (!selected || !analyzed) return;
+    /* 샘플 원본(DGDATA)을 건드리지 않도록 처음 수정할 때 복제본으로 전환 */
+    if (!selected._own) { selected = JSON.parse(JSON.stringify(selected)); selected._own = true; }
+    var row = selected.extraction[i];
+    if (!row) return;
+    var tr = function (s) { return window.DGI18N && window.DGI18N.t ? window.DGI18N.t(s) : s; };
+    var next = window.prompt(tr('원문과 대조해 올바른 값을 입력하세요') + ' — ' + row.field, row.value);
+    if (next == null) return;
+    next = String(next).trim();
+    if (!next || next === row.value) return;
+    var reason = window.prompt(tr('수정 사유를 입력하세요'), '원문 p.' + row.page + ' 대조 — 오인식 교정');
+    if (reason == null) return;
+    row.edits = (row.edits || []).concat([{
+      before: row.value, after: next, reason: String(reason).trim() || '원문 대조',
+      by: editorName(), at: window.DGCase ? window.DGCase.stamp() : new Date().toISOString()
+    }]);
+    row.value = next;
+    row.conf = 1;
+    applyToProfile(row.field, next);
+    selected.accuracy = null;   /* 수정 반영해 적합도 재산정 */
+    renderExtract();
+    renderProfile();
+    renderAccuracy();
+    $('progressText').textContent = '원문 대조 수정 반영 — ' + row.field;
+  }
+
+  function editCountNote() {
+    var n = 0;
+    (selected.extraction || []).forEach(function (e) { n += (e.edits || []).length; });
+    return n ? ' · 원문 대조 수정 ' + n + '건' : '';
+  }
+
   /* ---------- 확정 ---------- */
   function confirmProfile() {
     if (!selected || !analyzed) return;
@@ -573,7 +653,7 @@
       compliance: null, warehouse: null, route: null, contract: null, dispatch: null, inbound: null
     }, 'MSDS 분석 완료 — ' + selected.title + ' (' + selected.profile.unNo + ' · Class ' +
        selected.profile.hazardClass + ' · ' + (selected.profile.packingGroup ? 'PG ' + selected.profile.packingGroup : 'PG 미지정') +
-       ') 표준 프로파일 확정', 'MSDS Document AI');
+       ') 표준 프로파일 확정' + editCountNote(), 'MSDS Document AI');
     location.href = 'compliance.html';
   }
 
@@ -607,6 +687,10 @@
     renderValidation();
     initDrop();
     $('analyzeBtn').addEventListener('click', analyze);
+    $('extractBody').addEventListener('click', function (ev) {
+      var b = ev.target.closest ? ev.target.closest('.edit-btn') : null;
+      if (b) editRow(Number(b.getAttribute('data-i')));
+    });
     $('confirmBtn').addEventListener('click', confirmProfile);
 
     /* 이미 분석된 케이스가 있으면 복원 — 저장된 id가 현재 목록에 없으면(데이터 개편 등) 안내만 */
@@ -617,6 +701,14 @@
            순서가 뒤바뀌면 사용자가 올린 파일명 대신 샘플 기본 파일명이 표시된다. */
         uploadedName = c.msds.fileName;
         pick(c.msds.id);
+        /* 확정 당시 값(원문 대조 수정 포함)으로 복원 — 샘플 원본으로 되돌리면 수정 이력이 사라진다 */
+        if (c.msds.extraction) {
+          selected = JSON.parse(JSON.stringify(selected));
+          selected._own = true;
+          selected.extraction = c.msds.extraction;
+          if (c.msds.profile) selected.profile = c.msds.profile;
+          selected.accuracy = c.msds.accuracy || null;
+        }
         analyzed = true;
         renderOcrSteps(4);
         renderExtract();

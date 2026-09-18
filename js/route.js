@@ -68,7 +68,24 @@
       '<div>적재</div><div>' + (v.capacityPL ? v.capacityPL + ' PL' : '탱크 20kL') + '</div>' +
       '<div>운전자</div><div>' + esc(v.driver) + ' · ' + esc(v.adr) + '</div>' +
       '<div>터널 제한</div><div>' + esc(v.tunnelLimit) + '</div>' +
-      '<div>보험 · GPS</div><div>' + esc(v.insurance) + ' · ' + (v.gps ? '실시간 위치 추적 가능' : '미지원') + '</div>';
+      '<div>보험 · GPS</div><div>' + esc(v.insurance) + ' · ' + (v.gps ? '실시간 위치 추적 가능' : '미지원') + '</div>' +
+      (window.DGVerify ? '<div>도로법 운행제한</div><div>' + esc(window.DGVerify.roadLaw(v).note) + '</div>' : '');
+  }
+
+  /* 경로 판정과 별개로 확인해야 하는 국내 운송 기준 — 도로법 운행제한 · 위험물 운송기준(별표21) */
+  function advisories(e) {
+    if (!window.DGVerify) return { html: '', warn: false, dr: null, rl: null };
+    var c = window.DGCase.get();
+    var p = c.msds && c.msds.profile;
+    var dr = window.DGVerify.driverRule(e.r, veh(), p);
+    var rl = window.DGVerify.roadLaw(veh());
+    var warn = dr.twoDrivers || !rl.ok;
+    return {
+      dr: dr, rl: rl, warn: warn,
+      html: '<div class="notice' + (warn ? ' warn' : '') + '" style="margin-top:12px;">' +
+        '<b>운송 기준 (위험물안전관리법 시행규칙 별표21)</b><br><span>' + esc(dr.text) + '</span><br>' +
+        '<b>도로법 운행제한 (시행령 제79조)</b><br><span>' + esc(rl.note) + '</span></div>'
+    };
   }
 
   /* ---------- 경로 목록 ---------- */
@@ -162,6 +179,7 @@
         '<span><span class="ci-t">' + condLabel(k) + '</span><br><span class="ci-d">' + (e.checks[k] ? '조건 충족' : '조건 위반 — 이 경로로 배차 불가') + '</span></span>' +
         '</div>';
     }).join('') + '</div>';
+    $('routeChecks').innerHTML += advisories(e).html;
     $('confirmBtn').disabled = !e.ok;
 
     /* 선택 상태 — 색상 단독 전달 방지: .sel 클래스 + aria-pressed */
@@ -188,11 +206,15 @@
     var e = routes.map(evalRoute).filter(function (x) { return x.r.id === selectedRoute; })[0];
     if (!e || !e.ok) return;
     var v = veh();
+    var adv = advisories(e);
     window.DGCase.patch({
       route: {
         id: e.r.id, name: e.r.name, distanceKm: e.r.distanceKm, minutes: e.r.minutes,
         tolls: e.r.tolls, tunnels: e.r.tunnels, emgMin: e.r.emgMin, note: e.r.note,
         vehicleId: v.id, carrier: v.carrier, vehicleType: v.type,
+        /* 배차 단계에서 운전자 수 · 운행허가를 챙기도록 판정 결과를 함께 넘긴다 */
+        driverRule: adv.dr ? adv.dr.text : null, twoDrivers: adv.dr ? !!adv.dr.twoDrivers : false,
+        roadLaw: adv.rl ? adv.rl.note : null,
         checkedAt: window.DGCase.stamp()
       },
       /* 경로·차량 재확정 시 하류(계약·배차·입고) 무효화 — 다른 확정 함수들과 동일 패턴 */

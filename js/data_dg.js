@@ -3,7 +3,7 @@
    · MSDS 3종(실제 문서 Section 3·14 기반 표준 프로파일)
    · 위험물 창고 8개소 / 위험물 운송 차량 5대
    · 매칭 가중치 · 법령 규제 카탈로그 · 현황 통계
-   Supabase 연결 시 js/db.js 가 동일 스키마로 원격 데이터를 덮어씁니다.
+   Supabase 연결 시 js/db.js 가 원격 데이터를 id 기준으로 병합합니다(로컬 전용 필드는 유지).
    ========================================================= */
 (function () {
   'use strict';
@@ -44,7 +44,10 @@
       },
       extraction: [
         { field: '제품명', value: 'Lithium cobalt oxide mixture', page: 1, section: 'Section 1', conf: 0.99 },
-        { field: 'CAS No.', value: '1308-06-1 / 12190-79-3', page: 3, section: 'Section 3', conf: 0.97 },
+        { field: 'CAS No.', value: '1308-06-1 / 12190-79-3', page: 3, section: 'Section 3', conf: 0.97,
+          /* 원문 오타를 CAS 체크디짓으로 검출해 교정한 이력 — 동일 성분의 타 문서 기재값으로 교차 확인 */
+          edits: [{ before: '12190-79-7', after: '12190-79-3', part: true, by: '사전 검증', at: '2026-08-03',
+                    reason: 'CAS 체크디짓 불일치 — 원문 오타, 동일 성분 타 문서 기재값으로 교차 확인' }] },
         { field: '구성성분 · 함유량', value: 'Co3O4 30~60% · LiCoO2 20~40%', page: 3, section: 'Section 3', conf: 0.94 },
         { field: 'UN Number', value: 'UN 3077', page: 9, section: 'Section 14', conf: 0.99 },
         { field: 'Proper Shipping Name', value: 'ENVIRONMENTALLY HAZARDOUS SUBSTANCE, SOLID, N.O.S.', page: 9, section: 'Section 14', conf: 0.98 },
@@ -159,6 +162,8 @@
       certs: ['자체소방대', '방폭 전기설비', '옥내소화전 · 스프링클러', '누출 감지 · 방유제'],
       portKm: 12, icKm: 4.2, ratePLDay: 1250,
       ops: '24시간 · 야간 입출고 가능', tempZones: ['상온', '정온(15~25℃)'],
+      /* 화관법 유해화학물질 보관·저장업 등록 품목(CAS) — 현업 매칭은 유별이 아니라 CAS 단위로 대조 */
+      permitItems: ['1308-06-1', '12190-79-3', '7722-84-1'],
       insurance: '화재 · 배상책임 100억'
     },
     {
@@ -237,6 +242,7 @@
       certs: ['중화조', '독립 배기', '출입통제'],
       portKm: 32, icKm: 2.8, ratePLDay: 1040,
       ops: '평일 09~18시', tempZones: ['상온'],
+      permitItems: ['7664-93-9', '1310-73-2', '7722-84-1'],
       insurance: '화재 · 배상책임 40억'
     },
     {
@@ -250,6 +256,8 @@
       certs: ['자체소방대', '옥내소화전', 'CCTV · 출입통제'],
       portKm: 5, icKm: 7.2, ratePLDay: 1150,
       ops: '24시간', tempZones: ['상온'],
+      /* Class 9 허가는 있으나 코발트 화합물은 등록 품목에 없음 — CAS 단위 대조로만 걸러지는 사례 */
+      permitItems: ['7664-93-9', '1310-73-2'],
       insurance: '화재 · 배상책임 90억'
     }
   ];
@@ -316,42 +324,133 @@
      5. 법령 · 규제 카탈로그 (적법성 교차검증 근거)
      --------------------------------------------------------- */
   var REGULATIONS = [
+    /* 필드
+       · revised   : 카탈로그(DB) 기준 개정·시행일 — 원격 dg_regulations 가 있으면 그 값으로 덮인다
+       · effective : 현행 시행일 확인값 — 국가법령정보(현행)에서 직접 조회한 값 (checkedAt 기준)
+       · rules     : 이 법령이 근거가 되는 판정 규칙 키 — 개정 시 재검토 대상 규칙
+       revised ≠ effective 이면 '카탈로그 갱신 필요', effective > RULESET.reviewedAt 이면 '규칙 재검토 필요' */
     {
       id: 'REG-DGS', name: '위험물안전관리법 시행령 별표1 (위험물 및 지정수량)',
-      authority: '소방청', revised: '2025-07-01', url: 'https://www.law.go.kr',
-      note: '제1류~제6류 유별 정의 · 지정수량. 과산화수소는 농도 36% 이상만 제6류 해당'
+      authority: '소방청', revised: '2025-07-01', effective: '2026-07-01', checkedAt: '2026-09-18',
+      lawId: '009707', scope: '국내', url: 'https://www.law.go.kr',
+      rules: ['korClass', 'designatedQty', 'conc'],
+      note: '제1류~제6류 유별 정의 · 지정수량. 과산화수소는 농도 36중량% 이상만 제6류 해당(비고 22)'
     },
     {
-      id: 'REG-DGS2', name: '위험물안전관리법 시행규칙 별표5 (옥내저장소 기준)',
-      authority: '소방청', revised: '2025-07-01', url: 'https://www.law.go.kr',
-      note: '저장창고 구조·설비·저장한도·혼재 저장 기준(유별을 달리하는 위험물의 동일 저장소 저장 원칙 금지)'
+      id: 'REG-DGS2', name: '위험물안전관리법 시행규칙 별표5 · 별표19 (옥내저장소 · 혼재기준)',
+      authority: '소방청', revised: '2025-07-01', effective: '2026-07-01', checkedAt: '2026-09-18',
+      lawId: '009732', scope: '국내', url: 'https://www.law.go.kr',
+      rules: ['permit', 'mix'],
+      note: '저장창고 구조·설비·저장한도, 유별을 달리하는 위험물의 혼재 기준(지정수량 1/10 이하 적용 제외)'
+    },
+    {
+      id: 'REG-DGT', name: '위험물안전관리법 시행규칙 별표21 (위험물의 운송기준)',
+      authority: '소방청', revised: '2026-07-01', effective: '2026-07-01', checkedAt: '2026-09-18',
+      lawId: '009732', scope: '국내', url: 'https://www.law.go.kr',
+      rules: ['driver'],
+      note: '이동탱크저장소 장거리 운송(고속국도 340km · 그 밖 200km 이상) 시 운전자 2명 이상. 예외 — 운송책임자 동승, 제2류·제3류(탄화물)·제4류(특수인화물 제외), 2시간마다 20분 이상 휴식'
     },
     {
       id: 'REG-CCA', name: '화학물질관리법 (유해화학물질 보관·저장업)',
-      authority: '환경부 · 화학물질안전원', revised: '2026-01-01', url: 'https://www.me.go.kr',
-      note: '유해화학물질 취급시설 기준 · 영업허가. 전국 보관창고업 약 210개소'
+      authority: '기후에너지환경부 · 화학물질안전원', revised: '2026-01-01', effective: '2025-10-01', checkedAt: '2026-09-18',
+      lawId: '000162', scope: '국내', url: 'https://www.law.go.kr',
+      rules: ['casPermit'],
+      note: '유해화학물질 취급시설 기준 · 영업허가. 창고 허가 품목은 CAS 단위로 관리'
+    },
+    {
+      id: 'REG-ROAD', name: '도로법 시행령 제79조 (차량의 운행 제한)',
+      authority: '국토교통부 · 도로관리청', revised: '2026-09-18', effective: '2026-09-18', checkedAt: '2026-09-18',
+      lawId: '003400', scope: '국내', url: 'https://www.law.go.kr',
+      rules: ['roadLaw'],
+      note: '축하중 10t · 총중량 40t · 폭 2.5m · 높이 4.0m(도로관리청 고시 구간 4.2m) · 길이 16.7m 초과 차량은 운행제한 — 제한차량 운행허가 필요'
+    },
+    {
+      id: 'REG-KOTSA', name: '물류정책기본법 제29조의2 (위험물질 운송안전관리센터 · 단말장치)',
+      authority: '국토교통부 · TS한국교통안전공단', revised: '2024-01-01', effective: '2025-10-01', checkedAt: '2026-09-18',
+      lawId: '000092', scope: '국내', url: 'https://www.law.go.kr',
+      rules: ['monitor'],
+      note: '위험물질 운송차량 단말장치 장착 · 실시간 모니터링(대상 기준은 하위법령 — 시행령 2026-09-15 개정)'
     },
     {
       id: 'REG-IMDG', name: 'IMDG Code (국제해상위험물규칙) Amdt. 42-24',
-      authority: 'IMO', revised: '2026-01-01(강제 시행)', url: 'https://www.imo.org',
-      note: 'UN 번호 · 등급 · 포장등급 · 해양오염물질 · 분리(Segregation) 기준'
+      authority: 'IMO', revised: '2026-01-01(강제 시행)', effective: '2026-01-01', checkedAt: null,
+      scope: '국제', url: 'https://www.imo.org',
+      rules: ['imdg'],
+      note: 'UN 번호 · 등급 · 포장등급 · 해양오염물질 · 분리(Segregation) 기준 — 국제기준은 개정판 발행 시 수동 확인'
     },
     {
       id: 'REG-IATA', name: 'IATA DGR 67th Edition',
-      authority: 'IATA', revised: '2026-01-01', url: 'https://www.iata.org',
+      authority: 'IATA', revised: '2026-01-01', effective: '2026-01-01', checkedAt: null,
+      scope: '국제', url: 'https://www.iata.org',
+      rules: ['iata'],
       note: '항공 위험물 포장기준 · 리튬배터리 SOC 30% 이하 규정(PI965~967)'
     },
     {
-      id: 'REG-ADR', name: '위험물 운반차량 통행제한 · 터널 제한코드(ADR 준용)',
-      authority: '국토교통부 · 도로공사', revised: '2025-03-01', url: 'https://www.molit.go.kr',
-      note: '터널 등급별 통행 제한(A~E), 위험물 운반차량 통행금지 구간·시간대'
-    },
-    {
-      id: 'REG-KOTSA', name: '위험물질 운송안전관리센터 실시간 모니터링 기준',
-      authority: 'TS한국교통안전공단', revised: '2024-01-01', url: 'https://main.kotsa.or.kr',
-      note: '위험물 1만ℓ 이상 · 유해화학물질 5톤 이상 운송차량 단말 장착 · 실시간 모니터링 대상'
+      id: 'REG-ADR', name: 'ADR 터널 제한코드 (유럽 기준 — 참조용)',
+      authority: 'UNECE', revised: '2025-01-01', effective: '2025-01-01', checkedAt: null,
+      scope: '국제', url: 'https://unece.org',
+      rules: ['tunnel'],
+      note: '터널 카테고리 A~E. 국내 공식 체계가 아니므로 참조값으로만 사용 — 국내 적용은 도로관리청·지자체 지정 통행제한 구간으로 대체 필요'
     }
   ];
+
+  /* 판정 규칙 세트 — 위 법령을 기준일에 대조해 검토를 마친 버전.
+     판정마다 이 버전을 기록하고, 이후 시행되는 개정(effective > reviewedAt)이 생기면 해당 규칙을 재검토한다. */
+  var RULESET = {
+    version: 'DG-RULES 2026.09',
+    reviewedAt: '2026-09-18',
+    note: '국내 법령 6건은 국가법령정보(현행)로 시행일을 확인, 국제기준 3건은 개정판 기준 수동 확인'
+  };
+
+  /* 도로법 시행령 제79조 ② — 초과 시 도로관리청 제한차량 운행허가 필요 */
+  var ROAD_LIMITS = { axleT: 10, gvwT: 40, heightM: 4.0, heightNoticeM: 4.2, widthM: 2.5, lengthM: 16.7, reg: 'REG-ROAD' };
+
+  /* 위험물안전관리법 시행규칙 별표21 2.나 — 이동탱크저장소 장거리 운송 기준 */
+  var DRIVER_RULE = {
+    highwayKm: 340, otherKm: 200, exemptKor: ['2류', '4류'], reg: 'REG-DGT',
+    exemptNote: '예외: 운송책임자 동승 · 제2류 · 제3류(칼슘·알루미늄 탄화물) · 제4류(특수인화물 제외) · 2시간마다 20분 이상 휴식'
+  };
+
+  /* 농도에 따라 분류가 달라지는 물질 — MSDS 기재 분류와 신고 농도의 상충 검사 */
+  var CONC_RULES = [
+    { cas: '7722-84-1', name: '과산화수소', unMinPct: 8, unClasses: ['5.1'], korMinPct: 36, korClass: '6류', reg: 'REG-DGS',
+      note: '8% 미만은 UN 운송규정 비대상, 36중량% 이상만 위험물안전관리법 제6류' }
+  ];
+
+  /* 화관법상 관리 대상으로 확인된 성분(CAS) — 창고 허가 품목 대조에 사용.
+     시연용 매핑이며, 운영 시에는 유해화학물질 고시 목록과 연동한다. */
+  var REG_CAS = [
+    { cas: '1308-06-1', name: '사산화삼코발트(코발트 화합물)', law: '화관법 유해화학물질' },
+    { cas: '12190-79-3', name: '리튬코발트산화물(코발트 화합물)', law: '화관법 유해화학물질' },
+    { cas: '7722-84-1', name: '과산화수소', law: '화관법 유해화학물질(농도 기준 확인)' }
+  ];
+
+  /* 위험물안전관리법 시행령 별표1 — 지정수량(품명별). 배수 환산 = 저장수량 ÷ 지정수량 */
+  var DESIGNATED_QTY = [
+    { kor: '4류', item: '특수인화물', qty: 50, unit: 'L' },
+    { kor: '4류', item: '제1석유류(비수용성)', qty: 200, unit: 'L' },
+    { kor: '4류', item: '제1석유류(수용성)', qty: 400, unit: 'L' },
+    { kor: '4류', item: '알코올류', qty: 400, unit: 'L' },
+    { kor: '4류', item: '제2석유류(비수용성)', qty: 1000, unit: 'L' },
+    { kor: '4류', item: '제2석유류(수용성)', qty: 2000, unit: 'L' },
+    { kor: '4류', item: '제3석유류(비수용성)', qty: 2000, unit: 'L' },
+    { kor: '4류', item: '제3석유류(수용성)', qty: 4000, unit: 'L' },
+    { kor: '4류', item: '제4석유류', qty: 6000, unit: 'L' },
+    { kor: '4류', item: '동식물유류', qty: 10000, unit: 'L' },
+    { kor: '5류', item: '제1종', qty: 10, unit: 'kg' },
+    { kor: '5류', item: '제2종', qty: 100, unit: 'kg' },
+    { kor: '6류', item: '과염소산', qty: 300, unit: 'kg' },
+    { kor: '6류', item: '과산화수소', qty: 300, unit: 'kg' },
+    { kor: '6류', item: '질산', qty: 300, unit: 'kg' }
+  ];
+
+  /* 경로 데이터의 출처와 한계 — 화면에 그대로 고지 */
+  var ROUTE_META = {
+    dataset: '시연 샘플 — 창고 8곳 × 경로 후보 2~3개',
+    roadNetwork: false,
+    asOf: '2026-08',
+    note: '실제 도로망 경로탐색·실시간 통제 정보는 미연동 — 판정 조건 구조는 국내 도로 전반에 적용 가능'
+  };
 
   /* ---------------------------------------------------------
      6. 경로 후보 (DG Route Intelligence · 발표자료 20장)
@@ -359,7 +458,7 @@
   var ROUTE_CONDITIONS = [
     { key: 'height', label: '차량 높이 · 총중량 · 축중', tip: '경로의 통과 높이·중량 제한 구간과 차량 제원을 직접 대조' },
     { key: 'dgban', label: '위험물 차량 통행 제한', tip: '도심 통과 금지 구간·시간대, 지하차도 진입 제한' },
-    { key: 'tunnel', label: '터널 제한코드 (ADR 준용)', tip: '화물의 터널 제한코드 이상 카테고리 터널은 통행 금지 — 예: 코드 E 화물은 E 카테고리 터널만 금지(A~D 통행 가능), 코드 B 화물은 B~E 전부 금지' },
+    { key: 'tunnel', label: '터널 제한코드 (ADR 참조)', tip: '화물의 터널 제한코드 이상 카테고리 터널은 통행 금지 — ADR(유럽) 체계를 참조값으로 사용하며, 국내 적용 시 도로관리청 · 지자체 지정 통행제한 구간으로 대체' },
     { key: 'width', label: '도로 폭 · 회전반경', tip: '트레일러 회전반경 미달 구간, 협소 산업도로 회피' },
     { key: 'eta', label: '예상 도착시간 · 교통정보', tip: '입고 예약시간 대비 도착 여유 · 정체 예측' },
     { key: 'emg', label: '비상대응 접근성 · 운행거리', tip: '소방서·유해화학물질 대응기관 접근시간, 총 운행거리' }
@@ -621,6 +720,13 @@
     STATS: STATS,
     REVENUE: REVENUE,
     MIX_RULES: MIX_RULES,
-    mixOk: mixOk
+    mixOk: mixOk,
+    RULESET: RULESET,
+    ROAD_LIMITS: ROAD_LIMITS,
+    DRIVER_RULE: DRIVER_RULE,
+    CONC_RULES: CONC_RULES,
+    REG_CAS: REG_CAS,
+    DESIGNATED_QTY: DESIGNATED_QTY,
+    ROUTE_META: ROUTE_META
   };
 })();
