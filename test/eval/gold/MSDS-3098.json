@@ -1,0 +1,28 @@
+{
+  "id": "MSDS-3098",
+  "file": "1.WLC-C5H(GHS MSDS)EN-04(01).pdf",
+  "pages": 12,
+  "verifiedBy": "원본 PDF 텍스트 레이어 대조 (2026-09-21)",
+  "docMeta": { "language": "en", "layout": "text-pdf", "scanQuality": "high", "format": "국내 MSDS 16개 항목(산업안전보건법 제110조 양식)" },
+  "fields": {
+    "productName": { "key": "WLC-C5H", "printed": "A. Product name: WLC-C5H", "page": 1 },
+    "casNo": { "v": ["7722-84-1", "77-92-9", "7732-18-5"], "printed": ["7722- 84- 1", "77-92-9", "7732- 18- 5"], "page": 3 },
+    "components": { "v": [
+      { "name": "Hydrogen peroxide", "cas": "7722-84-1", "pct": "2-6" },
+      { "name": "Citric acid", "cas": "77-92-9", "pct": "1-5" },
+      { "name": "Water", "cas": "7732-18-5", "pct": "87-95" }
+    ], "page": 3 },
+    "unNo": { "v": "UN 3098", "printed": "A. UN number: 3098", "page": 10 },
+    "psn": { "v": "OXIDIZING LIQUID, CORROSIVE, N.O.S.", "printed": "Oxidizing liquid, corrosive, not listed separately [HYDROGEN PEROXIDE] (OXIDIZING LIQUID, CORROSIVE, N.O.S.)", "page": 10 },
+    "hazardClass": { "v": "5.1", "printed": "C. Transport hazard class: 5.1(8)", "page": 10 },
+    "subRisk": { "v": "8", "page": 10 },
+    "packingGroup": { "v": "II", "printed": "D. Packing grade: 2", "page": 10 },
+    "marinePollutant": { "v": null, "printed": "E. Marine pollutants: Not available", "page": 10 },
+    "tunnelCode": { "v": null, "note": "원본 미기재" },
+    "specialProvisions": { "v": [], "note": "원본에 특별규정(SP) 번호 없음 — EmS F-A, S-Q(p.11) 기재" },
+    "domesticLaw": { "printed": "C. Regulation by Dangerous Materials Safety Control Law: Not applicable", "page": 11 }
+  },
+  "printedErrors": [
+    { "field": "casNo", "printed": "7722- 84- 1", "correct": "7722-84-1", "page": 3, "how": "아래첨자 표기로 추출 시 공백 삽입 — 자동 정규화" }
+  ]
+}

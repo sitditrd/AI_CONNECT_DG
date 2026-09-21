@@ -1,0 +1,37 @@
+{
+  "id": "MSDS-3077",
+  "file": "2.(MSDS) P-Co-BT-LG-MixLithiumCobaltOxide-2018-rev.005-21-INGLESE.pdf",
+  "pages": 11,
+  "verifiedBy": "원본 PDF 텍스트 레이어 대조 (2026-09-21)",
+  "docMeta": { "language": "en", "layout": "text-pdf", "scanQuality": "high", "format": "SEC.1~16 표준 16개 섹션" },
+  "fields": {
+    "productName": { "key": "P-Co (BT-LG)", "printed": "P-Co (BT-LG) -Mixture of Lithium metal Oxides based Cobalt (BT/LG)", "page": 1 },
+    "casNo": { "v": ["1307-96-6", "12190-79-3", "554-13-2", "1317-39-1", "7440-02-0"],
+               "printed": ["1370-96-6", "12190-79-7", "554-13-2", "1317-39-1", "7440-02-0"], "page": 3 },
+    "components": { "v": [
+      { "name": "Cobalt oxide", "cas": "1307-96-6", "pct": "10-20" },
+      { "name": "Lithium cobalt oxide", "cas": "12190-79-3", "pct": "5-10" },
+      { "name": "Graphite", "cas": null, "pct": "18-20" },
+      { "name": "Lithium carbonate", "cas": "554-13-2", "pct": "4-8" },
+      { "name": "Lithium iron phosphate", "cas": null, "pct": "<5" },
+      { "name": "Cobalt nickel manganese lithium oxide", "cas": null, "pct": "<5" },
+      { "name": "Copper oxide (I)", "cas": "1317-39-1", "pct": "<5" },
+      { "name": "Nickel", "cas": "7440-02-0", "pct": "<4" }
+    ], "page": 3 },
+    "unNo": { "v": "UN 3077", "printed": "14.1 UN N°-ADR, IMDG, IATA 3077", "page": 9 },
+    "psn": { "v": "ENVIRONMENTALLY HAZARDOUS SUBSTANCE, SOLID, N.O.S.",
+             "printed": "ENVIRONMENTALLY HAZRDOUS SUBSTANCE, SOLID, N.O.S. (cobalt oxides, nickel oxides)", "page": 9 },
+    "hazardClass": { "v": "9", "page": 10 },
+    "subRisk": { "v": null },
+    "packingGroup": { "v": "III", "page": 10 },
+    "marinePollutant": { "v": true, "printed": "P/PP Marine Pollutant: Symbol: fish and tree", "page": 10 },
+    "tunnelCode": { "v": null, "note": "원본 미기재" },
+    "specialProvisions": { "v": [], "note": "원본에 특별규정(SP) 번호 없음 — EmS F-A, S-F 만 기재" }
+  },
+  "printedErrors": [
+    { "field": "casNo", "printed": "1370-96-6", "correct": "1307-96-6", "page": 3, "how": "CAS 체크디짓 불일치 — 3480 원본 p.2 의 Cobalt oxide 1307-96-6 과 교차 확인" },
+    { "field": "casNo", "printed": "12190-79-7", "correct": "12190-79-3", "page": 3, "how": "CAS 체크디짓 불일치 — Lithium cobalt oxide 표준 CAS" },
+    { "field": "psn", "printed": "HAZRDOUS", "correct": "HAZARDOUS", "page": 9, "how": "철자 오기" },
+    { "field": "unNo", "printed": "UN 30777", "correct": "UN 3077", "page": 10, "how": "IMDG · IATA · LQ 행 3곳 오기 — 14.1(p.9)은 3077 정상" }
+  ]
+}

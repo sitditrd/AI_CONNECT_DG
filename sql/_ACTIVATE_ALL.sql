@@ -190,7 +190,7 @@ on conflict (id) do update set
   base_fare = excluded.base_fare, updated_at = now();
 
 -- ---------- 창고 허가 품목(CAS) — 시연 매핑 ----------
-update public.dg_warehouses set permit_items = '["1308-06-1","12190-79-3","7722-84-1"]'::jsonb where id = 'W-01';
+update public.dg_warehouses set permit_items = '["1307-96-6","12190-79-3","7722-84-1"]'::jsonb where id = 'W-01';
 update public.dg_warehouses set permit_items = '["7664-93-9","1310-73-2","7722-84-1"]'::jsonb  where id = 'W-07';
 update public.dg_warehouses set permit_items = '["7664-93-9","1310-73-2"]'::jsonb              where id = 'W-08';
 

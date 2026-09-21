@@ -86,7 +86,8 @@
     var ctx = {
       profile: p, qtyPL: qty,
       region: (c.request && c.request.region) || '무관',
-      tempNeed: null
+      /* MSDS 보관 온도 표기에서 창고 온도구역 요구를 도출해 대조한다 */
+      tempNeed: V && p ? V.tempNeedFrom(p) : null
     };
     var ranked = p ? window.DGMatch.rank(D.WAREHOUSES, ctx, D.WEIGHTS) : [];
     var fit = ranked.filter(function (r) { return r.verdict === 'OK' || r.verdict === 'COND'; });
@@ -101,9 +102,14 @@
             fit.length ? '저장한도 · 시설조건 충족 ' + fit.length + '개소' : '조건 충족 창고 없음'),
         chk(ranked.every(function (r) { return window.DGMatch.daysUntil(r.wh.inspectionValidUntil) >= 0; }),
             '검사 유효기간', '정기검사 만료 창고 자동 제외'),
+        chk(!ctx.tempNeed || ranked.some(function (r) { return (r.wh.tempZones || []).some(function (z) { return z.indexOf(ctx.tempNeed) === 0; }); }),
+            '보관 조건(온도)', ctx.tempNeed ? 'MSDS 보관 온도 → ' + ctx.tempNeed + ' 구역 보유 ' +
+              ranked.filter(function (r) { return (r.wh.tempZones || []).some(function (z) { return z.indexOf(ctx.tempNeed) === 0; }); }).length + '개소'
+              : 'MSDS 에 보관 온도 기재 없음 — 온도구역 요구 없음'),
         chk(ranked.some(function (r) { return r.wh.availPL >= qty; }), '가용공간',
             '요청 ' + qty + 'PL 수용 가능 ' + ranked.filter(function (r) { return r.wh.availPL >= qty; }).length + '개소'),
         (function () {
+          if (ranked.length && ranked[0].cas.status === 'article') return chk(true, 'CAS 단위 허가 품목', '물품(Article) — 화관법 허가 품목 대조 비대상');
           var need = ranked.length ? ranked[0].cas.regulated : [];
           if (!need.length) return chk(true, 'CAS 단위 허가 품목', '화관법 관리 대상 성분 없음 — 유별 · 등급 단위 대조로 충분');
           var listed = ranked.filter(function (r) { return r.cas.status !== 'unknown'; });

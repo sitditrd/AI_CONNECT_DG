@@ -104,6 +104,8 @@
   function casPermit(w, profile) {
     var D = window.DGDATA || {};
     var norm = function (s) { return String(s == null ? '' : s).replace(/\s+/g, ''); };
+    /* 물품(Article, 예: 배터리 셀)은 내장 성분이 있어도 화관법 허가 품목 대조 대상이 아니다 */
+    if (profile && profile.article) return { status: 'article', regulated: [], missing: [] };
     var comps = profile ? (profile.components || []).map(function (c) { return norm(c.cas); })
       .concat((profile.casNo || []).map(norm)) : [];
     var regulated = (D.REG_CAS || []).filter(function (r) {

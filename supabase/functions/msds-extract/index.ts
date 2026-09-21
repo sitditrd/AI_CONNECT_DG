@@ -1,5 +1,9 @@
-// Connect DG — MSDS 실문서 분석 Edge Function (Claude API)
-// PDF/이미지 MSDS를 Claude 문서 이해로 구조화해 '표준 위험물 프로파일'을 반환.
+// Connect DG — 위험물 문서 분석 Edge Function (Claude API)
+// PDF/이미지 문서를 Claude 문서 이해로 구조화한다. 문서 유형(doc_type)마다 출력 스키마만 바꾼다.
+//   · msds (기본) — 표준 위험물 프로파일
+//   · bl          — B/L(선하증권) · 위험물 신고 행 — 양식이 통일되지 않은 비정형 문서
+// 두 유형 모두 문서 특성(docMeta: 언어 · 형식 · 스캔 품질)을 함께 판독해, 저품질 · 미검증 언어는
+// 클라이언트에서 담당자 확인으로 전환한다.
 // 배포: supabase functions deploy msds-extract --no-verify-jwt
 // 시크릿: ANTHROPIC_API_KEY (필수) · SUPABASE_URL/SERVICE_ROLE_KEY는 자동 주입
 // 인증: 요청 body의 token(dg_sessions)을 검증 — 승인 계정만 실분석 허용(API 비용 보호)
@@ -18,6 +22,86 @@ const cors = {
 function j(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 }
+
+// 문서 특성 — 양식 · 언어 · 스캔 품질 차이에 대한 처리 근거
+const DOC_META_SCHEMA = {
+  type: "object",
+  properties: {
+    language: { type: "string", enum: ["ko", "en", "zh", "ja", "other"], description: "Main language of the document body" },
+    layout: { type: "string", enum: ["text-pdf", "scanned", "photo", "mixed"], description: "text-pdf if a text layer exists, scanned/photo if image only" },
+    scanQuality: { type: "string", enum: ["high", "medium", "low"], description: "Legibility of the source; low if values are blurred, skewed or cut off" },
+    format: { type: "string", description: "Document format, e.g. 'GHS 16 sections', 'Korean MSDS (OSH Act Art.110)', 'non-standard'" },
+    origin: { type: "string", description: "Issuer/manufacturer country or edition if stated, else empty" },
+  },
+  required: ["language", "layout", "scanQuality", "format", "origin"],
+  additionalProperties: false,
+};
+
+// 추출값 원문 위치 — 모든 문서 유형 공통
+const EXTRACTION_SCHEMA = {
+  type: "array",
+  description: "Per-field provenance for the audit table",
+  items: {
+    type: "object",
+    properties: {
+      field: { type: "string" },
+      value: { type: "string", description: "Extracted value as displayed" },
+      section: { type: "string", description: "Section or block where found" },
+      page: { type: "integer", description: "1-based page number where found; 0 if unknown" },
+      confidence: { type: "number", description: "0-1 extraction confidence" },
+    },
+    required: ["field", "value", "section", "page", "confidence"],
+    additionalProperties: false,
+  },
+};
+
+// B/L(선하증권) 스키마 — 발행사마다 양식이 다른 비정형 문서. 위험물 신고 행을 구조화한다.
+const BL_SCHEMA = {
+  type: "object",
+  properties: {
+    blNo: { type: "string" },
+    shipper: { type: "string" },
+    consignee: { type: "string" },
+    notifyParty: { type: "string" },
+    vessel: { type: "string" },
+    voyage: { type: "string" },
+    portOfLoading: { type: "string" },
+    portOfDischarge: { type: "string" },
+    containers: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: { no: { type: "string" }, type: { type: "string" }, seal: { type: "string" } },
+        required: ["no", "type", "seal"],
+        additionalProperties: false,
+      },
+    },
+    goods: {
+      type: "array",
+      description: "Cargo lines. For dangerous goods, transcribe UN/class/PG exactly as printed; empty strings when absent",
+      items: {
+        type: "object",
+        properties: {
+          description: { type: "string" },
+          unNo: { type: "string" },
+          psn: { type: "string" },
+          hazardClass: { type: "string" },
+          packingGroup: { type: "string" },
+          marinePollutant: { type: "boolean" },
+          packages: { type: "string" },
+          grossWeightKg: { type: "string" },
+        },
+        required: ["description", "unNo", "psn", "hazardClass", "packingGroup", "marinePollutant", "packages", "grossWeightKg"],
+        additionalProperties: false,
+      },
+    },
+    docMeta: DOC_META_SCHEMA,
+    extraction: EXTRACTION_SCHEMA,
+  },
+  required: ["blNo", "shipper", "consignee", "notifyParty", "vessel", "voyage", "portOfLoading", "portOfDischarge",
+    "containers", "goods", "docMeta", "extraction"],
+  additionalProperties: false,
+};
 
 // 표준 위험물 프로파일 스키마 — msds.js 데모 프로파일과 동일 구조
 const PROFILE_SCHEMA = {
@@ -48,7 +132,8 @@ const PROFILE_SCHEMA = {
     flashPointC: { type: "string", description: "Flash point in Celsius as printed, or empty" },
     storageTemp: { type: "string", description: "Recommended storage temperature/condition, or empty" },
     incompatible: { type: "array", items: { type: "string" }, description: "Incompatible materials (Section 10)" },
-    specialProvisions: { type: "array", items: { type: "string" }, description: "Special provisions / EmS / notes from Section 14" },
+    specialProvisions: { type: "array", items: { type: "string" }, description: "Special provision numbers only if printed; do not infer" },
+    docMeta: DOC_META_SCHEMA,
     extraction: {
       type: "array",
       description: "Per-field provenance for the audit table",
@@ -68,8 +153,33 @@ const PROFILE_SCHEMA = {
   },
   required: ["productName", "casNo", "components", "unNo", "psn", "hazardClass", "subRisk",
     "packingGroup", "marinePollutant", "tunnelCode", "flashPointC", "storageTemp",
-    "incompatible", "specialProvisions", "extraction"],
+    "incompatible", "specialProvisions", "docMeta", "extraction"],
   additionalProperties: false,
+};
+
+// 문서 유형별 스키마 · 지시문 — 새 유형은 여기에 한 항목만 추가하면 된다
+const DOC_TYPES: Record<string, { schema: unknown; system: string; prompt: string }> = {
+  msds: {
+    schema: PROFILE_SCHEMA,
+    system:
+      "You are a dangerous-goods logistics document analyst. Extract a standard dangerous goods profile " +
+      "from the attached MSDS/SDS document. Focus on Section 1 (identification), Section 3 (composition), " +
+      "Section 9/10 (flash point, storage, incompatibilities) and Section 14 (transport information). " +
+      "Values must be transcribed exactly as printed (do not infer UN numbers or classes that are not in the document; " +
+      "use empty strings when a field is genuinely absent). Report page numbers from the PDF page index. " +
+      "Assess docMeta (language, layout, scan quality) from the document itself. " +
+      "Confidence reflects OCR/print quality and ambiguity.",
+    prompt: "Extract the standard dangerous goods profile from this MSDS",
+  },
+  bl: {
+    schema: BL_SCHEMA,
+    system:
+      "You are a shipping document analyst. The attached document is a Bill of Lading whose layout differs by issuer. " +
+      "Extract parties, vessel/voyage, ports, containers and every cargo line. For dangerous goods lines, transcribe " +
+      "UN number, proper shipping name, class and packing group exactly as printed; never infer missing values. " +
+      "Report page numbers from the PDF page index and assess docMeta (language, layout, scan quality).",
+    prompt: "Extract the bill of lading data and dangerous goods lines from this document",
+  },
 };
 
 async function validToken(token: string): Promise<boolean> {
@@ -95,12 +205,15 @@ Deno.serve(async (req) => {
     // Anthropic API 를 호출하지 않으므로 과금 0. 키 값은 절대 내려보내지 않고 유무만 반환.
     // 인증도 요구하지 않아 로그인 전에도 정확한 엔진 상태를 표시할 수 있다.
     if (body && body.probe === true) {
-      return j({ ok: true, ai: !!ANTHROPIC_KEY, maxBytes: MAX_BYTES, mediaTypes: MEDIA_OK });
+      return j({ ok: true, ai: !!ANTHROPIC_KEY, maxBytes: MAX_BYTES, mediaTypes: MEDIA_OK, docTypes: Object.keys(DOC_TYPES) });
     }
 
     if (!ANTHROPIC_KEY) return j({ error: "ANTHROPIC_API_KEY not configured", code: "no_api_key" }, 503);
 
     const { token, filename, media_type, data } = body;
+    const docType = String(body.doc_type ?? "msds");
+    const spec = DOC_TYPES[docType];
+    if (!spec) return j({ error: "unsupported doc_type", docTypes: Object.keys(DOC_TYPES) }, 400);
     if (!(await validToken(String(token ?? "")))) return j({ error: "로그인이 필요합니다" }, 401);
     if (!MEDIA_OK.includes(media_type)) return j({ error: "unsupported media type" }, 400);
     const b64 = String(data ?? "");
@@ -121,22 +234,17 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: "claude-opus-5",
         max_tokens: 16000,
-        system:
-          "You are a dangerous-goods logistics document analyst. Extract a standard dangerous goods profile " +
-          "from the attached MSDS/SDS document. Focus on Section 1 (identification), Section 3 (composition), " +
-          "Section 9/10 (flash point, storage, incompatibilities) and Section 14 (transport information). " +
-          "Values must be transcribed exactly as printed (do not infer UN numbers or classes that are not in the document; " +
-          "use empty strings when a field is genuinely absent). Confidence reflects OCR/print quality and ambiguity.",
+        system: spec.system,
         messages: [{
           role: "user",
           content: [
             docBlock,
-            { type: "text", text: `Extract the standard dangerous goods profile from this MSDS (file: ${String(filename ?? "upload")}).` },
+            { type: "text", text: `${spec.prompt} (file: ${String(filename ?? "upload")}).` },
           ],
         }],
         // effort medium — claude-opus-5는 thinking이 기본 ON이고 max_tokens를 응답과 공유한다.
         // 기본(high)에서는 다페이지·저품질 스캔 MSDS에서 출력이 잘려 JSON 파싱이 실패할 수 있다.
-        output_config: { format: { type: "json_schema", schema: PROFILE_SCHEMA }, effort: "medium" },
+        output_config: { format: { type: "json_schema", schema: spec.schema }, effort: "medium" },
       }),
     });
 
@@ -157,7 +265,7 @@ Deno.serve(async (req) => {
     try { profile = JSON.parse(textBlock.text); }
     catch { return j({ error: "analysis result parse failed" }, 502); }
 
-    return j({ ok: true, profile, model: out.model, usage: out.usage });
+    return j({ ok: true, docType, profile, model: out.model, usage: out.usage });
   } catch (e) {
     return j({ error: String(e) }, 500);
   }

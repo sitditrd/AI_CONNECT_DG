@@ -9,139 +9,169 @@
   'use strict';
 
   /* ---------------------------------------------------------
-     1. MSDS 표준 위험물 프로파일 (발표자료 17장 · 실제 MSDS 3종)
+     1. MSDS 표준 위험물 프로파일 — 실제 MSDS 3종 원본 대조(2026-09-21)
+        · 추출값 · 쪽수는 원본 PDF 텍스트와 대조한 값이며 test/eval/gold 정답지와 일치한다
+        · 원문 오기는 추출값에 교정값을 두고 edits 에 원문 표기 · 사유를 남긴다
+        · 신뢰도(conf)는 데모 재생용 예시값 — 실제 값은 AI 분석 시 산출
+        · docMeta: 원본의 언어 · 형식 · 스캔 품질(원본 실측)
      --------------------------------------------------------- */
   var MSDS = [
     {
       id: 'MSDS-3077',
-      fileName: 'MSDS_Lithium-Cobalt-Oxide-Mixture.pdf',
+      fileName: '(MSDS) P-Co-BT-LG-MixLithiumCobaltOxide-2018-rev.005-21-INGLESE.pdf',
       title: '리튬 · 코발트 산화물 혼합물',
-      summary: '주요 성분 Cobalt oxide · Lithium cobalt oxide — Marine Pollutant 표시',
-      pages: 12,
+      summary: 'Cobalt oxide · Lithium cobalt oxide 등 재활용 혼합물 — Marine Pollutant 표시',
+      pages: 11,
+      docMeta: { language: 'en', origin: '이탈리아 제조사 영문판', layout: 'text-pdf', scanQuality: 'high', format: 'SEC.1~16 표준 16개 섹션' },
       profile: {
-        productName: 'Lithium cobalt oxide mixture',
-        casNo: ['1308-06-1', '12190-79-3'],
+        productName: 'P-Co (BT-LG) Mixture of Lithium metal Oxides based Cobalt',
+        casNo: ['1307-96-6', '12190-79-3', '554-13-2', '1317-39-1', '7440-02-0'],
         components: [
-          { name: 'Cobalt oxide (Co3O4)', cas: '1308-06-1', pct: '30~60%' },
-          { name: 'Lithium cobalt oxide', cas: '12190-79-3', pct: '20~40%' },
-          { name: 'Graphite', cas: '7782-42-5', pct: '5~15%' }
+          { name: 'Cobalt oxide', cas: '1307-96-6', pct: '10-20%' },
+          { name: 'Lithium cobalt oxide (CoO2Li)', cas: '12190-79-3', pct: '5-10%' },
+          { name: 'Graphite', cas: '—', pct: '18-20%' },
+          { name: 'Lithium carbonate (Li2CO3)', cas: '554-13-2', pct: '4-8%' },
+          { name: 'Lithium iron phosphate', cas: '—', pct: '<5%' },
+          { name: 'Cobalt nickel manganese lithium oxide', cas: '—', pct: '<5%' },
+          { name: 'Copper oxide (I) (Cu2O)', cas: '1317-39-1', pct: '<5%' },
+          { name: 'Nickel', cas: '7440-02-0', pct: '<4%' }
         ],
         unNo: 'UN 3077',
-        psn: 'ENVIRONMENTALLY HAZARDOUS SUBSTANCE, SOLID, N.O.S.',
+        psn: 'ENVIRONMENTALLY HAZARDOUS SUBSTANCE, SOLID, N.O.S. (cobalt oxides, nickel oxides)',
         hazardClass: '9',
         subRisk: null,
         packingGroup: 'III',
         marinePollutant: true,
-        tunnelCode: 'E',
-        specialProvisions: ['274', '331', '335', '375'],
+        tunnelCode: null,           /* 원본 미기재 */
+        specialProvisions: [],      /* 원본에 SP 번호 없음 */
+        ems: 'F-A, S-F',
         korClass: null,
         korNote: '위험물안전관리법 유별(제1~6류) 비대상 — 해양오염물질·환경유해성 기준 적용',
-        chemAct: '유해화학물질(코발트 화합물) 해당 — 화관법 보관·저장업 등록 시설 필요',
-        state: '고체 · 분말',
-        packing: 'Fibre drum · 25kg × 40',
-        storageTemp: '상온 (5~35℃)',
-        incompatible: ['강산', '강환원제', '제3류 금수성 물질']
+        chemAct: '코발트 화합물 함유 — 화관법 유해화학물질 해당 여부 확인, 해당 시 보관·저장업 등록 시설 필요',
+        state: '흑색 슬러지(Black mud) · 불연성',
+        packing: '문서 기재 없음',
+        storageTemp: '밀폐 · 서늘한 곳 — 온도 기재 없음 (Sec.7 · 10)',
+        incompatible: ['산화제(과산화물 등)', '환원제', '산', '강염기']
       },
       extraction: [
-        { field: '제품명', value: 'Lithium cobalt oxide mixture', page: 1, section: 'Section 1', conf: 0.99 },
-        { field: 'CAS No.', value: '1308-06-1 / 12190-79-3', page: 3, section: 'Section 3', conf: 0.97,
-          /* 원문 오타를 CAS 체크디짓으로 검출해 교정한 이력 — 동일 성분의 타 문서 기재값으로 교차 확인 */
-          edits: [{ before: '12190-79-7', after: '12190-79-3', part: true, by: '사전 검증', at: '2026-08-03',
-                    reason: 'CAS 체크디짓 불일치 — 원문 오타, 동일 성분 타 문서 기재값으로 교차 확인' }] },
-        { field: '구성성분 · 함유량', value: 'Co3O4 30~60% · LiCoO2 20~40%', page: 3, section: 'Section 3', conf: 0.94 },
-        { field: 'UN Number', value: 'UN 3077', page: 9, section: 'Section 14', conf: 0.99 },
-        { field: 'Proper Shipping Name', value: 'ENVIRONMENTALLY HAZARDOUS SUBSTANCE, SOLID, N.O.S.', page: 9, section: 'Section 14', conf: 0.98 },
-        { field: 'Hazard Class', value: 'Class 9', page: 9, section: 'Section 14', conf: 0.99 },
-        { field: 'Packing Group', value: 'PG III', page: 9, section: 'Section 14', conf: 0.98 },
-        { field: 'Marine Pollutant', value: 'Yes (해양오염물질)', page: 9, section: 'Section 14', conf: 0.96 },
-        { field: '특별주의사항', value: 'SP 274 · 331 · 335 · 375', page: 10, section: 'Section 14', conf: 0.88 }
+        { field: '제품명', value: 'P-Co (BT-LG) -Mixture of Lithium metal Oxides based Cobalt (BT/LG)', page: 1, section: 'Section 1', conf: 0.95 },
+        { field: 'CAS No.', value: '1307-96-6 / 12190-79-3 / 554-13-2 / 1317-39-1 / 7440-02-0', page: 3, section: 'Section 3', conf: 0.9,
+          /* 원문 오타를 CAS 체크디짓으로 검출해 교정한 이력 */
+          edits: [
+            { before: '1370-96-6', after: '1307-96-6', part: true, by: '사전 검증', at: '2026-08-03',
+              reason: 'CAS 체크디짓 불일치 — 원문 오타, 3480 원본 p.2 의 Cobalt oxide 기재값과 교차 확인' },
+            { before: '12190-79-7', after: '12190-79-3', part: true, by: '사전 검증', at: '2026-08-03',
+              reason: 'CAS 체크디짓 불일치 — 원문 오타, Lithium cobalt oxide 표준 CAS 로 교정' }
+          ] },
+        { field: '구성성분 · 함유량', value: 'Cobalt oxide 10-20% · Lithium cobalt oxide 5-10% · Graphite 18-20% · Lithium carbonate 4-8% 외 4종', page: 3, section: 'Section 3', conf: 0.9 },
+        { field: 'UN Number', value: 'UN 3077', page: 9, section: 'Section 14', conf: 0.97,
+          edits: [{ before: 'UN 30777', after: 'UN 3077', part: true, by: '사전 검증', at: '2026-09-21',
+                    reason: 'p.10 IMDG · IATA · LQ 행의 원문 오기 — 14.1(p.9) 3077 로 확정' }] },
+        { field: 'Proper Shipping Name', value: 'ENVIRONMENTALLY HAZARDOUS SUBSTANCE, SOLID, N.O.S. (cobalt oxides, nickel oxides)', page: 9, section: 'Section 14', conf: 0.93,
+          edits: [{ before: 'HAZRDOUS', after: 'HAZARDOUS', part: true, by: '사전 검증', at: '2026-09-21', reason: '원문 철자 오기 — 정식 운송명으로 교정' }] },
+        { field: 'Hazard Class', value: 'Class 9', page: 10, section: 'Section 14', conf: 0.97 },
+        { field: 'Packing Group', value: 'PG III', page: 10, section: 'Section 14', conf: 0.97 },
+        { field: 'Marine Pollutant', value: 'Yes — P/PP Marine Pollutant (fish and tree)', page: 10, section: 'Section 14', conf: 0.94 },
+        { field: 'EmS · 적재', value: 'EmS F-A, S-F · Stowage SW23 (BK3)', page: 10, section: 'Section 14', conf: 0.88 }
       ]
     },
     {
       id: 'MSDS-3480',
-      fileName: 'MSDS_Lithium-ion-Battery-Cell.pdf',
+      fileName: '(중대형) MSDS_Cell.pdf',
       title: '리튬이온 배터리 셀',
-      summary: 'Lithium-ion battery cell — 터널 제한코드 E · Marine Pollutant No',
-      pages: 10,
+      summary: 'Lithium-ion battery (CM0940R0008A · 94Ah) — 터널 제한코드 E · Marine Pollutant No',
+      pages: 8,
+      docMeta: { language: 'en', origin: '국내 제조사 영문판(미국 · EU 병기)', layout: 'text-pdf', scanQuality: 'high', format: '번호형 16개 항목(USA · EU 병기)' },
       profile: {
-        productName: 'Lithium-ion battery cell (INR21700)',
-        casNo: ['—(제품 · 물품)'],
+        productName: 'MODEL CM0940R0008A (94Ah capacity) Lithium-Ion battery',
+        casNo: ['1307-96-6', '1313-13-9', '1313-99-1', '7440-44-0', '24937-79-9', '7429-90-5', '7440-50-8'],
         components: [
-          { name: 'Lithium nickel cobalt manganese oxide', cas: '346417-97-8', pct: '25~45%' },
-          { name: 'Graphite', cas: '7782-42-5', pct: '10~25%' },
-          { name: 'Organic electrolyte (carbonate 계)', cas: '혼합물', pct: '10~20%' },
-          { name: 'Aluminium / Copper foil', cas: '7429-90-5 / 7440-50-8', pct: '10~20%' }
+          { name: 'Cobalt oxide', cas: '1307-96-6', pct: '<30%' },
+          { name: 'Manganese dioxide', cas: '1313-13-9', pct: '<30%' },
+          { name: 'Nickel oxide', cas: '1313-99-1', pct: '<30%' },
+          { name: 'Carbon', cas: '7440-44-0', pct: '10-30%' },
+          { name: 'Electrolyte (LiPF6 · organic carbonates)', cas: '—', pct: '10-20%' },
+          { name: 'Polyvinylidene fluoride (PVdF)', cas: '24937-79-9', pct: '<10%' },
+          { name: 'Aluminium foil', cas: '7429-90-5', pct: '2-10%' },
+          { name: 'Copper foil', cas: '7440-50-8', pct: '2-10%' },
+          { name: 'Aluminium and inert materials', cas: '—', pct: '5-10%' }
         ],
+        article: true,              /* 물품(Article) — 화관법 CAS 허가 품목 대조 비대상 */
         unNo: 'UN 3480',
         psn: 'LITHIUM ION BATTERIES',
         hazardClass: '9',
         subRisk: null,
-        packingGroup: null,   /* UN 3480은 포장등급 미지정 품목 — 포장은 PG II '성능 기준' 충족 요구 */
-        packingNote: '포장등급 미지정 — 포장은 PG II 성능 기준 충족 요구 (IMDG/IATA)',
+        packingGroup: 'II',
+        packingNote: '문서 기재값 — US DOT · ADR/RID · IMDG · ICAO 모두 II',
         marinePollutant: false,
         tunnelCode: 'E',
-        specialProvisions: ['188', '230', '310', '348', '376', '377'],
+        specialProvisions: [],      /* 원본에 SP 번호 없음 */
+        ems: 'F-A, S-I',
         korClass: null,
         korNote: '위험물안전관리법 유별 비대상 — 다만 전해액(인화성 액체) 내장으로 화재하중 관리 필요',
-        chemAct: '화관법 유해화학물질 비해당 — 이차전지 보관 화재안전기준(소방청 지침) 적용',
-        state: '고체 · 물품(Cell)',
-        packing: 'Carton on pallet · 800 cells/PL',
-        storageTemp: '상온 (0~35℃) · 직사광선 회피',
-        incompatible: ['제1류 산화성 고체', '제5류 자기반응성', '수분 · 침수']
+        chemAct: '물품(Article) — 화관법 유해화학물질 보관 기준 비대상, 이차전지 보관 화재안전기준 적용',
+        state: '고체 · 물품(셀) · 3.68V',
+        packing: '문서 기재 없음',
+        storageTemp: '실온(약 20℃) · 충전율 20~50% (OCV 3.5~3.7V) · 원포장 밀폐',
+        incompatible: ['문서상 특정 금지 물질 없음 — 화기 · 고온 · 발화원 회피']
       },
       extraction: [
-        { field: '제품명', value: 'Lithium-ion battery cell (INR21700)', page: 1, section: 'Section 1', conf: 0.99 },
-        { field: 'CAS No.', value: '물품(Article) — 구성물질별 표기', page: 3, section: 'Section 3', conf: 0.82 },
-        { field: '구성성분 · 함유량', value: 'NCM 25~45% · 흑연 10~25% · 전해액 10~20%', page: 3, section: 'Section 3', conf: 0.91 },
-        { field: 'UN Number', value: 'UN 3480', page: 8, section: 'Section 14', conf: 0.99 },
-        { field: 'Proper Shipping Name', value: 'LITHIUM ION BATTERIES', page: 8, section: 'Section 14', conf: 0.99 },
-        { field: 'Hazard Class', value: 'Class 9', page: 8, section: 'Section 14', conf: 0.99 },
-        { field: 'Packing Group', value: '미지정 — 포장은 PG II 성능 기준 충족 요구', page: 8, section: 'Section 14', conf: 0.93 },
-        { field: 'Marine Pollutant', value: 'No', page: 8, section: 'Section 14', conf: 0.95 },
-        { field: '터널 제한코드', value: 'E', page: 8, section: 'Section 14', conf: 0.90 },
-        { field: '특별주의사항', value: 'SP 188 · 230 · 310 · 348 · 376 · 377', page: 9, section: 'Section 14', conf: 0.87 }
+        { field: '제품명', value: 'MODEL CM0940R0008A (94Ah capacity) Lithium-Ion battery', page: 1, section: 'Section 1', conf: 0.97 },
+        { field: 'CAS No.', value: '1307-96-6 / 1313-13-9 / 1313-99-1 / 7440-44-0 / 24937-79-9 / 7429-90-5 / 7440-50-8', page: 2, section: 'Section 3', conf: 0.92 },
+        { field: '구성성분 · 함유량', value: 'Cobalt oxide <30% · Manganese dioxide <30% · Nickel oxide <30% · Carbon 10-30% · Electrolyte 10-20% 외', page: 2, section: 'Section 3', conf: 0.9 },
+        { field: 'UN Number', value: 'UN 3480', page: 6, section: 'Section 14', conf: 0.99 },
+        { field: 'Proper Shipping Name', value: 'LITHIUM ION BATTERIES', page: 6, section: 'Section 14', conf: 0.98 },
+        { field: 'Hazard Class', value: 'Class 9', page: 6, section: 'Section 14', conf: 0.99 },
+        { field: 'Packing Group', value: 'PG II', page: 6, section: 'Section 14', conf: 0.95 },
+        { field: 'Marine Pollutant', value: 'No', page: 7, section: 'Section 14', conf: 0.96 },
+        { field: '터널 제한코드', value: 'E', page: 6, section: 'Section 14', conf: 0.95 },
+        { field: 'EmS · IATA', value: 'EmS F-A, S-I · IATA PI 965 (Cargo 35 kg G)', page: 7, section: 'Section 14', conf: 0.9 }
       ]
     },
     {
       id: 'MSDS-3098',
-      fileName: 'MSDS_WLC-C5H_Oxidizing-Corrosive.pdf',
+      fileName: 'WLC-C5H(GHS MSDS)EN-04(01).pdf',
       title: 'WLC-C5H 산화성 · 부식성 액체',
       summary: 'H₂O₂ 2~6% · Citric acid 1~5% — 국내 위험물안전관리법 문서상 비대상 표기',
-      pages: 14,
+      pages: 12,
+      docMeta: { language: 'en', origin: '국내 제조사 영문판', layout: 'text-pdf', scanQuality: 'high', format: '국내 MSDS 16개 항목(산업안전보건법 제110조 양식)' },
       profile: {
-        productName: 'WLC-C5H (세정용 산화성 액체)',
-        casNo: ['7722-84-1', '77-92-9'],
+        productName: 'WLC-C5H (Copper etchant)',
+        casNo: ['7722-84-1', '77-92-9', '7732-18-5'],
         components: [
-          { name: 'Hydrogen peroxide (H₂O₂)', cas: '7722-84-1', pct: '2~6%' },
+          { name: 'Hydrogen peroxide (H₂O₂)', cas: '7722-84-1', pct: 'Less than 2~6%' },
           { name: 'Citric acid', cas: '77-92-9', pct: '1~5%' },
-          { name: 'Water', cas: '7732-18-5', pct: '90% 이상' }
+          { name: 'Water', cas: '7732-18-5', pct: '87~95%' }
         ],
         unNo: 'UN 3098',
-        psn: 'OXIDIZING LIQUID, CORROSIVE, N.O.S.',
+        psn: 'OXIDIZING LIQUID, CORROSIVE, N.O.S. (HYDROGEN PEROXIDE)',
         hazardClass: '5.1',
         subRisk: '8',
         packingGroup: 'II',
-        marinePollutant: false,
-        tunnelCode: 'E',
-        specialProvisions: ['274'],
+        marinePollutant: null,      /* 원문 'Not available' — 해당 여부 미기재 */
+        tunnelCode: null,           /* 원본 미기재 */
+        specialProvisions: [],      /* 원본에 SP 번호 없음 */
+        ems: 'F-A, S-Q',
         korClass: '제6류 비해당 (H₂O₂ 농도 36% 미만 — 시행령 별표1 비고)',
         korNote: '⚠ MSDS 기재 UN3098(Class 5.1/8 · PG II)이 신고 농도(H₂O₂ 2~6%, UN 운송규정 규제 하한 8% 미만)와 불일치 — 분류 과대표기 의심, 제조사 확인 필요',
-        chemAct: '화관법 유독물질 해당 여부 농도 기준 확인 필요',
-        state: '액체 · 무색',
-        packing: 'HDPE Drum 200L × 20',
-        storageTemp: '상온 (5~30℃) · 직사광선 · 열원 회피',
-        incompatible: ['제2류 가연성 고체', '제4류 인화성 액체', '금속 분말', '강알칼리']
+        chemAct: '문서 표기: 유독물질 비해당(H₂O₂ 6% 미만) — 함량 상한이 기준 경계라 확인 필요',
+        state: '무색 또는 연황색 액체 · 산화성 · 부식성',
+        packing: '문서 기재 없음',
+        storageTemp: '열 · 불꽃 · 가연물 회피, 잠금 보관 — 온도 기재 없음 (Sec.7)',
+        incompatible: ['가연성 물질', '연료', '금수성 물질', '환원성 물질']
       },
       extraction: [
-        { field: '제품명', value: 'WLC-C5H', page: 1, section: 'Section 1', conf: 0.98 },
-        { field: 'CAS No.', value: '7722-84-1 / 77-92-9', page: 2, section: 'Section 3', conf: 0.96 },
-        { field: '구성성분 · 함유량', value: 'H₂O₂ 2~6% · Citric acid 1~5%', page: 2, section: 'Section 3', conf: 0.93 },
-        { field: 'UN Number', value: 'UN 3098', page: 11, section: 'Section 14', conf: 0.97 },
-        { field: 'Proper Shipping Name', value: 'OXIDIZING LIQUID, CORROSIVE, N.O.S.', page: 11, section: 'Section 14', conf: 0.95 },
-        { field: 'Hazard Class', value: 'Class 5.1 (부차위험성 8)', page: 11, section: 'Section 14', conf: 0.94 },
-        { field: 'Packing Group', value: 'PG II', page: 11, section: 'Section 14', conf: 0.92 },
-        { field: 'Marine Pollutant', value: 'No', page: 11, section: 'Section 14', conf: 0.90 },
-        { field: '국내 법령 적용', value: '「위험물안전관리법 비대상」 문서 표기', page: 12, section: 'Section 15', conf: 0.61 }
+        { field: '제품명', value: 'WLC-C5H (Copper etchant)', page: 1, section: 'Section 1', conf: 0.98 },
+        { field: 'CAS No.', value: '7722-84-1 / 77-92-9 / 7732-18-5', page: 3, section: 'Section 3', conf: 0.93,
+          edits: [{ before: '7722- 84- 1', after: '7722-84-1', part: true, by: '자동 정규화', at: '2026-09-21',
+                    reason: '아래첨자 표기로 추출 시 공백 삽입 — CAS 형식으로 정규화' }] },
+        { field: '구성성분 · 함유량', value: 'H₂O₂ Less than 2~6% · Citric acid 1~5% · Water 87~95%', page: 3, section: 'Section 3', conf: 0.92 },
+        { field: 'UN Number', value: 'UN 3098', page: 10, section: 'Section 14', conf: 0.97 },
+        { field: 'Proper Shipping Name', value: 'OXIDIZING LIQUID, CORROSIVE, N.O.S. (HYDROGEN PEROXIDE)', page: 10, section: 'Section 14', conf: 0.95 },
+        { field: 'Hazard Class', value: 'Class 5.1 (부차위험성 8)', page: 10, section: 'Section 14', conf: 0.94 },
+        { field: 'Packing Group', value: 'PG II (원문 "Packing grade: 2")', page: 10, section: 'Section 14', conf: 0.9 },
+        { field: 'Marine Pollutant', value: 'Not available — 해당 여부 미기재', page: 10, section: 'Section 14', conf: 0.72 },
+        { field: '국내 법령 적용', value: '위험물안전관리법 Not applicable · 유독물질 비해당(H₂O₂ 6% 미만) 문서 표기', page: 11, section: 'Section 15', conf: 0.61 }
       ]
     }
   ];
@@ -163,7 +193,7 @@
       portKm: 12, icKm: 4.2, ratePLDay: 1250,
       ops: '24시간 · 야간 입출고 가능', tempZones: ['상온', '정온(15~25℃)'],
       /* 화관법 유해화학물질 보관·저장업 등록 품목(CAS) — 현업 매칭은 유별이 아니라 CAS 단위로 대조 */
-      permitItems: ['1308-06-1', '12190-79-3', '7722-84-1'],
+      permitItems: ['1307-96-6', '12190-79-3', '7722-84-1'],
       insurance: '화재 · 배상책임 100억'
     },
     {
@@ -420,7 +450,7 @@
   /* 화관법상 관리 대상으로 확인된 성분(CAS) — 창고 허가 품목 대조에 사용.
      시연용 매핑이며, 운영 시에는 유해화학물질 고시 목록과 연동한다. */
   var REG_CAS = [
-    { cas: '1308-06-1', name: '사산화삼코발트(코발트 화합물)', law: '화관법 유해화학물질' },
+    { cas: '1307-96-6', name: '산화코발트(코발트 화합물)', law: '화관법 유해화학물질' },
     { cas: '12190-79-3', name: '리튬코발트산화물(코발트 화합물)', law: '화관법 유해화학물질' },
     { cas: '7722-84-1', name: '과산화수소', law: '화관법 유해화학물질(농도 기준 확인)' }
   ];

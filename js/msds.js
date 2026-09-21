@@ -187,6 +187,9 @@
     var consistency = totalWeight ? Math.round(consistencyTotal / totalWeight * 100) : 0;
     var score = Math.round(completeness * 0.35 + confidence * 0.30 + traceability * 0.20 + consistency * 0.15);
     var mode = item.live ? 'proxy' : 'reference';
+    /* 문서 특성 — 저품질 스캔 · 사진 · 정답지 미확보 언어는 원문 대조로 넘긴다 */
+    var docIssueList = window.DGVerify ? window.DGVerify.docIssues(item.docMeta) : [];
+    docIssueList.forEach(function (x) { conflicts.push(x); });
     if (/^⚠/.test(String(profile.korNote || ''))) conflicts.push('국내 규제 주의사항');
     /* 체크디짓 · 농도 규칙(js/verify-rules.js) — 추출값끼리 서로 맞아도 값 자체가 틀린 경우를 잡는다 */
     var ruleIssues = [];
@@ -197,7 +200,7 @@
     conflicts = conflicts.concat(ruleIssues);
     var grade = score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : 'D';
     var action = missing.length || conflicts.some(function (label) { return label === 'UN Number' || label === 'Hazard Class'; }) ? 'review' : 'pass';
-    if (mode === 'proxy' || lowConfidence.length || score < 85 || ruleIssues.length) action = 'review';
+    if (mode === 'proxy' || lowConfidence.length || score < 85 || ruleIssues.length || docIssueList.length) action = 'review';
     return {
       score: score, grade: grade, mode: mode, action: action,
       metrics: { completeness: completeness, confidence: confidence, traceability: traceability, consistency: consistency },
@@ -378,6 +381,7 @@
       fileName: fileName,
       pages: pages,
       summary: '실문서 AI 분석 결과',
+      docMeta: p.docMeta || null,   /* 엔진이 판독한 언어 · 형식 · 스캔 품질 */
       profile: {
         productName: p.productName || '—',
         casNo: p.casNo || [],
@@ -565,6 +569,7 @@
         '<div>CAS No.</div><div class="mono">' + esc(p.casNo.join(' / ')) + '</div>' +
         '<div>성상 · 포장</div><div>' + esc(p.state) + ' · ' + esc(p.packing) + '</div>' +
         '<div>보관 온도</div><div>' + esc(p.storageTemp) + '</div>' +
+        '<div>문서 특성</div><div>' + esc(window.DGVerify ? window.DGVerify.docMetaText(selected.docMeta) : '-') + '</div>' +
         '<div>특별주의사항</div><div class="mono">' + esc((p.specialProvisions || []).join(' · ')) + '</div>' +
         '<div>국내 법령</div><div>' + esc(p.korNote) + '</div>' +
         '<div>화관법</div><div>' + esc(p.chemAct) + '</div>' +
@@ -646,6 +651,7 @@
         pages: selected.pages,
         profile: selected.profile,
         extraction: selected.extraction,
+        docMeta: selected.docMeta || null,
         accuracy: selected.accuracy,
         analyzedAt: window.DGCase.stamp()
       },
@@ -721,7 +727,7 @@
         selected = {
           id: c.msds.id, live: true, title: c.msds.title, fileName: c.msds.fileName,
           pages: c.msds.pages || 1, summary: '실문서 AI 분석 결과',
-          profile: c.msds.profile, extraction: c.msds.extraction, accuracy: c.msds.accuracy
+          profile: c.msds.profile, extraction: c.msds.extraction, accuracy: c.msds.accuracy, docMeta: c.msds.docMeta
         };
         uploadedName = c.msds.fileName;
         analyzed = true;

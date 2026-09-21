@@ -88,6 +88,40 @@
     return out;
   }
 
+  /* ---------- 문서 특성(양식 · 언어 · 스캔 품질) ----------
+     정답지로 정확도를 확인한 언어만 '검증됨'으로 본다 — 현재 정답지(test/eval/gold)는 영문 MSDS 3종.
+     저품질 스캔 · 사진 촬영본 · 정답지 미확보 언어는 원문 대조를 거치도록 담당자 확인으로 전환한다. */
+  var VALIDATED_LANG = ['en'];
+  var LANG_LABEL = { en: '영어', ko: '한국어', zh: '중국어', ja: '일본어', other: '기타 언어' };
+  var LAYOUT_LABEL = { 'text-pdf': '텍스트 PDF', scanned: '스캔본', photo: '사진 촬영본', mixed: '혼합' };
+  var QUALITY_LABEL = { high: '상', medium: '중', low: '하' };
+  function docIssues(meta) {
+    var out = [];
+    if (!meta) return out;
+    if (meta.scanQuality === 'low') out.push('저품질 스캔(판독 품질 하) — 원문 대조 필수');
+    if (meta.layout === 'photo') out.push('사진 촬영본 — 원문 대조 필수');
+    if (meta.language && VALIDATED_LANG.indexOf(meta.language) < 0) {
+      out.push((LANG_LABEL[meta.language] || meta.language) + ' 문서 — 정답지 미확보 언어, 원문 대조 필요');
+    }
+    return out;
+  }
+  function docMetaText(meta) {
+    if (!meta) return '미측정';
+    return [LANG_LABEL[meta.language] || meta.language || '언어 미상', meta.origin, LAYOUT_LABEL[meta.layout] || meta.layout,
+      meta.scanQuality ? '판독 품질 ' + (QUALITY_LABEL[meta.scanQuality] || meta.scanQuality) : null, meta.format]
+      .filter(Boolean).join(' · ');
+  }
+
+  /* ---------- 보관 조건 ----------
+     MSDS 보관 온도 표기에서 창고 온도구역 요구를 도출한다. 온도 표기가 없으면 요구 없음(null). */
+  function tempNeedFrom(profile) {
+    var s = String((profile && profile.storageTemp) || '');
+    if (/냉장|2\s*~\s*8\s*℃/.test(s)) return '냉장';
+    if (/정온/.test(s)) return '정온';
+    if (/실온|상온|room temperature/i.test(s)) return '상온';
+    return null;
+  }
+
   /* ---------- 운송 ---------- */
   /* 도로법 시행령 제79조 ② — 차량 제원이 운행제한 기준을 넘으면 제한차량 운행허가 필요 */
   function roadLaw(v) {
@@ -160,6 +194,7 @@
     { key: 'dqty', label: '지정수량 환산 불가', example: '국내 위험물인데 품명 · 환산 정보 없음', impl: '구현' },
     { key: 'subrisk', label: '부차위험 허가 미보유 창고', example: 'Class 5.1(8) → Class 8 허가 없음', impl: '구현' },
     { key: 'casPermit', label: '창고 허가 품목(CAS) 미등재', example: 'Class 9 허가는 있으나 코발트 화합물 미등재', impl: '구현' },
+    { key: 'docQuality', label: '문서 품질 · 언어 미검증', example: '저품질 스캔 · 사진 촬영본 · 정답지 미확보 언어', impl: '구현' },
     { key: 'law', label: '근거 법령 개정 · 규칙 재검토', example: '규칙 검토일 이후 시행되는 개정', impl: '부분' }
   ];
 
@@ -189,6 +224,7 @@
 
     var req = window.DGMatch ? window.DGMatch.requiredPermits(p) : { kor: null };
     if (req.kor && !designatedQty(req.kor, p.korItem)) hit('dqty', '제' + req.kor + ' — 품명별 지정수량 확인 필요');
+    docIssues(c.msds && c.msds.docMeta).forEach(function (t) { hit('docQuality', t); });
 
     lawStatus().forEach(function (s) {
       if (s.ruleReview) hit('law', s.reg.name + ' 시행 ' + s.reg.effective + ' — 규칙 재검토 전');
@@ -210,6 +246,10 @@
     driverRule: driverRule,
     lawStatus: lawStatus,
     designatedQty: designatedQty,
+    docIssues: docIssues,
+    docMetaText: docMetaText,
+    tempNeedFrom: tempNeedFrom,
+    VALIDATED_LANG: VALIDATED_LANG,
     TRIGGERS: TRIGGERS,
     evaluate: evaluate
   };

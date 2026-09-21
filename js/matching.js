@@ -18,7 +18,8 @@
       profile: c.msds && c.msds.profile,
       qtyPL: Number($('mQty').value) || 1,
       region: $('mRegion').value,
-      tempNeed: $('mTemp').value || null,
+      /* 사용자가 온도구역을 고르지 않으면 MSDS 보관 온도에서 도출한 값을 쓴다 */
+      tempNeed: $('mTemp').value || (window.DGVerify && c.msds ? window.DGVerify.tempNeedFrom(c.msds.profile) : null),
       caseObj: c
     };
   }
@@ -156,6 +157,7 @@
   function casLine(r) {
     var c = r.cas || { status: 'na' };
     if (c.status === 'na') return '화관법 관리 대상 성분 없음 — 유별 · 등급 대조로 충분';
+    if (c.status === 'article') return '물품(Article) — 화관법 허가 품목 대조 비대상';
     var names = c.regulated.map(function (x) { return x.name; }).join(' · ');
     if (c.status === 'match') return '<span class="badge badge-ok"><i></i>일치</span> ' + esc(names);
     if (c.status === 'missing') return '<span class="badge badge-cond"><i></i>미등재</span> ' +

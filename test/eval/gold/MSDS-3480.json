@@ -1,0 +1,31 @@
+{
+  "id": "MSDS-3480",
+  "file": "3.(중대형) MSDS_Cell.pdf",
+  "pages": 8,
+  "verifiedBy": "원본 PDF 텍스트 레이어 대조 (2026-09-21)",
+  "docMeta": { "language": "en", "layout": "text-pdf", "scanQuality": "high", "format": "번호형 16개 항목(USA · EU 병기)" },
+  "fields": {
+    "productName": { "key": "CM0940R0008A", "printed": "MODEL CM0940R0008A (94Ah capacity)", "page": 1 },
+    "casNo": { "v": ["1307-96-6", "1313-13-9", "1313-99-1", "7440-44-0", "24937-79-9", "7429-90-5", "7440-50-8"], "page": 2 },
+    "components": { "v": [
+      { "name": "Cobalt oxide", "cas": "1307-96-6", "pct": "<30" },
+      { "name": "Manganese dioxide", "cas": "1313-13-9", "pct": "<30" },
+      { "name": "Nickel oxide", "cas": "1313-99-1", "pct": "<30" },
+      { "name": "Carbon", "cas": "7440-44-0", "pct": "10-30" },
+      { "name": "Electrolyte", "cas": null, "pct": "10-20" },
+      { "name": "Polyvinylidene fluoride (PVdF)", "cas": "24937-79-9", "pct": "<10" },
+      { "name": "Aluminium foil", "cas": "7429-90-5", "pct": "2-10" },
+      { "name": "Copper foil", "cas": "7440-50-8", "pct": "2-10" },
+      { "name": "Aluminium and inert materials", "cas": null, "pct": "5-10" }
+    ], "page": 2 },
+    "unNo": { "v": "UN 3480", "printed": "ID Number: UN3480", "page": 6 },
+    "psn": { "v": "LITHIUM ION BATTERIES", "printed": "Lithium-ion batteries", "page": 6 },
+    "hazardClass": { "v": "9", "page": 6 },
+    "subRisk": { "v": null },
+    "packingGroup": { "v": "II", "printed": "Packing group: II (US DOT · ADR/RID · IMDG · ICAO)", "page": 6 },
+    "marinePollutant": { "v": false, "printed": "Marine pollutant: No", "page": 7 },
+    "tunnelCode": { "v": "E", "printed": "Tunnel restriction code: E", "page": 6 },
+    "specialProvisions": { "v": [], "note": "원본에 특별규정(SP) 번호 없음 — EmS F-A, S-I · IATA PI 965 기재" }
+  },
+  "printedErrors": []
+}

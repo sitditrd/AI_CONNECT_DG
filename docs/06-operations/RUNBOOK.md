@@ -10,7 +10,7 @@ python -m http.server 8155   # http://localhost:8155  (file:// 로 열어도 동
 ## 회귀 테스트
 
 ```bash
-cd test && npm install && npm test    # jsdom 119개 단언 (업로드 39 + 신뢰성 검증 80)
+cd test && npm install && npm test    # jsdom 141개 단언 (업로드 39 + 신뢰성 검증 102) + MSDS 정답지 채점
 ```
 
 `test/` 는 배포 대상이 아니다(워크플로가 `*.html` 과 `css/ js/ assets/ data/` 만 `_site` 로 옮긴다).

@@ -103,8 +103,8 @@ function loadData() {
     ok('지정수량 조회 — 제4류 제1석유류(비수용성) 200L', (V.designatedQty('4류', '제1석유류(비수용성)') || {}).qty === 200);
 
     console.log('\n=== 2. 구현·검증 페이지 ===');
-    ok('구현 범위 13행', w.document.querySelectorAll('#scopeBody tr').length === 13, w.document.querySelectorAll('#scopeBody tr').length);
-    ok('전환 기준 12행', w.document.querySelectorAll('#triggerBody tr').length === 12);
+    ok('구현 범위 17행', w.document.querySelectorAll('#scopeBody tr').length === 17, w.document.querySelectorAll('#scopeBody tr').length);
+    ok('전환 기준 13행', w.document.querySelectorAll('#triggerBody tr').length === 13);
     ok('법령 대조 9행', w.document.querySelectorAll('#lawBody tr').length === 9);
     ok('문서 처리 절차 4단계', w.document.querySelectorAll('#docSteps .step').length === 4);
     ok('법령 관리 절차 5단계', w.document.querySelectorAll('#lawSteps .step').length === 5);
@@ -119,7 +119,7 @@ function loadData() {
     await sleep(60);
     const gates = w.document.getElementById('gates').textContent;
     ok('게이트에 CAS 체크디짓 항목', /CAS 체크디짓/.test(gates));
-    ok('게이트에 농도 · 분류 교차검증 위반', /농도 · 분류 교차검증 — 과산화수소 2~6%/.test(gates), gates.slice(0, 300));
+    ok('게이트에 농도 · 분류 교차검증 위반', /농도 · 분류 교차검증 — 과산화수소 (Less than )?2~6%/.test(gates), gates.slice(0, 300));
     ok('게이트에 근거 법령 현행 대조', /근거 법령 현행 대조 — DG-RULES 2026\.09/.test(gates));
     ok('게이트에 CAS 단위 허가 품목', /CAS 단위 허가 품목/.test(gates));
     const trig = w.document.getElementById('triggerBox').textContent;
@@ -148,7 +148,7 @@ function loadData() {
     await sleep(60);
     const c = JSON.parse(w.localStorage.getItem('dg-case'));
     ok('승인 + 전환 사유 없음 → 적합', c.compliance.verdict === 'OK', c.compliance.verdict + ' / ' + (c.compliance.triggers || []).join(','));
-    ok('CAS 단위 허가 품목 — 코발트 화합물 대조 표시', /사산화삼코발트/.test(w.document.getElementById('gates').textContent));
+    ok('CAS 단위 허가 품목 — 코발트 화합물 대조 표시', /산화코발트\(코발트 화합물\)/.test(w.document.getElementById('gates').textContent));
     ok('런타임 오류 없음', errors.length === 0, errors.join(' | '));
   }
 
@@ -186,7 +186,8 @@ function loadData() {
     ok('W-08 COND · cas=missing', w08.verdict === 'COND' && w08.cas.status === 'missing');
     ok('W-01 OK · cas=match', w01.verdict === 'OK' && w01.cas.status === 'match');
     ok('W-06 목록 미등록은 판정 영향 없음', w06.verdict === 'OK' && w06.cas.status === 'unknown');
-    ok('3480(관리 대상 성분 없음)은 CAS 대조 비대상', w.DGMatch.casPermit(w.DGDATA.WAREHOUSES[7], w.DGDATA.MSDS[1].profile).status === 'na');
+    ok('3480 배터리(물품)는 CAS 허가 대조 비대상', w.DGMatch.casPermit(w.DGDATA.WAREHOUSES[7], w.DGDATA.MSDS[1].profile).status === 'article');
+    ok('관리 대상 성분이 없으면 CAS 대조 비대상', w.DGMatch.casPermit(w.DGDATA.WAREHOUSES[7], { components: [{ cas: '7732-18-5' }] }).status === 'na');
     const vl = w.document.getElementById('vehList').textContent;
     ok('차량 목록에 도로법 운행제한 표시', /도로관리청 제한차량 운행허가 필요/.test(vl));
     ok('런타임 오류 없음', errors.length === 0, errors.join(' | '));
@@ -268,6 +269,64 @@ function loadData() {
     ok('리포트에 규칙 세트', /판정 규칙 세트\s*DG-RULES 2026\.09/.test(rb));
     ok('리포트에 전환 사유', /담당자 확인 전환 사유\s*농도 · 분류 상충/.test(rb));
     ok('리포트에 판정 당시 시행일', /판정 당시 시행일/.test(rb) && /2026-07-01/.test(rb));
+    ok('런타임 오류 없음', errors.length === 0, errors.join(' | '));
+  }
+
+  console.log('\n=== 11. 정답지 채점 — 시연 데이터가 원본과 일치하는가 ===');
+  {
+    const ev = require('./msds-eval.js');
+    const out = ev.run({});
+    ok('정답지 3종 로드', out.results.length === 3);
+    ok('필드 30/30 원본 일치', out.total.fieldCorrect === 30 && out.total.fieldTotal === 30,
+       out.results.map((r) => r.id + ':' + r.misses.map((m) => m.label).join('/')).join(' '));
+    ok('원문 위치(쪽수) 전부 일치', out.total.pageCorrect === out.total.pageTotal && out.total.pageTotal >= 25,
+       out.total.pageCorrect + '/' + out.total.pageTotal);
+    ok('총 쪽수 3/3 일치', out.total.pageCountOk === 3);
+    /* 채점기가 틀린 값을 실제로 잡는지 — 3480 을 옛 데이터처럼 바꿔 넣으면 감점돼야 한다 */
+    const gold = ev.loadGold().find((g) => g.id === 'MSDS-3480');
+    const bad = { pages: 10, profile: { productName: 'Lithium-ion battery cell (INR21700)', unNo: 'UN 3480', psn: 'LITHIUM ION BATTERIES',
+      hazardClass: '9', packingGroup: null, marinePollutant: false, tunnelCode: 'E', casNo: [], components: [] },
+      extraction: [{ field: 'UN Number', page: 8 }] };
+    const s = ev.score(bad, gold);
+    ok('채점기 — 틀린 제품명 · 포장등급 · CAS · 쪽수 감점', s.fieldCorrect === 6 && s.pageCorrect === 0 && !s.pageCountOk,
+       s.fieldCorrect + '/' + s.fieldTotal + ' 쪽수 ' + s.pageCorrect);
+    ok('포장등급 표기 정규화(2 → II)', ev.roman('2') === 'II' && ev.roman('PG III') === 'III');
+    ok('함량 표기 정규화', ev.pct('Less than 2~6%') === '2-6' && ev.pct('<5 %') === '<5');
+  }
+
+  console.log('\n=== 12. 문서 특성 · 보관 조건 ===');
+  {
+    const { w, errors } = await boot('compliance.html', (w) => {
+      const c = sampleCase(w, 'MSDS-3480');
+      c.msds.docMeta = loadData().MSDS.find((m) => m.id === 'MSDS-3480').docMeta;
+      w.localStorage.setItem('dg-case', JSON.stringify(c));
+    });
+    const V = w.DGVerify;
+    ok('영문 텍스트 PDF · 고품질 → 전환 없음', V.docIssues({ language: 'en', layout: 'text-pdf', scanQuality: 'high' }).length === 0);
+    ok('저품질 스캔 → 전환', V.docIssues({ language: 'en', layout: 'scanned', scanQuality: 'low' }).length === 1);
+    ok('사진 촬영본 → 전환', V.docIssues({ language: 'en', layout: 'photo', scanQuality: 'medium' }).some((t) => /사진/.test(t)));
+    ok('정답지 미확보 언어(국문) → 전환', V.docIssues({ language: 'ko', layout: 'text-pdf', scanQuality: 'high' }).some((t) => /한국어/.test(t)));
+    const ko = V.evaluate({ msds: { profile: loadData().MSDS[1].profile, extraction: [], docMeta: { language: 'ko', layout: 'scanned', scanQuality: 'low' },
+      accuracy: { score: 95, mode: 'reference', missing: [] } } });
+    ok('케이스 평가에 문서 품질 전환 사유', ko.filter((h) => h.key === 'docQuality').length === 2, ko.map((h) => h.key).join(','));
+    ok('보관 온도 도출 — 3480 실온 → 상온', V.tempNeedFrom(loadData().MSDS[1].profile) === '상온');
+    ok('보관 온도 도출 — 온도 기재 없음 → 요구 없음', V.tempNeedFrom(loadData().MSDS[0].profile) === null);
+    ok('보관 온도 도출 — 냉장', V.tempNeedFrom({ storageTemp: '냉장(2~8℃)' }) === '냉장');
+    w.document.getElementById('runBtn').click();
+    await sleep(60);
+    const gates = w.document.getElementById('gates').textContent;
+    ok('게이트에 보관 조건(온도) — 상온 구역 대조', /보관 조건\(온도\) — MSDS 보관 온도 → 상온 구역 보유/.test(gates));
+    ok('게이트에 물품 CAS 대조 비대상', /물품\(Article\) — 화관법 허가 품목 대조 비대상/.test(gates));
+    ok('런타임 오류 없음', errors.length === 0, errors.join(' | '));
+  }
+  {
+    const { w, errors } = await boot('msds.html');
+    w.document.querySelector('#sampleChips .f-chip[data-id="MSDS-3098"]').click();
+    w.document.getElementById('analyzeBtn').click();
+    await sleep(3000);
+    const box = w.document.getElementById('profileBox').textContent;
+    ok('프로파일에 문서 특성 표시(원본 실측)', /문서 특성/.test(box) && /영어/.test(box) && /텍스트 PDF/.test(box), box.slice(box.indexOf('문서 특성'), box.indexOf('문서 특성') + 80));
+    ok('원문대로 함량 표기(Water 87~95%)', /87~95%/.test(box));
     ok('런타임 오류 없음', errors.length === 0, errors.join(' | '));
   }
 

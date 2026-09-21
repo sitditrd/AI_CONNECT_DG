@@ -17,7 +17,7 @@
   <meta property="og:image" content="https://sitditrd.github.io/AI_CONNECT_DG/assets/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-  <link rel="stylesheet" href="css/style.css?v=2026-09-18a">
+  <link rel="stylesheet" href="css/style.css?v=2026-09-21a">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/touch-icon.png">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
@@ -159,9 +159,11 @@
               <tbody>
                 <tr><td class="strong">규칙 기반 파서</td><td>39칸 중 12칸 적중(약 30%) — 섹션 헤더 · 2단 레이아웃 · 라벨 표기가 문서마다 다름</td><td>기각</td></tr>
                 <tr><td class="strong">무료 OCR · 문서 AI 5종</td><td>문서당 2페이지 제한(Section 14는 6~10쪽), OCR 노이즈, 정확도 근거 없음</td><td>기각</td></tr>
-                <tr><td class="strong">CAS 체크디짓</td><td>원문 오타 검출 — 12190-79-7 → 12190-79-3 (동일 성분 타 문서로 교차 확인)</td><td>적용</td></tr>
+                <tr><td class="strong">시연 데이터 원본 대조</td><td>정답지로 채점 — 정정 전 필드 19/30 · 쪽수 7/25 · 총 쪽수 0/3 → 정정 후 30/30 · 25/25 · 3/3</td><td>정정 완료</td></tr>
+                <tr><td class="strong">CAS 체크디짓</td><td>원문 오타 2건 검출 — 1370-96-6 → 1307-96-6 (3480 원본 p.2 와 교차 확인), 12190-79-7 → 12190-79-3</td><td>적용</td></tr>
+                <tr><td class="strong">원문 오기 · 표기</td><td>UN 30777(p.10 3곳) · HAZRDOUS 철자 · 'Packing grade: 2' · CAS 사이 공백 — 원문 대조 수정 이력으로 기록</td><td>적용</td></tr>
                 <tr><td class="strong">농도 · 분류 교차검증</td><td>UN3098 기재 문서의 H₂O₂ 2~6% — UN 운송 규제 하한(8%) 미만과 상충 검출</td><td>적용</td></tr>
-                <tr><td class="strong">LLM 분석 정확도</td><td>미측정 — 분석 서버 배포와 샘플셋 구축 후 측정</td><td>검증 필요</td></tr>
+                <tr><td class="strong">LLM 분석 정확도</td><td>미측정 — 채점 도구 준비 완료, 분석 서버 배포와 샘플셋 구축 후 같은 기준으로 측정</td><td>검증 필요</td></tr>
               </tbody>
             </table>
           </div>
@@ -175,7 +177,9 @@
                 <tr><td class="strong">정답지</td><td>위험물 담당자 2인이 독립 판독한 뒤 불일치 항목을 합의</td></tr>
                 <tr><td class="strong">측정 지표</td><td>CAS · UN · Class · PG · 성분 · 함유량별 정확도, 누락률, 오인식률, 원문 위치 일치율, 처리 시간</td></tr>
                 <tr><td class="strong">합격 기준(안)</td><td>UN · Class · PG 오인식이 '확인 필요' 없이 통과되는 건 0건 — 나머지 필드는 측정 후 기준 설정</td></tr>
-                <tr><td class="strong">다른 문서</td><td>B/L 등 비정형 문서 — 분석 엔진은 출력 스키마만 바꾸는 구조이며, 문서별 스키마와 샘플 검증 후 적용</td></tr>
+                <tr><td class="strong">다른 문서</td><td>B/L 등 비정형 문서 — 분석 엔진에 문서 유형별 스키마(MSDS · B/L) 구현, 실제 샘플과 정답지로 검증 후 적용</td></tr>
+                <tr><td class="strong">양식 · 언어 · 품질</td><td>문서 특성(언어 · 형식 · 판독 품질)을 함께 판독 — 정답지로 검증된 언어는 현재 영어, 그 외 언어 · 저품질 스캔 · 사진은 원문 대조로 전환</td></tr>
+                <tr><td class="strong">채점 도구</td><td>원본 정답지(원문 표기 · 쪽수 · 원문 오기) + 필드별 채점기 — test/msds-eval.js</td></tr>
               </tbody>
             </table>
           </div>
@@ -264,17 +268,17 @@
     </div>
   </footer>
 
-  <script src="js/common.js?v=2026-09-18a"></script>
-  <script src="js/i18n-dict.js?v=2026-09-18a"></script>
-  <script src="js/i18n.js?v=2026-09-18a"></script>
-  <script src="js/auth.js?v=2026-09-18a"></script>
-  <script src="js/auth-gate.js?v=2026-09-18a"></script>
-  <script src="js/ui-kit.js?v=2026-09-18a"></script>
-  <script src="js/case-sync.js?v=2026-09-18a"></script>
-  <script src="js/data_dg.js?v=2026-09-18a"></script>
-  <script src="js/db.js?v=2026-09-18a"></script>
-  <script src="js/match-engine.js?v=2026-09-18a"></script>
-  <script src="js/verify-rules.js?v=2026-09-18a"></script>
-  <script src="js/verify.js?v=2026-09-18a"></script>
+  <script src="js/common.js?v=2026-09-21a"></script>
+  <script src="js/i18n-dict.js?v=2026-09-21a"></script>
+  <script src="js/i18n.js?v=2026-09-21a"></script>
+  <script src="js/auth.js?v=2026-09-21a"></script>
+  <script src="js/auth-gate.js?v=2026-09-21a"></script>
+  <script src="js/ui-kit.js?v=2026-09-21a"></script>
+  <script src="js/case-sync.js?v=2026-09-21a"></script>
+  <script src="js/data_dg.js?v=2026-09-21a"></script>
+  <script src="js/db.js?v=2026-09-21a"></script>
+  <script src="js/match-engine.js?v=2026-09-21a"></script>
+  <script src="js/verify-rules.js?v=2026-09-21a"></script>
+  <script src="js/verify.js?v=2026-09-21a"></script>
 </body>
 </html>
