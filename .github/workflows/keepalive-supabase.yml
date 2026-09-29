@@ -1,0 +1,50 @@
+name: Supabase 일시중지 방지 (keep-alive)
+
+# Supabase 무료 플랜 프로젝트는 7일간 요청이 없으면 자동 일시중지(pause)된다.
+# 매일 한 번 PostgREST 로 1행만 읽어 '활동'을 남긴다.
+#   · 사용하는 키는 js/db.js 의 publishable 키(클라이언트 노출 전제 공개키) — 시크릿 등록 불필요
+#   · service key 는 사용하지 않는다
+# ※ GitHub 은 저장소에 60일간 커밋이 없으면 schedule 을 자동 비활성화한다.
+#    발표 전까지 커밋이 없을 경우 Actions 탭에서 한 번 수동 실행(Run workflow)하면 다시 살아난다.
+on:
+  schedule:
+    - cron: '17 21 * * *'   # 매일 21:17 UTC = 06:17 KST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keepalive-supabase
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 접속 정보 추출 (js/db.js 공개 설정)
+        id: cfg
+        run: |
+          URL=$(grep -oE 'https://[a-z0-9]+\.supabase\.co' js/db.js | head -1)
+          KEY=$(grep -oE 'sb_publishable_[A-Za-z0-9_-]+' js/db.js | head -1)
+          if [ -z "$URL" ] || [ -z "$KEY" ]; then
+            echo "js/db.js 에서 Supabase URL 또는 publishable 키를 찾지 못했다"; exit 1
+          fi
+          echo "::add-mask::$KEY"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "key=$KEY" >> "$GITHUB_OUTPUT"
+
+      - name: keep-alive 요청 (dg_warehouses 1행)
+        env:
+          URL: ${{ steps.cfg.outputs.url }}
+          KEY: ${{ steps.cfg.outputs.key }}
+        run: |
+          code=$(curl -sS -o /tmp/keepalive.out -w '%{http_code}' \
+            "$URL/rest/v1/dg_warehouses?select=id&limit=1" \
+            -H "apikey: $KEY" -H "Authorization: Bearer $KEY")
+          echo "HTTP $code"
+          head -c 300 /tmp/keepalive.out; echo
+          # 200 이 아니면 실패로 끝내 메일 알림을 받는다(일시중지 · 키 만료 · 테이블 삭제 감지)
+          [ "$code" = "200" ] || exit 1

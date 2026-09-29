@@ -26,6 +26,16 @@ cd test && npm install && npm test    # jsdom 141개 단언 (업로드 39 + 신�
 저장소의 `?v=` 값을 손으로 올릴 필요가 없다(원본 파일은 건드리지 않는다).
 이 자동화 이전에는 수동 갱신이 3회 연속 누락돼 재방문자가 구버전 JS를 받았다.
 
+## Supabase 자동 일시중지(pause) 방지
+
+무료 플랜 프로젝트는 **7일간 요청이 없으면 자동 일시중지**된다(일시중지 후 90일 안에는 대시보드에서 복구 가능, 이후에는 데이터 내려받기만 가능).
+발표 직전에 멈추는 일을 막기 위해 워크플로 `Supabase 일시중지 방지 (keep-alive)` 가 **매일 06:17 KST** 에
+`dg_warehouses` 1행을 읽어 활동을 남긴다(js/db.js 의 publishable 키 사용, 시크릿 불필요).
+
+- 응답이 200 이 아니면 실행이 실패하므로 일시중지 · 키 · 테이블 이상을 메일로 알 수 있다
+- **GitHub 은 저장소에 60일간 커밋이 없으면 schedule 을 자동 비활성화한다** — 장기 방치 시 Actions 탭에서 `Run workflow` 1회
+- 확실히 막으려면 Supabase Pro(유료) 전환 — 유료 플랜은 미사용 일시중지가 없다
+
 ## v2.0 백엔드 활성화 (인증 · 케이스 동기화 · 실문서 분석)
 
 → **[ACTIVATION_V2.md](ACTIVATION_V2.md)** 참조 — SQL 2본(auth_setup/case_sync) 실행 → 관리자 비번 교체 → Edge Functions(send-code/msds-extract) 배포 → 시크릿(SMTP_*, ANTHROPIC_API_KEY). 미활성 상태에서도 사이트는 안전하게 폴백 동작.
@@ -58,6 +68,8 @@ cd test && npm install && npm test    # jsdom 141개 단언 (업로드 39 + 신�
 | 케이스가 꼬임 (단계 안 열림) | process.html → "케이스 초기화" (localStorage `dg-case` 삭제) |
 | 화면 갱신 안 됨 | 브라우저 캐시 — Ctrl+F5. 배포본의 `?v=` 는 배포 시 커밋 SHA로 자동 치환되므로 보통 발생하지 않는다 |
 | dg_cases 적재 실패 | 정상 범위 — insert-only 정책이며 실패해도 화면 동작에 영향 없음 |
+| Supabase "프로젝트 일시중지 예정" 메일 | 7일 무활동 경고 — keep-alive 워크플로가 도는지 확인(Actions 탭), 멈춰 있으면 `Run workflow` 수동 실행 |
+| 사이트 배지가 시드로 바뀌고 REST 가 모두 실패 | 프로젝트가 이미 일시중지됨 → 대시보드에서 Restore(90일 이내), 이후 keep-alive 재개 확인 |
 
 ## 자격증명 관리
 
