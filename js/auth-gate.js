@@ -1,6 +1,9 @@
 /* =========================================================
    Connect DG — 미로그인 게이트 (lock-in 티저)
-   처음엔 정상 노출 → 알림(카운트다운) → 주요기능 blur + "로그인 필요" 오버레이.
+   ※ 현재 기본값은 '공개' — DGCONFIG.gate.enabled = false 이면 게이트를 걸지 않는다.
+      누구나 로그인 없이 MSDS 분석부터 전 단계를 진행할 수 있고, 계정 버튼만 헤더에 남는다.
+      (로그인은 '내 케이스' 다기기 보관 · 회원 승인 · 실문서 AI 분석에만 필요)
+   enabled = true 일 때: 처음엔 정상 노출 → 알림(카운트다운) → 주요기능 blur + "로그인 필요" 오버레이.
    로그인(승인 계정)하면 게이트 해제 · 전 화면 열람.
    인증 백엔드 미활성 시 validate()가 false → 게이트는 예약되지만
    데모 노출 시간(GATE_DELAY_MS) 동안은 전 기능 정상 동작.
@@ -9,8 +12,10 @@
    ========================================================= */
 (function () {
   'use strict';
-  var GATE_DELAY_MS = 12000; /* [조정] 처음 노출 시간(ms) — 이후 게이트 */
-  var WARN_BEFORE = 3000;    /* [조정] blur 몇 ms 전에 알림 카운트다운 */
+  var GCFG = (window.DGCONFIG && DGCONFIG.gate) || {};
+  var GATE_ON = GCFG.enabled === true;              /* [조정] js/config.js 의 gate.enabled */
+  var GATE_DELAY_MS = GCFG.delayMs || 12000; /* 처음 노출 시간(ms) — 이후 게이트 */
+  var WARN_BEFORE = GCFG.warnMs || 3000;     /* blur 몇 ms 전에 알림 카운트다운 */
   var gateApplied = false, timers = [];
   var lastAuthed = false, lastName = null;
 
@@ -94,7 +99,7 @@
       '</div>';
   }
   function applyGate() {
-    if (gateApplied || DGAUTH.isAuthed()) return;
+    if (!GATE_ON || gateApplied || DGAUTH.isAuthed()) return;
     gateApplied = true;
     removeToast();
     document.body.classList.add('auth-gated');
@@ -114,6 +119,7 @@
 
   /* 게이트 예약: (지연-알림) 시점에 카운트다운 알림 → 지연 시점에 blur */
   function scheduleGate() {
+    if (!GATE_ON) return;                            /* 공개 모드 — 알림도 blur 도 없다 */
     var warnAt = Math.max(0, GATE_DELAY_MS - WARN_BEFORE);
     timers.push(setTimeout(function () {
       if (DGAUTH.isAuthed()) return;
@@ -131,6 +137,7 @@
     injectAccount(DGAUTH.isAuthed(), s && s.name);
 
     var hasContent = !!document.querySelector('.dash-section'); /* 워크벤치 화면만 게이트(랜딩 제외) */
+    if (!GATE_ON) releaseGate();                     /* 이전 방문에서 남은 blur 상태 정리 */
     DGAUTH.validate().then(function (authed) {
       s = DGAUTH.session();
       injectAccount(authed, s && s.name);
@@ -140,6 +147,10 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
+
+  /* 게이트 상태 진단용(회귀 테스트 · 콘솔 확인) — 동작에는 영향 없음 */
+  window.DGGATE = { enabled: GATE_ON, delayMs: GATE_DELAY_MS, warnMs: WARN_BEFORE,
+                    applied: function () { return gateApplied; } };
 
   /* 언어 전환 시 동적 주입 요소(계정 버튼·게이트 오버레이) 재번역 —
      i18n 엔진이 원문(한국어) 기준으로 다시 번역하도록 원문으로 재주입 */

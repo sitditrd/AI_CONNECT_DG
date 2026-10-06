@@ -330,6 +330,40 @@ function loadData() {
     ok('런타임 오류 없음', errors.length === 0, errors.join(' | '));
   }
 
+  /* ---------- 13. 로그인 없이 공개 — 인증 게이트 미적용 ---------- */
+  console.log('\n13. 로그인 없이 공개 (인증 게이트)');
+  {
+    const cfg = fs.readFileSync(path.join(ROOT, 'js/config.js'), 'utf8');
+    ok('설정에 게이트 비활성화', /gate:[\s\S]*?enabled:\s*false/.test(cfg));
+    const gated = fs.readdirSync(ROOT).filter((f) => f.endsWith('.html'))
+      .filter((f) => fs.readFileSync(path.join(ROOT, f), 'utf8').includes('js/auth-gate.js'));
+    const badOrder = gated.filter((f) => {
+      const h = fs.readFileSync(path.join(ROOT, f), 'utf8');
+      return h.indexOf('js/config.js') < 0 || h.indexOf('js/config.js') > h.indexOf('js/auth-gate.js');
+    });
+    ok('게이트 화면 전부 config.js 를 먼저 로드', gated.length >= 10 && badOrder.length === 0, badOrder.join(','));
+  }
+  for (const page of ['msds.html', 'process.html', 'compliance.html']) {
+    const { w, errors } = await boot(page);
+    await sleep(400);
+    ok(page + ' — 게이트 비활성', !!w.DGGATE && w.DGGATE.enabled === false && w.DGGATE.applied() === false);
+    ok(page + ' — 잠금 오버레이 · blur 없음',
+       !w.document.getElementById('authGate') && !w.document.body.classList.contains('auth-gated'));
+    const acct = w.document.getElementById('acctBtn');
+    ok(page + ' — 로그인 버튼은 남아 있음(선택 로그인)', !!acct && acct.getAttribute('href') === 'login.html');
+    ok(page + ' — 런타임 오류 없음', errors.length === 0, errors.join(' | '));
+  }
+  {
+    /* 미로그인 상태에서 MSDS 분석이 끝까지 돌아야 한다 */
+    const { w, errors } = await boot('msds.html');
+    w.document.querySelector('#sampleChips .f-chip[data-id="MSDS-3077"]').click();
+    w.document.getElementById('analyzeBtn').click();
+    await sleep(3000);
+    ok('미로그인 MSDS 분석 — 추출표 생성', w.document.querySelectorAll('#extractBody tr').length > 0);
+    ok('미로그인 MSDS 분석 — 확정 버튼 활성', !w.document.getElementById('confirmBtn').disabled);
+    ok('미로그인 MSDS 분석 — 런타임 오류 없음', errors.length === 0, errors.join(' | '));
+  }
+
   console.log('\n결과: ' + pass + ' PASS / ' + fail + ' FAIL');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error('하네스 오류:', e); process.exit(2); });
