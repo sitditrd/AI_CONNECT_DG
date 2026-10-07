@@ -615,19 +615,36 @@ input[type=range] { width: 100%; accent-color: var(--dg); }
 }
 
 @media (max-width: 900px) {
-  :root { --header-h: 112px; }
-  .site-header { height: auto; }
+  :root { --header-h: 109px; }
+  .site-header { height: auto; background: var(--header-bg); box-shadow: 0 1px 0 var(--border); }
   .header-inner {
-    height: auto; padding: 8px 12px; display: grid;
-    grid-template-columns: minmax(0, 1fr) auto; gap: 8px;
+    height: auto; padding: 6px 12px 8px; display: grid;
+    grid-template-columns: minmax(0, 1fr) auto; gap: 0 8px;
   }
   .logo-slot { min-height: 44px; }
   .header-actions {
-    grid-column: 1 / -1; justify-content: flex-end; flex-wrap: wrap;
+    grid-column: 1 / -1; justify-content: flex-start; flex-wrap: wrap;
+    gap: 6px; border-top: 1px solid var(--border); padding-top: 6px;
     margin-left: 0 !important;
   }
-  .header-actions .icon-btn { width: 44px; height: 44px; flex: none; }
-  .lang-btn { min-width: 28px; min-height: 44px; padding: 5px 7px; }
+  .header-actions .icon-btn {
+    width: 44px; height: 44px; flex: none; border: 0; border-radius: 8px;
+    background: transparent; color: var(--ink-2);
+  }
+  .header-actions .lang-switch {
+    min-width: 84px; height: 44px; border: 0; border-radius: 0;
+    background: transparent; opacity: 1; overflow: visible; color: var(--ink-2);
+  }
+  .header-actions .lang-btn {
+    position: relative; min-width: 28px; min-height: 44px; padding: 5px 7px;
+    font-size: 12px; font-weight: 600; color: var(--ink-2); background: transparent;
+  }
+  .header-actions .lang-btn:hover { background: var(--surface-2); }
+  .header-actions .lang-btn.active { color: var(--ink); background: transparent; }
+  .header-actions .lang-btn.active::after {
+    content: ''; position: absolute; left: 8px; right: 8px; bottom: 5px;
+    height: 2px; border-radius: 1px; background: var(--dg);
+  }
   .site-nav {
     position: absolute; inset: 100% 0 auto 0; flex-direction: column; align-items: stretch;
     background: var(--header-bg); backdrop-filter: blur(14px); padding: 10px 16px 16px;
@@ -635,7 +652,7 @@ input[type=range] { width: 100%; accent-color: var(--dg); }
   }
   .site-nav.open { display: flex; }
   .site-nav a { color: var(--ink); padding: 11px 8px; }
-  .nav-burger { display: block; margin-left: 0; width: 44px; height: 44px; padding: 11px; }
+  .nav-burger { display: block; margin-left: 0; width: 44px; height: 44px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--ink); }
   .header-actions .btn { display: none; }
   .section { padding: 52px 0; }
 }
@@ -656,9 +673,37 @@ input[type=range] { width: 100%; accent-color: var(--dg); }
 .acct-btn .acct-name { opacity: .78; }
 /* 좁은 화면 — 계정 버튼 3종 + 언어 스위처가 헤더를 넘치지 않도록 압축 */
 @media (max-width: 900px) {
-  .acct-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; font-size: 11.5px; padding: 5px 8px; margin-left: 0; max-width: 33vw; overflow: hidden; text-overflow: ellipsis; }
-  .acct-btn .acct-name { display: none; }   /* 이름은 생략 — 로그아웃 라벨만 */
-  .header-actions { gap: 4px; min-width: 0; }
+  .acct-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 44px; min-height: 44px; font-size: 12px; font-weight: 600;
+    padding: 5px 8px; margin-left: 0; max-width: none; border: 0;
+    border-radius: 6px; color: var(--ink-2); opacity: 1; background: transparent;
+  }
+  .acct-btn .acct-name { display: none; }
+  .header-actions { gap: 6px; min-width: 0; }
+  .header-actions #casesBtn { margin-left: auto; }
+  .header-actions #acctBtn {
+    padding: 5px 12px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface-2); color: var(--ink);
+  }
+  .header-actions #acctBtn[href*="login.html"] {
+    border-color: transparent; background: var(--brand-primary); color: #fff;
+  }
+  .header-actions .acct-btn-admin {
+    background: var(--surface-2); color: var(--ink); border: 1px solid var(--border);
+  }
+  .hero-page .site-header:not(.scrolled) .logo-slot,
+  .hero-page .site-header:not(.scrolled) .logo-text .l1,
+  .hero-page .site-header:not(.scrolled) .site-nav a,
+  .hero-page .site-header:not(.scrolled) .icon-btn,
+  .hero-page .site-header:not(.scrolled) .lang-switch,
+  .hero-page .site-header:not(.scrolled) .nav-burger,
+  .hero-page .site-header:not(.scrolled) .acct-btn { color: var(--ink); }
+  .hero-page .site-header:not(.scrolled) .logo-text .l2,
+  .hero-page .site-header:not(.scrolled) .site-nav a.active { color: var(--dg); }
+  .site-header :is(.lang-btn, .icon-btn, .acct-btn, .nav-burger):focus-visible {
+    outline: 2px solid var(--brand-accent); outline-offset: 2px;
+  }
 }
 
 /* 미로그인 게이트 (일정시간 뒤 blur + 로그인 유도) */
