@@ -74,3 +74,11 @@ node msds-eval.js --json          # 결과 JSON
 ```bash
 node msds-upload.test.js /path/to/mutated-copy
 ```
+
+## MSDS example prompt regression
+
+`npm test` includes `node msds-example.test.js` (35 assertions).
+The test covers the yes/no prompt, file-picker cancellation, automatic sample analysis,
+keyboard focus and Escape, restored-case prompt suppression, Korean/English/Chinese,
+and the no-paid-extraction guarantee when AI is available. Requests are mocked.
+Native mobile dialog layout is checked separately using browser E2E.

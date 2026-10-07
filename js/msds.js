@@ -347,6 +347,79 @@
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
+  function initExamplePrompt() {
+    var dialog = $('msdsExampleDialog');
+    var yes = $('msdsExampleYes');
+    var no = $('msdsExampleNo');
+    var previousFocus = null;
+    var previousOverflow = '';
+    var backdrop = null;
+    if (!dialog || !yes || !no) return;
+
+    function closePrompt() {
+      if (!dialog.open) return;
+      if (typeof dialog.close === 'function') dialog.close();
+      else dialog.removeAttribute('open');
+      document.body.style.overflow = previousOverflow;
+      if (backdrop) { backdrop.remove(); backdrop = null; }
+      if (previousFocus && document.contains(previousFocus)) previousFocus.focus();
+    }
+
+    function openPrompt() {
+      if (dialog.open) return;
+      previousFocus = document.activeElement === document.body ? $('fileSelectBtn') : document.activeElement;
+      previousOverflow = document.body.style.overflow;
+      if (typeof dialog.showModal === 'function') {
+        dialog.showModal();
+      } else {
+        backdrop = document.createElement('div');
+        backdrop.className = 'msds-example-backdrop';
+        backdrop.addEventListener('click', closePrompt);
+        document.body.appendChild(backdrop);
+        dialog.setAttribute('open', '');
+        dialog.setAttribute('role', 'dialog');
+        dialog.setAttribute('aria-modal', 'true');
+      }
+      document.body.style.overflow = 'hidden';
+      yes.focus();
+    }
+
+    yes.addEventListener('click', function () {
+      var samples = D.MSDS || [];
+      var sample = samples.filter(function (item) { return selected && item.id === selected.id; })[0] ||
+        samples.filter(function (item) { return item.id === 'MSDS-3480'; })[0] || samples[0];
+      if (!sample) return;
+      closePrompt();
+      uploadedFile = null;
+      uploadedName = null;
+      $('fileInput').value = '';
+      pick(sample.id);
+      renderEngineBadge();
+      analyze();
+    });
+    no.addEventListener('click', function () {
+      closePrompt();
+      $('fileInput').click();
+    });
+    dialog.addEventListener('cancel', function (event) {
+      event.preventDefault();
+      closePrompt();
+    });
+    dialog.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') { event.preventDefault(); closePrompt(); }
+      if (event.key !== 'Tab') return;
+      if (event.shiftKey && document.activeElement === yes) { event.preventDefault(); no.focus(); }
+      else if (!event.shiftKey && document.activeElement === no) { event.preventDefault(); yes.focus(); }
+    });
+    $('fileSelectBtn').addEventListener('click', openPrompt);
+    $('exampleBtn').addEventListener('click', openPrompt);
+    $('dropZone').addEventListener('keydown', function (event) {
+      if (event.target !== $('dropZone')) return;
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openPrompt(); }
+    });
+    if (!analyzed && !selected && !uploadedFile) openPrompt();
+  }
+
   function initDrop() {
     var dz = $('dropZone');
     ['dragenter', 'dragover'].forEach(function (ev) {
@@ -747,9 +820,7 @@
     dz.setAttribute('tabindex', '0');
     dz.setAttribute('role', 'button');
     dz.setAttribute('aria-label', 'MSDS 파일 선택 — Enter 키로 파일 대화상자 열기');
-    dz.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('fileInput').click(); }
-    });
+    initExamplePrompt();
     window.DGUI.initReveal();
   });
 })();

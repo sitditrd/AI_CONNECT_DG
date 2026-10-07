@@ -3157,3 +3157,26 @@ window.DGI18N_DICT = {
     '관리':'操作'
   });
 })();
+
+;(function(){
+  var dict=window.DGI18N_DICT;
+  if(!dict)return;
+  Object.assign(dict.en,{
+    '파일 없이 예시로 진행':'Continue with an example',
+    '파일 없이도 진행할 수 있어요':'No file? You can still continue.',
+    '예시 MSDS로 진행하시겠습니까?':'Would you like to use an example MSDS?',
+    '파일이 없어도 제공된 예시 MSDS로 분석과 다음 단계를 진행할 수 있습니다.':'Use a provided example MSDS to run the analysis and continue, even without your own file.',
+    '예시를 선택하면 검증된 샘플 분석이 자동 시작됩니다. 실제 파일을 서버에 업로드하지 않는 시연입니다.':'Choosing an example starts a verified sample analysis automatically. This is a demo; no file is uploaded to the server.',
+    '예, 예시로 진행':'Yes, use an example',
+    '아니요, 직접 업로드':'No, upload my own file'
+  });
+  Object.assign(dict.zh,{
+    '파일 없이 예시로 진행':'使用示例继续',
+    '파일 없이도 진행할 수 있어요':'没有文件也可以继续',
+    '예시 MSDS로 진행하시겠습니까?':'是否使用示例 MSDS 继续？',
+    '파일이 없어도 제공된 예시 MSDS로 분석과 다음 단계를 진행할 수 있습니다.':'即使没有自己的文件，也可以使用提供的示例 MSDS 进行分析并继续后续步骤。',
+    '예시를 선택하면 검증된 샘플 분석이 자동 시작됩니다. 실제 파일을 서버에 업로드하지 않는 시연입니다.':'选择示例后将自动开始已验证样本的分析。这是演示，不会将文件上传到服务器。',
+    '예, 예시로 진행':'是，使用示例',
+    '아니요, 직접 업로드':'否，上传自己的文件'
+  });
+})();

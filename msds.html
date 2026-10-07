@@ -18,6 +18,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="css/style.css?v=2026-10-06a">
+  <link rel="stylesheet" href="css/msds-example.css?v=2026-10-07b">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/touch-icon.png">
   <link rel="icon" href="assets/twl_logo.ico">
 </head>
@@ -86,7 +87,10 @@
             <div class="drop-zone" id="dropZone">
               <div class="dz-t">MSDS 파일을 여기에 끌어다 놓으세요</div>
               <div class="dz-d">데모 재생 모드에서는 업로드 시 아래 실제 MSDS 3종 중 하나가 무작위로 선택됩니다</div>
-              <button class="btn btn-ghost btn-sm" type="button" onclick="document.getElementById('fileInput').click()">파일 선택</button>
+              <div class="row" style="justify-content:center; gap:8px;">
+                <button class="btn btn-ghost btn-sm" id="fileSelectBtn" type="button">파일 선택</button>
+                <button class="btn btn-dg btn-sm" id="exampleBtn" type="button">파일 없이 예시로 진행</button>
+              </div>
               <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff" class="hide" aria-hidden="true" tabindex="-1">
             </div>
             <div class="row" id="engineBadge" style="margin-top:14px; align-items:center;"></div>
@@ -181,6 +185,19 @@
       <p class="src-note">출처 · 실제 MSDS 3종 Section 3 · Section 14</p>
     </div>
   </section>
+
+  <dialog id="msdsExampleDialog" class="msds-example-dialog" aria-labelledby="msdsExampleTitle" aria-describedby="msdsExampleDescription msdsExampleNote">
+    <div class="msds-example-body">
+      <span class="badge badge-neutral">파일 없이도 진행할 수 있어요</span>
+      <h2 id="msdsExampleTitle">예시 MSDS로 진행하시겠습니까?</h2>
+      <p id="msdsExampleDescription">파일이 없어도 제공된 예시 MSDS로 분석과 다음 단계를 진행할 수 있습니다.</p>
+      <p id="msdsExampleNote" class="src-note">예시를 선택하면 검증된 샘플 분석이 자동 시작됩니다. 실제 파일을 서버에 업로드하지 않는 시연입니다.</p>
+      <div class="msds-example-actions">
+        <button class="btn btn-dg" id="msdsExampleYes" type="button" autofocus>예, 예시로 진행</button>
+        <button class="btn btn-ghost" id="msdsExampleNo" type="button">아니요, 직접 업로드</button>
+      </div>
+    </div>
+  </dialog>
 
   <footer class="site-footer">
     <div class="container footer-grid">
