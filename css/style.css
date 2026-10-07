@@ -313,7 +313,7 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---------- 9단계 파이프라인 ---------- */
 .pipeline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-@media (max-width: 860px) { .pipeline { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .pipeline { grid-template-columns: 1fr; } }
 .pipe-group { border: 1px solid var(--border); border-radius: 14px; background: var(--surface); padding: 14px; }
 .pipe-group > .g-t { font-size: 13px; font-weight: 800; color: var(--dg); margin-bottom: 10px; }
 .pipe-item {
@@ -615,14 +615,27 @@ input[type=range] { width: 100%; accent-color: var(--dg); }
 }
 
 @media (max-width: 900px) {
+  :root { --header-h: 112px; }
+  .site-header { height: auto; }
+  .header-inner {
+    height: auto; padding: 8px 12px; display: grid;
+    grid-template-columns: minmax(0, 1fr) auto; gap: 8px;
+  }
+  .logo-slot { min-height: 44px; }
+  .header-actions {
+    grid-column: 1 / -1; justify-content: flex-end; flex-wrap: wrap;
+    margin-left: 0 !important;
+  }
+  .header-actions .icon-btn { width: 44px; height: 44px; flex: none; }
+  .lang-btn { min-width: 28px; min-height: 44px; padding: 5px 7px; }
   .site-nav {
-    position: fixed; inset: var(--header-h) 0 auto 0; flex-direction: column; align-items: stretch;
+    position: absolute; inset: 100% 0 auto 0; flex-direction: column; align-items: stretch;
     background: var(--header-bg); backdrop-filter: blur(14px); padding: 10px 16px 16px;
     border-bottom: 1px solid var(--border); display: none;
   }
   .site-nav.open { display: flex; }
   .site-nav a { color: var(--ink); padding: 11px 8px; }
-  .nav-burger { display: block; }
+  .nav-burger { display: block; margin-left: 0; width: 44px; height: 44px; padding: 11px; }
   .header-actions .btn { display: none; }
   .section { padding: 52px 0; }
 }
@@ -643,7 +656,7 @@ input[type=range] { width: 100%; accent-color: var(--dg); }
 .acct-btn .acct-name { opacity: .78; }
 /* 좁은 화면 — 계정 버튼 3종 + 언어 스위처가 헤더를 넘치지 않도록 압축 */
 @media (max-width: 900px) {
-  .acct-btn { font-size: 11.5px; padding: 5px 8px; margin-left: 2px; max-width: 33vw; overflow: hidden; text-overflow: ellipsis; }
+  .acct-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; font-size: 11.5px; padding: 5px 8px; margin-left: 0; max-width: 33vw; overflow: hidden; text-overflow: ellipsis; }
   .acct-btn .acct-name { display: none; }   /* 이름은 생략 — 로그아웃 라벨만 */
   .header-actions { gap: 4px; min-width: 0; }
 }
@@ -717,3 +730,32 @@ input[type=range] { width: 100%; accent-color: var(--dg); }
 .trigger-list li { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.55; }
 .trigger-list .badge { flex: none; }
 .sub-h { font-size: 16px; font-weight: 800; color: var(--ink); }
+
+@media (max-width: 900px) {
+  .site-nav { max-height: calc(100vh - var(--header-h)); max-height: calc(100dvh - var(--header-h)); overflow-y: auto; overscroll-behavior: contain; }
+  .btn, .f-chip { min-height: 44px; max-width: 100%; white-space: normal; text-align: center; }
+  .field { font-size: 16px; min-height: 44px; }
+  .pipe-item a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; }
+  .dash-section[id], main[id] { scroll-margin-top: calc(var(--header-h) + 12px); }
+}
+@media (max-width: 600px) {
+  .container, .hero-inner { padding-left: 12px; padding-right: 12px; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: minmax(0, 1fr); }
+  .split, .card, .panel, .panel-body, .cand > div { min-width: 0; }
+  .card, .panel-body { padding: 14px; }
+  .kv { grid-template-columns: minmax(0, 0.7fr) minmax(0, 1fr); }
+  .kv > div { min-width: 0; overflow-wrap: anywhere; }
+  .cand { grid-template-columns: minmax(0, 1fr) auto; }
+  .badge { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+  .dash-badge, .notice, .src-note, .tl-item { overflow-wrap: anywhere; }
+  .drop-zone { padding: 20px 14px; }
+  .case-store .admin-tbl { display: block; min-width: 0; }
+  .case-store .admin-tbl thead { display: none; }
+  .case-store .admin-tbl tbody { display: grid; gap: 12px; padding: 12px; }
+  .case-store .admin-tbl tr { display: grid; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .case-store .admin-tbl td { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 8px; font-size: 13px; overflow-wrap: anywhere; text-align: left; }
+  .case-store .admin-tbl td::before { content: attr(data-label); color: var(--muted); font-size: 12px; font-weight: 700; }
+  .case-store .admin-tbl td[colspan] { display: block; }
+  .case-store .admin-tbl td[colspan]::before { display: none; }
+  .case-store .row-act { justify-content: flex-start; }
+}

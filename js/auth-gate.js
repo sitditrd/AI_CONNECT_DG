@@ -58,10 +58,8 @@
 
     /* 로그인 사용자: '내 케이스' 링크(서버 케이스 보관함) */
     var cs = document.getElementById('casesBtn');
-    if (authed) {
-      if (!cs) { cs = document.createElement('a'); cs.id = 'casesBtn'; cs.className = 'acct-btn'; host.insertBefore(cs, a); }
-      setLabel(cs, '내 케이스', null); cs.href = 'cases.html'; cs.title = '내 케이스';
-    } else if (cs) { cs.remove(); }
+    if (!cs) { cs = document.createElement('a'); cs.id = 'casesBtn'; cs.className = 'acct-btn'; host.insertBefore(cs, a); }
+    setLabel(cs, '내 케이스', null); cs.href = 'cases.html'; cs.title = '내 케이스';
 
     /* 관리자: '회원 승인' 링크 */
     var adm = document.getElementById('adminBtn');

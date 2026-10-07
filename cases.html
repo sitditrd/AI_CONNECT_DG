@@ -38,10 +38,10 @@
     </div>
   </header>
 
-  <main class="container admin-wrap">
+  <main class="container admin-wrap case-store">
     <div class="page-head">
-      <h1>내 케이스 — 서버 보관함</h1>
-      <p>로그인 계정으로 저장된 케이스를 다른 기기에서도 열 수 있습니다. 케이스가 진행될 때마다 자동으로 서버에 동기화됩니다.</p>
+      <h1 id="caseTitle">내 케이스 — 서버 보관함</h1>
+      <p id="caseIntro">로그인 계정으로 저장된 케이스를 다른 기기에서도 열 수 있습니다. 케이스가 진행될 때마다 자동으로 서버에 동기화됩니다.</p>
     </div>
 
     <div class="admin-toolbar">
@@ -51,13 +51,13 @@
     </div>
 
     <div id="caseMsg" class="auth-msg" hidden></div>
-    <div class="tbl-card" style="overflow-x:auto">
+    <div class="tbl-card table-wrap" style="overflow-x:auto">
       <table class="admin-tbl">
         <thead><tr><th>케이스 번호</th><th>화주사</th><th>품목</th><th>판정</th><th>창고</th><th>마지막 저장</th><th class="ta-r">관리</th></tr></thead>
         <tbody id="caseRows"><tr><td colspan="7" class="muted" style="text-align:center;padding:24px">불러오는 중…</td></tr></tbody>
       </table>
     </div>
-    <p class="auth-hint" style="margin-top:12px;">'열기'는 서버 케이스를 이 브라우저의 현재 케이스로 복원합니다(현재 작업 중 케이스는 덮어씀).</p>
+    <p class="auth-hint" id="caseHint" style="margin-top:12px;">'열기'는 서버 케이스를 이 브라우저의 현재 케이스로 복원합니다(현재 작업 중 케이스는 덮어씀).</p>
   </main>
 
   <script src="js/common.js?v=2026-10-06a"></script>
@@ -77,14 +77,20 @@
       function esc(s) { return (s == null ? '' : String(s)).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
       /* 로그인 확인 */
-      if (!A.isAuthed()) { location.replace('login.html'); return; }
-      A.validate().then(function (ok) {
-        if (!ok) { location.replace('login.html'); return; }
-        load();
-      });
+      window.addEventListener('dg-lang',load); if (A.isAuthed()) A.validate().then(load);
+      else load();
 
       document.getElementById('reload').onclick = load;
       document.getElementById('pushBtn').onclick = function () {
+        if (!A.isAuthed()) {
+          var current = window.DGCase.get();
+          if (!current.caseNo) { show('보관할 케이스가 없습니다. 먼저 보관 요청을 등록하세요.', 'err'); return; }
+          window.DGCase.archive();
+          window.DGCase.restore(current.caseNo);
+          show('현재 케이스를 이 브라우저에 보관했습니다.', 'ok');
+          load();
+          return;
+        }
         S.push().then(function (r) {
           if (r && r.ok) { show('현재 케이스를 동기화했습니다.', 'ok'); load(); }
           else { show('동기화할 케이스가 없거나 실패했습니다.', 'err'); }
@@ -92,6 +98,30 @@
       };
 
       function load() {
+        var local = !A.isAuthed();
+        document.getElementById('caseTitle').textContent = local ? '내 케이스 — 브라우저 보관함' : '내 케이스 — 서버 보관함';
+        document.getElementById('caseIntro').textContent = local
+          ? '로그인 없이 현재 작업과 보관한 케이스를 열 수 있습니다. 이 브라우저에 저장되며, 다른 기기에서 이어 보려면 로그인하세요.'
+          : '로그인 계정으로 저장된 케이스를 다른 기기에서도 열 수 있습니다. 케이스가 진행될 때마다 자동으로 서버에 동기화됩니다.';
+        document.getElementById('pushBtn').textContent = local ? '현재 케이스 보관' : '현재 케이스 지금 동기화';
+        document.getElementById('caseHint').textContent = local
+          ? '브라우저 데이터를 지우면 케이스도 삭제됩니다. 열기는 선택한 케이스를 현재 작업으로 복원합니다.'
+          : "'열기'는 서버 케이스를 이 브라우저의 현재 케이스로 복원합니다(현재 작업 중 케이스는 덮어씀).";
+        if (local) {
+          var current = window.DGCase.get();
+          var list = window.DGCase.archives().filter(function (entry) { return entry.caseNo !== current.caseNo; });
+          if (current.caseNo) list.unshift(current);
+          render(list.map(function (entry) {
+            var request = entry.request || {};
+            return {
+              caseNo: entry.caseNo, shipper: request.shipper, item: request.item,
+              verdict: entry.compliance && entry.compliance.verdict,
+              warehouseId: entry.warehouse && entry.warehouse.alias,
+              updatedAt: entry.archivedAt || (entry.logs && entry.logs.length && entry.logs[entry.logs.length - 1].at) || entry.createdAt
+            };
+          }));
+          return;
+        }
         rows.innerHTML = '<tr><td colspan="7" class="muted" style="text-align:center;padding:24px">불러오는 중…</td></tr>';
         S.list().then(function (r) {
           if (!Array.isArray(r)) { show(r && r.error ? r.error : '목록 조회 실패 — 케이스 동기화 백엔드가 아직 활성화되지 않았을 수 있습니다.', 'err'); rows.innerHTML = '<tr><td colspan="7" class="muted" style="text-align:center;padding:24px">조회 실패</td></tr>'; return; }
@@ -101,7 +131,7 @@
       function render(list) {
         if (!list.length) { rows.innerHTML = '<tr><td colspan="7" class="muted" style="text-align:center;padding:24px">저장된 케이스가 없습니다. 프로세스 화면에서 케이스를 진행하면 자동 저장됩니다.</td></tr>'; return; }
         rows.innerHTML = list.map(function (c) {
-          var d = c.updatedAt ? new Date(c.updatedAt) : null;
+          var d = c.updatedAt ? new Date(String(c.updatedAt).replace(' ','T')) : null;
           function p(n) { return String(n).padStart(2, '0'); }
           var ds = d ? (d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes())) : '—';
           var v = c.verdict ? '<span class="st-pill st-' + (c.verdict === 'OK' ? 'approved' : c.verdict === 'NO' ? 'rejected' : 'pending') + '">' + (VD[c.verdict] || esc(c.verdict)) + '</span>' : '<span class="muted">—</span>';
@@ -112,17 +142,31 @@
               '<button class="btn btn-ghost btn-xs" data-act="del" data-no="' + esc(c.caseNo) + '" type="button">삭제</button>' +
             '</div></td></tr>';
         }).join('');
+        rows.querySelectorAll('tr').forEach(function (row) {
+          Array.prototype.forEach.call(row.children, function (cell, index) {
+            var labels = ['케이스 번호', '화주사', '품목', '판정', '창고', '마지막 저장', '관리'];
+            cell.setAttribute('data-label',window.DGI18N?DGI18N.t(labels[index] || ''):(labels[index] || ''));
+          });
+        });
         rows.querySelectorAll('[data-act]').forEach(function (b) {
           b.onclick = function () {
             var no = b.dataset.no;
             if (b.dataset.act === 'open') {
-              if (!confirm('서버 케이스 ' + no + ' 를 현재 케이스로 복원할까요? 현재 작업 중인 케이스는 덮어씁니다.')) return;
-              S.restore(no).then(function (r) {
+              if (!confirm((A.isAuthed()?'서버 케이스 ':'브라우저 케이스 ') + no + ' 를 현재 케이스로 복원할까요? 현재 작업 중인 케이스는 덮어씁니다.')) return;
+              var restored = !A.isAuthed()
+                ? Promise.resolve({ ok: window.DGCase.get().caseNo === no || !!window.DGCase.restore(no) })
+                : S.restore(no);
+              restored.then(function (r) {
                 if (r && r.ok) { show('복원했습니다. 프로세스 화면으로 이동합니다…', 'ok'); setTimeout(function () { location.href = 'process.html'; }, 600); }
                 else { show(r && r.error ? r.error : '복원 실패', 'err'); }
               });
             } else {
-              if (!confirm('서버에 저장된 케이스 ' + no + ' 를 삭제할까요? 이 작업은 되돌릴 수 없습니다.')) return;
+              if (!confirm((A.isAuthed()?'서버에 저장된 케이스 ':'브라우저에 저장된 케이스 ') + no + ' 를 삭제할까요? 이 작업은 되돌릴 수 없습니다.')) return;
+              if (!A.isAuthed()) {
+                window.DGCase.removeArchive(no);
+                if (window.DGCase.get().caseNo === no) window.DGCase.reset();
+                show('삭제했습니다.', 'ok'); load(); return;
+              }
               S.remove(no).then(function (r) {
                 if (r && r.ok) { show('삭제했습니다.', 'ok'); load(); }
                 else { show(r && r.error ? r.error : '삭제 실패', 'err'); }

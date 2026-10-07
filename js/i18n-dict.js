@@ -3118,3 +3118,42 @@ window.DGI18N_DICT = {
     "Cobalt oxide <#% · Manganese dioxide <#% · Nickel oxide <#% · Carbon #-#% · Electrolyte #-#% 외": "Cobalt oxide <#% · Manganese dioxide <#% · Nickel oxide <#% · Carbon #-#% · Electrolyte #-#% 等"
   });
 })();
+
+;(function(){
+  var dict=window.DGI18N_DICT;
+  if(!dict)return;
+  Object.assign(dict.en,{
+    '내 케이스 — 브라우저 보관함':'My cases — Browser storage',
+    '로그인 없이 현재 작업과 보관한 케이스를 열 수 있습니다. 이 브라우저에 저장되며, 다른 기기에서 이어 보려면 로그인하세요.':'Open your current work and saved cases without signing in. Cases stay in this browser. Sign in to continue on another device.',
+    '현재 케이스 보관':'Save current case',
+    '브라우저 데이터를 지우면 케이스도 삭제됩니다. 열기는 선택한 케이스를 현재 작업으로 복원합니다.':'Clearing browser data deletes these cases. Open restores a saved case as your current work.',
+    '보관할 케이스가 없습니다. 먼저 보관 요청을 등록하세요.':'No case to save. Create a storage request first.',
+    '현재 케이스를 이 브라우저에 보관했습니다.':'The current case was saved in this browser.',
+    '브라우저 케이스 # 를 현재 케이스로 복원할까요? 현재 작업 중인 케이스는 덮어씁니다.':'Restore browser case # as the current case? This replaces your current work.',
+    '브라우저에 저장된 케이스 # 를 삭제할까요? 이 작업은 되돌릴 수 없습니다.':'Delete browser case #? This cannot be undone.',
+    '케이스 번호':'Case number',
+    '화주사':'Shipper',
+    '품목':'Item',
+    '판정':'Decision',
+    '창고':'Warehouse',
+    '마지막 저장':'Last saved',
+    '관리':'Actions'
+  });
+  Object.assign(dict.zh,{
+    '내 케이스 — 브라우저 보관함':'我的案例 — 浏览器存储',
+    '로그인 없이 현재 작업과 보관한 케이스를 열 수 있습니다. 이 브라우저에 저장되며, 다른 기기에서 이어 보려면 로그인하세요.':'无需登录即可打开当前工作和已保存的案例。案例保存在此浏览器中。若要在其他设备上继续，请登录。',
+    '현재 케이스 보관':'保存当前案例',
+    '브라우저 데이터를 지우면 케이스도 삭제됩니다. 열기는 선택한 케이스를 현재 작업으로 복원합니다.':'清除浏览器数据也会删除这些案例。打开将选定案例恢复为当前工作。',
+    '보관할 케이스가 없습니다. 먼저 보관 요청을 등록하세요.':'没有可保存的案例。请先提交仓储请求。',
+    '현재 케이스를 이 브라우저에 보관했습니다.':'当前案例已保存在此浏览器中。',
+    '브라우저 케이스 # 를 현재 케이스로 복원할까요? 현재 작업 중인 케이스는 덮어씁니다.':'将浏览器案例 # 恢复为当前案例吗？这将覆盖当前工作。',
+    '브라우저에 저장된 케이스 # 를 삭제할까요? 이 작업은 되돌릴 수 없습니다.':'删除浏览器中保存的案例 # 吗？此操作无法撤销。',
+    '케이스 번호':'案例编号',
+    '화주사':'货主',
+    '품목':'品目',
+    '판정':'判定',
+    '창고':'仓库',
+    '마지막 저장':'最后保存',
+    '관리':'操作'
+  });
+})();

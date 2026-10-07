@@ -27,6 +27,7 @@
 .auth-tab.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
 
 .auth-form { display: flex; flex-direction: column; gap: 14px; }
+.auth-form[hidden] { display: none; }
 .auth-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
 .auth-form input {
   font: inherit; font-size: 14.5px; color: var(--ink); background: var(--surface-2);
@@ -35,7 +36,7 @@
 .auth-form input:focus { outline: none; border-color: var(--dg); box-shadow: 0 0 0 3px color-mix(in srgb, var(--dg) 20%, transparent); }
 .auth-form .req { color: var(--v-no); }
 .with-btn { display: flex; gap: 8px; }
-.with-btn input { flex: 1; }
+.with-btn input { flex: 1; min-width: 0; }
 .with-btn .btn { flex: none; white-space: nowrap; }
 .btn-block { margin-top: 4px; }
 .auth-hint { margin: 2px 0 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
@@ -82,3 +83,12 @@
 .case-sync-badge { font-size: 11.5px; font-weight: 700; color: var(--muted); }
 .case-sync-badge.on { color: var(--v-ok); }
 .case-sync-badge.err { color: var(--v-no); }
+
+@media (max-width: 900px) {
+  .auth-form input { font-size: 16px; }
+  .auth-tab { min-height: 44px; }
+}
+@media (max-width: 600px) {
+  .auth-wrap { padding-left: 12px; padding-right: 12px; }
+  .auth-card { padding: 22px 16px; }
+}

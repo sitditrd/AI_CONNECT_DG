@@ -52,6 +52,20 @@
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 
+    function updateHeaderHeight() {
+      if (window.matchMedia('(max-width: 900px)').matches) {
+        document.documentElement.style.setProperty('--header-h', header.getBoundingClientRect().height + 'px');
+      } else {
+        document.documentElement.style.removeProperty('--header-h');
+      }
+    }
+    if (typeof ResizeObserver === 'function') {
+      new ResizeObserver(updateHeaderHeight).observe(header);
+    } else {
+      window.addEventListener('resize', updateHeaderHeight);
+    }
+    updateHeaderHeight();
+
     var burger = document.querySelector('.nav-burger');
     var nav = document.querySelector('.site-nav');
     if (burger && nav) {
